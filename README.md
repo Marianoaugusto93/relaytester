@@ -1,67 +1,82 @@
 # Relay Tester Pro
 
-**Advanced Protection System Simulator** — ferramenta web para ensaio e verificação de relés de proteção em subestações. Simula injeção de correntes/tensões, avalia atuação de funções de proteção e gera relatórios COMTRADE compatíveis com IEC 60255.
+**Advanced Protection System Simulator** — ferramenta web para treinamento e comissionamento de relés de proteção em subestações. Simula injeção trifásica de correntes e tensões, avalia atuação de funções ANSI/IEC, exibe circuito de comando animado e gera arquivos COMTRADE.
 
 **Deploy:** [relaytester-pro.pages.dev](https://relaytester-pro.pages.dev)  
-**Stack:** React 18 · Vite 6 · JSZip · Cloudflare Pages
+**Stack:** React 18 · Vite 6 · Web Audio API · JSZip · Cloudflare Pages
 
 ---
 
-## Funcionalidades Atuais (v1.1)
+## Funcionalidades — v1.5.0
 
 ### Página CAMPO
-Interface de cabeamento da maleta de testes:
+Simulador de cabeamento físico entre maleta de testes e relé.
 
-- **Chave de Aferição** — simulação da chave de corrente com 10 pólos (ia1/ia2, ib1/ib2, ic1/ic2, va, vb, vc, terra). Posição FECHADA (UP): corrente flui A→S1, T→S2. Posição CURTO (DOWN): S1↔S2 em curto, circuito de corrente protegido.
-- **Régua de Bornes** — 12 módulos independentes com terminais top/bottom, suporte a anilhas identificadas (BO3-BO6, BI3-BI6).
-- **Maleta de Teste** — conectores de saída analógica de corrente (AO-I1, I2, I3) e tensão (AO-V1, V2, V3) e digitais (BO1-BO4, BI1-BI4).
-- **Grafo Elétrico em Tempo Real** — algoritmo BFS calcula quais terminais da maleta estão eletricamente conectados aos sensores do relé, dado o estado dos cabos e da chave. Detecta curto-circuito de TC.
-- **Leitura Real do Relé** — correntes e tensões injetadas são filtradas pela topologia elétrica. Se nenhum cabo conectar a maleta ao relé, o relé vê zero.
+- **Chave de Aferição (10 pólos)** — ia1/ia2, ib1/ib2, ic1/ic2, va, vb, vc, terra. Posição UP: corrente passa; DOWN: S1↔S2 em curto (segurança de TC).
+- **Régua de Bornes (12 módulos)** — top/bottom internamente ligados, anilhas identificadas.
+- **Maleta de Testes** — saídas de corrente (I1–I3), tensão (V1–V3), binários (BO1–BO6, BI1–BI6).
+- **Grafo Elétrico em Tempo Real** — Union-Find determina quais terminais compartilham nó elétrico, dado o estado de cabos e chave.
+- **Leitura Real do Relé** — fasores são filtrados pela topologia. Sem cabos = relé vê zero.
+- **Detecção de Trip via BO→Borne→BI** — rastrea o caminho físico completo até o disjuntor.
 
 ### Página RELÉ
-Configuração completa e simulação de atuação:
+Configuração, simulação e análise de atuação.
 
-#### Parâmetros de Sistema
-- **TP** — tensão primária/secundária, conexão (estrela/delta)
-- **TC** — corrente primária/secundária; cálculo automático de CTR
-- **Fasores de Pré-falta** — Ia, Ib, Ic (mag/ângulo) e Va, Vb, Vc. Modo balanceado 3φ ou manual.
-- **Fasores de Falta** — mesmo esquema; toggle Pre-Fault/Fault no painel.
-- **Base de ajuste** — primário, secundário ou múltiplo de TC/TP
+#### Painel de Injeção (coluna esquerda)
+- Fasores de **Pré-falta** e **Falta** independentes (Ia/Ib/Ic/Va/Vb/Vc)
+- Modo **3φ Equilibrado** (referência em Ia/Va) e **Manual** por fase
+- Seleção de sequência **ABC / ACB**
+- **Frequência** do sistema (50/60 Hz) com ajuste fino de 0,1 Hz
+- **Calculador de Falta** — calcula fasores de falta por componentes simétricas para AG, BG, CG, AB, BC, CA, ABG, BCG, CAG, ABC com impedâncias Z1/Z0 e resistência de falta configuráveis
+- **Diagrama Fasorial** — visualizador SVG com toggles por fasor (Ia/Ib/Ic/Va/Vb/Vc/componentes simétricas/interlineares)
 
-#### Funções de Proteção (ANSI/IEEE)
-| Função | Descrição | Norma |
-|--------|-----------|-------|
-| **51** | Sobrecorrente Temporizada de Fase | IEC 60255-151 |
-| **50** | Sobrecorrente Instantânea de Fase | IEC 60255-151 |
-| **51N** | Sobrecorrente Temporizada de Neutro | IEC 60255-151 |
-| **50N** | Sobrecorrente Instantânea de Neutro | IEC 60255-151 |
-| **67** | Direcional de Fase | IEC 60255-151 |
-| **67N** | Direcional de Neutro | IEC 60255-151 |
-| **27/59** | Sub/Sobretensão com histerese, seleção φ-N/φ-φ, bloqueio por baixa tensão | IEC 60255 |
-| **47** | Sequência Negativa de Tensão | ANSI C37.102 |
+#### Funções de Proteção (ANSI/IEC)
 
-Cada função suporta até **4 estágios** independentes com enable/disable por estágio.
+| Função | Descrição | Estágios |
+|--------|-----------|----------|
+| **50** | Sobrecorrente Instantânea de Fase | 4 |
+| **51** | Sobrecorrente Temporizada de Fase | 4 |
+| **50N** | Sobrecorrente Instantânea de Neutro (3I₀) | 4 |
+| **51N** | Sobrecorrente Temporizada de Neutro | 4 |
+| **67** | Direcional de Fase (MTA, pol. quadratura/seq+) | 4 |
+| **67N** | Direcional de Neutro (−V₀, V₀) | 4 |
+| **27/59** | Sub/Sobretensão — φ-N ou φ-φ, histerese, bloqueio Low-V | 3+3 |
+| **47** | Tensão de Sequência Negativa (V₂) | 2 |
+| **46** | Sobrecorrente de Sequência Negativa (I₂) | 4 |
+| **81** | Sub/Sobrefrequência (81U e 81O) | 3+3 |
+| **32** | Potência Direcional/Reversa (32R e 32F) | 2+2 |
+| **79** | Religamento Automático — shots, dead time, reclaim time | — |
 
-#### Curvas de Tempo Inverso (51/51N/67/67N)
-18 curvas disponíveis:
-- IEC: Standard Inverse, Very Inverse, Extremely Inverse, Long-Time Inverse, Short-Time Inverse
-- US: Moderately Inverse, Inverse, Very Inverse, Extremely Inverse, Short-Time Inverse
-- IEEE/ANSI: Moderately/Very/Extremely Inverse (IEEE e ANSI flavors)
-- Tempo Definido
+**18 curvas de tempo inverso** para 51/51N/67/67N: IEC SI/VI/EI/LTI/STI, US CO2/CO8/MI/EI/STI, IEEE MI/VI/EI, ANSI NI/VI/EI + Tempo Definido.
 
 #### Motor de Proteção
-- **Tolerância 50/50N**: erro absoluto ±20 ms ou relativo ±5% (o maior). Tempo básico 30 ms quando ajuste = 0. Distribuição uniforme dentro da banda.
-- **Simulação determinística**: exibe tempo teórico, banda ±Δt, resultado simulado, erro percentual e status PASS/FAIL.
-- **Display de Relé** — 9 páginas: I secundária, I primária, I múltiplo TC, V secundária, V primária, V múltiplo TP, P secundária, P primária, Fault Record.
+- **Modo direto** (sem pré-falta): calcula tempos reais com tolerância por função, exibe diagnósticos por estágio.
+- **Modo com pré-falta** (acumulador): integração da fração de operação fase a fase — simula relés com memória de curva inversa.
+- **Tolerâncias realistas**: 50/50N ±20 ms ou ±5%; 51/51N ±40 ms ou ±5%.
+- **Monitoramento autônomo da 27**: relé detecta subtensão mesmo fora da simulação.
 
-#### Matriz de Saída/Entrada
-- **Output Matrix** (6 BO × 6 LED) — mapeamento de funções de proteção para saídas binárias e LEDs
-- **Input Matrix** (6 BI × funções) — mapeamento de entradas binárias para bloqueios/habilitações
+#### Relay Virtual (LCD + LEDs)
+- Display LCD com **10 páginas**: I sec., I prim., I múltiplo TC, V sec., V prim., V múltiplo TP, P sec., P prim., Seq./Freq. (I₂, V₂, freq.), Fault Record.
+- **8 LEDs** mapeáveis pela Output Matrix.
+- Botões **RESET / 0 (Abrir) / I (Fechar)** no frontal do relé.
+- Indicador de trip piscante com latch.
 
-#### Exportação
-- **COMTRADE** — gera arquivo `.cfg` + `.dat` (IEC 60255-24) com os fasores configurados
-- **ZIP** — compacta ambos os arquivos para download único
-- **Dump de Estado** — exporta JSON com toda a configuração do relé
+#### Matrizes de Saída/Entrada
+- **Output Matrix** — 6 BO × 6 LED; mapeia estágios de proteção, CB status e CB commands para saídas físicas.
+- **Input Matrix** — CB_Opened/CB_Closed × 6 BI; para de timer quando disjuntor confirma abertura.
+
+#### Presets de Teste (11 configurações prontas)
+51/50 Fase, 51N/50N Neutro, 50/51/50N/51N completo, 67 Direcional, 67N Neutro, 27/59 Tensão, 47 Seq.V, 46 Seq.I, 81U Freq, 32R Pot.Rev., 79+51/50 Auto-reclose.
+
+### Página PAINEL
+Simulação do circuito de comando do disjuntor.
+
+- **SVG do Disjuntor Siemens SION** responsivo com estados: aberto, fechando, fechado, abrindo, disparando.
+- **Diagrama de Comando Ladder animado** — BCS, LM, BL, BO2, BO1, BD, CL, OP, BI1, BI2, K, M, BF, AB, BA, BM com iluminação de contatos em tempo real.
+- **Diagrama Unifilar** — fonte → TC/TP → disjuntor → carga com correntes e tensões primárias animadas.
+- **Mola de Fechamento** — carregamento progressivo (~5 s), bloqueio de fechamento sem mola pronta.
+- **Sonoplastia** — abertura, fechamento e carregamento de mola via Web Audio API (zero latência).
+- **Contador de Operações** por sessão.
 
 ---
 
@@ -69,114 +84,141 @@ Cada função suporta até **4 estágios** independentes com enable/disable por 
 
 ```
 src/
-├── main.jsx          # Entry point React 18
-├── App.jsx           # Shell principal, state global, motor de proteção
-│   ├── page 0        # CAMPO — renderiza CampoPage
-│   └── page 1        # RELÉ  — configuração inline
-├── CampoPage.jsx     # Chave, régua de bornes, maleta, grafo elétrico
-│   ├── buildElectricalGraph()     # Constrói grafo de adjacência dos terminais
-│   ├── computeRelayReadings()     # BFS: determina o que o relé vê
-│   └── checkMaletaTripDetection() # Detecta trip da maleta via BO
-└── comtrade.js       # Gerador COMTRADE (IEC 60255-24)
+├── main.jsx          # Ponto de entrada React 18
+├── App.jsx           # Estado global, motor de proteção, engine de simulação
+├── CampoPage.jsx     # Simulador de cabeamento — Union-Find, grafo elétrico
+├── PainelPage.jsx    # Disjuntor, diagrama ladder, unifilar, áudio
+└── comtrade.js       # Gerador COMTRADE IEEE C37.111-1999
 
 public/
 ├── favicon.svg
-└── _redirects        # Cloudflare Pages SPA routing
+├── _redirects        # Cloudflare SPA routing
+└── sounds/           # abrir.mp3  fechar.mp3  mola.mp3
 ```
 
 **Fluxo de dados:**
-
 ```
-Fasores (App) → CampoPage (grafo elétrico) → relayReadings → Motor de Proteção → Resultados
-                     ↑
-          Estado da chave + cabos conectados
+App.jsx (phasors + protections + sys)
+  ├── CampoPage  →  fieldState (connections, internalConns)
+  │                 electricalGraph (Union-Find)
+  │                 computeRelayReadings()  →  relayReadings
+  │                 checkMaletaTripDetection()
+  │
+  ├── Protection Engine  →  evalProtectionsDirect() | accumulator
+  │                         → trippedStageIds, tripHistory, COMTRADE
+  │
+  └── PainelPage  →  bkState, springLoaded, tripLatch
+                     onBreakerChange() callback  →  ar79 auto-reclose
 ```
 
 ---
 
-## Deploy — Cloudflare Pages
+## Deploy
 
-### Configurações do Projeto
+### Pré-requisitos
+- Node.js 18+
+- Conta GitHub
+- Conta Cloudflare (plano gratuito suficiente)
+
+### 1. Desenvolvimento local
+
+```bash
+git clone https://github.com/SEU_USUARIO/relaytester-pro.git
+cd relaytester-pro
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # gera /dist
+npm run preview    # serve /dist localmente
+```
+
+### 2. Push para GitHub
+
+Se ainda não tiver o remote configurado:
+
+```bash
+git remote add origin https://github.com/SEU_USUARIO/relaytester-pro.git
+git push -u origin master
+```
+
+Ou com o GitHub CLI:
+
+```bash
+gh repo create relaytester-pro --public --source=. --push
+```
+
+### 3. Deploy no Cloudflare Pages
+
+1. Acesse **dash.cloudflare.com** → **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**
+2. Autorize o acesso ao GitHub e selecione o repositório `relaytester-pro`
+3. Configure o build:
 
 | Campo | Valor |
 |-------|-------|
-| Framework preset | None (manual) |
+| Framework preset | `Vite` |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Node.js version | `20` |
-| Root directory | `/` (raiz do repo) |
+| Root directory | `/` |
 
-### Variáveis de Ambiente
-Nenhuma variável de ambiente necessária atualmente.
+4. Clique **Save and Deploy** — o primeiro deploy leva ~1 min.
 
-### Roteamento SPA
-O arquivo `public/_redirects` contém:
-```
-/* /index.html 200
-```
-Isso garante que deep links e refresh de página funcionem corretamente no Cloudflare Pages.
+**Variáveis de ambiente:** nenhuma necessária.
 
-### Build Local
-```bash
-npm install
-npm run build    # gera /dist
-npm run preview  # serve /dist localmente
-```
+**Roteamento SPA:** o arquivo `public/_redirects` contém `/* /index.html 200`, que garante que refresh e deep links não retornem 404.
+
+**Deploys automáticos:** após a configuração inicial, qualquer `git push` para `master` dispara um novo deploy automaticamente.
 
 ---
 
 ## Roadmap
 
-### v1.2 — Página PAINEL (Sessão 2)
-- [ ] **Disjuntor Siemens SION** — renderização SVG responsiva com estados: Aberto / Fechado / Rearme
-- [ ] **Diagrama de Comando** — esquema ladder animado (BIS, LM, BL, BO2, BO1, BD, CL, OP, BI1, BI2, K, M, BF, AB, BA, BM)
-- [ ] **State machine** do disjuntor: `open | closing | closed | opening | tripped`
-- [ ] **Indicadores de estado**: ESTADO (Aberto/Fechado), MOLA (Carregada/Carregando), OPERAÇÕES (contador)
-- [ ] **Botões de comando**: `[I Fechar]` e `[0 Abrir]` com lógica de intertravamento
+### Próximas funções de proteção
+- [ ] **49** — Proteção Térmica (I²t acumulador, limite de temperatura, cooling)
+- [ ] **21** — Distância (zonas Z1/Z2/Z3, características mho/quadrilateral, zona de memória de tensão)
+- [ ] **87T / 87L** — Diferencial de Transformador / Linha (corrente de estabilização, bloqueio de inrush 2ª harmônica)
+- [ ] **25** — Sincronismo (janela de tensão/frequência/ângulo para fechamento síncrono)
+- [ ] **86** — Relé de Bloqueio / Lockout (latch com flag visual, reset manual supervisionado)
+- [ ] **24** — Sobreexcitação V/Hz (proteção de transformador e gerador)
 
-### v1.3 — Interlocking PAINEL ↔ RELÉ ↔ CAMPO (Sessão 3)
-- [ ] **Trip via BO1** → abre disjuntor automaticamente (CL energizado)
-- [ ] **52a/52b contacts** → alimentam BI1/BI2 do relé (estado real do disjuntor)
-- [ ] **Spring motor** → lógica de carregamento da mola pós-operação (~5 s simulado)
-- [ ] **Bloqueio de fechamento** sem mola carregada (intertravamento mecânico)
-- [ ] **Contador de operações** persistente na sessão
+### Melhorias de simulação
+- [ ] **Coordenograma TCC** — curvas de tempo-corrente sobrepostas em escala log-log (Recharts); exportação SVG/PNG
+- [ ] **Cálculo de seletividade** — margem de tempo automática entre estágios coordenados
+- [ ] **Harmônicas** — injeção de 2ª/3ª/5ª/7ª harmônicas nos fasores; análise de bloqueio de diferencial
+- [ ] **Cálculo de curto-circuito completo** — modelo de rede com impedância de sequência Z1/Z2/Z0 do sistema para todos os tipos de falta
 
-### v1.4 — Diagrama Unifilar Responsivo (Sessão 4)
-- [ ] SVG do unifilar simplificado: fonte → TP/TC → disjuntor → carga
-- [ ] Animação de corrente ativa (partículas no condutor) quando circuito fechado
-- [ ] Indicadores de tensão e corrente inline no diagrama
-- [ ] Responsividade mobile-first para uso em campo com tablet/smartphone
+### Exportação e relatórios
+- [ ] **Relatório PDF** — sumário do ensaio: configurações, resultados, fasores, diagrama unifilar (jsPDF + html2canvas)
+- [ ] **COMTRADE v2013** — suporte ao formato IEEE C37.111-2013 (binário + ASCII)
+- [ ] **Planilha de resultados** — exportação CSV/XLSX com tempo teórico × simulado × erro por estágio
 
-### v2.0 — Features Avançadas (Backlog)
-- [ ] **Persistência** — salvar/carregar configuração completa em JSON (localStorage + File API)
-- [ ] **Múltiplos relés** — configurar proteção principal e backup
-- [ ] **Coordenograma TCC** — curvas de tempo-corrente em log-log (Recharts)
-- [ ] **Cálculo de coordenação** — margem de seletividade automática entre estágios
-- [ ] **Exportação de relatório** — PDF com configurações, resultados e diagrama unifilar (jsPDF)
-- [ ] **Banco de relés** — presets com nameplate values reais (SIEMENS 7SJ, SEL-751, GE T35, ABB REF 615)
-- [ ] **Harmônicas** — injeção de componentes harmônicas nos fasores (análise 2ª/3ª/5ª/7ª)
-- [ ] **Modo turma** — múltiplos usuários simultâneos via Cloudflare D1 + Workers
+### UX e treinamento
+- [ ] **Banco de relés** — presets de nameplate reais: SIEMENS 7SJ85, SEL-751A, GE T35, ABB REF 615, Schneider Sepam
+- [ ] **Modo guiado** — roteiro de ensaio passo a passo com checklist e validação automática de resultados
+- [ ] **Responsividade mobile** — layout adaptado para tablets de campo (modo retrato/paisagem)
+- [ ] **Modo turma** — sessões compartilhadas via Cloudflare D1 + Workers para uso em cursos
 
 ---
 
 ## Normas Referenciadas
 
-- **IEC 60255-151** — Curvas de tempo inverso para relés de sobrecorrente
-- **IEC 60255-24** — COMTRADE (Common Format for Transient Data Exchange)
-- **IEC 60255-127** — Medição de grandezas analógicas
-- **ANSI/IEEE C37.102** — Guia de proteção de geradores síncronos
-- **IEEE 1584-2018** — Cálculo de arco elétrico (referência futura)
-- **NBR IEC 60255** — Versão ABNT das normas de relés de proteção
+| Norma | Assunto |
+|-------|---------|
+| IEC 60255-151 | Curvas de tempo inverso para relés de sobrecorrente |
+| IEC 60255-24 / IEEE C37.111 | COMTRADE — formato de dados transitórios |
+| IEC 60255-127 | Medição de grandezas analógicas |
+| IEC 61850 | Comunicação em subestações (referência futura) |
+| ANSI/IEEE C37.102 | Proteção de geradores síncronos |
+| ANSI/IEEE C37.112 | Curvas de tempo inverso (IEEE/ANSI) |
+| NBR IEC 60255 | Versão ABNT das normas de relés de proteção |
 
 ---
 
 ## Desenvolvimento
 
 ```bash
-git clone <repo>
-cd relaytester_pro
-npm install
-npm run dev      # dev server em http://localhost:5173
+npm run dev      # Servidor de desenvolvimento com HMR
+npm run build    # Build de produção → /dist
+npm run preview  # Serve o /dist localmente (verifica build antes do deploy)
 ```
 
-**Contribuição:** Issues e PRs bem-vindos. Mantenha o formato de código existente (JSX inline, CSS-in-JS via `<style>` tags, sem TypeScript por enquanto).
+**Sem TypeScript, sem framework de testes, sem linter configurado** — contribuições devem manter o estilo JSX inline existente. CSS como template literals por componente (`campoCSS`, `S`). Sem dependências externas além de `react`, `react-dom` e `jszip`.
