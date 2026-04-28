@@ -2,7 +2,7 @@
 
 **Advanced Protection System Simulator** — ferramenta web para treinamento e comissionamento de relés de proteção em subestações. Simula injeção trifásica de correntes e tensões, avalia atuação de funções ANSI/IEC, exibe circuito de comando animado e gera arquivos COMTRADE.
 
-**Deploy:** [relaytester-pro.pages.dev](https://relaytester-pro.pages.dev)  
+**Deploy:** [relaytester](https://relaytester.augustocesar-mariano.workers.dev/)  
 **Stack:** React 18 · Vite 6 · Web Audio API · JSZip · Cloudflare Pages
 
 ---
