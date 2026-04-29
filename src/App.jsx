@@ -965,6 +965,7 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .rr{background:rgba(127,29,29,.5);color:#fca5a5;border-color:rgba(248,113,113,.25)}.r0{background:rgba(255,255,255,.04);color:#4a5060;border-color:rgba(255,255,255,.08)}.rii{background:rgba(20,83,45,.5);color:#86efac;border-color:rgba(74,222,128,.25)}
 .rfo{text-align:center;padding:2px 6px 4px;flex-shrink:0}.rfb{font-size:6px;color:#1e2230;letter-spacing:2px;font-family:var(--fm);text-transform:uppercase}
 .relay-actions{display:flex;gap:8px;padding:6px 10px 2px;flex-shrink:0}
+.rp-mensuracao{display:flex;height:100%;overflow:hidden}.rp-subnav{display:flex;flex-direction:column;width:38px;border-right:1px solid rgba(255,255,255,.05);flex-shrink:0;padding:4px 0;gap:2px;background:rgba(0,0,0,.15)}.rp-snb{padding:8px 2px;border:none;background:transparent;color:#3d4455;font-size:7px;font-weight:700;font-family:var(--fh);cursor:pointer;letter-spacing:.8px;text-align:center;text-transform:uppercase;transition:all .2s;border-left:2px solid transparent;line-height:1.3}.rp-snb:hover{color:#6b7280}.rp-snb.on{color:var(--cyan);background:rgba(14,165,233,.06);border-left-color:var(--cyan)}.rp-mensuracao-content{flex:1;overflow-y:auto;min-width:0}
 .ra-btn{flex:1;padding:10px 4px;border-radius:var(--rs);background:var(--card2);border:1px solid transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s}.ra-btn:hover{border-color:rgba(255,255,255,.1);background:var(--card3)}.ra-btn:active{transform:scale(.96)}
 .ra-ico{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
 .ra-ico.send{background:var(--orange-dim);color:var(--orange);border:2px solid rgba(249,115,22,.2)}.ra-ico.get{background:var(--sky-dim);color:var(--sky);border:2px solid rgba(125,211,252,.2)}.ra-ico.wave{background:var(--amber-dim);color:var(--amber);border:2px solid rgba(251,191,36,.2)}
@@ -1123,7 +1124,7 @@ export default function App(){
   const[prot,setProt]=useState(deepClone(defaultProtections));const[relayProt,setRelayProt]=useState(deepClone(defaultProtections));
   const[outMatrix,setOutMatrix]=useState(buildDefaultMatrix);const[relayMatrix,setRelayMatrix]=useState(buildDefaultMatrix);
   const[inMatrix,setInMatrix]=useState(buildDefaultInMatrix);
-  const[mainTab,setMainTab]=useState("relay");const[tab,setTab]=useState("51");const[si,setSi]=useState(0);const[relayTab,setRelayTab]=useState("mensuracao");
+  const[mainTab,setMainTab]=useState("relay");const[tab,setTab]=useState("51");const[si,setSi]=useState(0);const[relayTab,setRelayTab]=useState("mensuracao");const[mensTab,setMensTab]=useState("corr");
   const[ss,setSs]=useState("idle");const[stime,setStime]=useState(0);const[rp,setRp]=useState(0);
   const[trippedStageIds,setTrippedStageIds]=useState([]);const[diag,setDiag]=useState([]);const[evts,setEvts]=useState([]);
   const[isTripped,setIsTripped]=useState(false);const[maletaTripped,setMaletaTripped]=useState(false);const[faultRecord,setFaultRecord]=useState(null);
@@ -2143,23 +2144,118 @@ export default function App(){
     }
   };
 
-  const renderMensuracaoTab=()=>(<div>
-    <div className="rp-section"><div className="rp-stitle">CORRENTE SECUNDÁRIA</div>
-      {["Ia","Ib","Ic"].map(k=><div key={k} className="rp-row"><span className="rp-lbl">{k}</span><span className="rp-val">{ff(ci[k].mag)} A ∠{fa(ci[k].ang)}°</span></div>)}
-      <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3I₀</span><span className="rp-val">{ff(i0.mag,3)} A ∠{fa(i0.ang)}°</span></div>
-    </div>
-    <div className="rp-sep" style={{margin:"0 10px"}}/>
-    <div className="rp-section"><div className="rp-stitle">TENSÃO SECUNDÁRIA</div>
-      {["Va","Vb","Vc"].map(k=><div key={k} className="rp-row"><span className="rp-lbl">{k}</span><span className="rp-val">{ff(vi[k].mag)} V ∠{fa(vi[k].ang)}°</span></div>)}
-      <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3V₀</span><span className="rp-val">{ff(v0.mag,3)} V ∠{fa(v0.ang)}°</span></div>
-    </div>
-    <div className="rp-sep" style={{margin:"0 10px"}}/>
-    <div className="rp-section"><div className="rp-stitle">SISTEMA</div>
-      <div className="rp-row"><span className="rp-lbl">Frequência</span><span className="rp-val">{freqLcd.toFixed(1)} Hz</span></div>
-      <div className="rp-row"><span className="rp-lbl">TC {sys.tc.priA}/{sys.tc.secA} A</span><span className="rp-val">RTC {rtc.toFixed(1)}</span></div>
-      <div className="rp-row"><span className="rp-lbl">TP {sys.tp.priV}/{sys.tp.secV} V</span><span className="rp-val">RTP {rtp.toFixed(1)}</span></div>
-    </div>
-  </div>);
+  const renderMensuracaoTab=()=>{
+    const a1r=Math.cos(2*Math.PI/3),a1i=Math.sin(2*Math.PI/3);
+    const a2r=Math.cos(4*Math.PI/3),a2i=Math.sin(4*Math.PI/3);
+    const IaR=toRect(ci.Ia.mag,ci.Ia.ang),IbR=toRect(ci.Ib.mag,ci.Ib.ang),IcR=toRect(ci.Ic.mag,ci.Ic.ang);
+    const VaR=toRect(vi.Va.mag,vi.Va.ang),VbR=toRect(vi.Vb.mag,vi.Vb.ang),VcR=toRect(vi.Vc.mag,vi.Vc.ang);
+    const i1re=(IaR.re+(a1r*IbR.re-a1i*IbR.im)+(a2r*IcR.re-a2i*IcR.im))/3;
+    const i1im=(IaR.im+(a1r*IbR.im+a1i*IbR.re)+(a2r*IcR.im+a2i*IcR.re))/3;
+    const i1mag=injecting?Math.sqrt(i1re*i1re+i1im*i1im):0;
+    const v2re=(VaR.re+(a2r*VbR.re-a2i*VbR.im)+(a1r*VcR.re-a1i*VcR.im))/3;
+    const v2im=(VaR.im+(a2r*VbR.im+a2i*VbR.re)+(a1r*VcR.im+a1i*VcR.re))/3;
+    const v2mag=injecting?Math.sqrt(v2re*v2re+v2im*v2im):0;
+    const v2ang=injecting?Math.atan2(v2im,v2re)*180/Math.PI:0;
+    const pk=rtc*rtp;
+    const fmtPwr=(v,u)=>Math.abs(v)>=1000?`${(v/1000).toFixed(2)} k${u}`:`${v.toFixed(2)} ${u}`;
+    const Vnom=sys.tp.secV/Math.sqrt(3);
+    const df=freqLcd-60;
+    return(<div className="rp-mensuracao">
+      <div className="rp-subnav">
+        {[["corr","CORR."],["tens","TENS."],["pot","POT."],["sist","SIST."]].map(([id,lbl])=>(
+          <button key={id} className={`rp-snb ${mensTab===id?"on":""}`} onClick={()=>setMensTab(id)}>{lbl}</button>
+        ))}
+      </div>
+      <div className="rp-mensuracao-content">
+        {mensTab==="corr"&&(<div>
+          <div className="rp-section"><div className="rp-stitle">I SECUNDÁRIA</div>
+            {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(ci[ph].mag)} A ∠{fa(ci[ph].ang)}°</span></div>)}
+            <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3I₀</span><span className="rp-val">{ff(i0.mag,3)} A ∠{fa(i0.ang)}°</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">I PRIMÁRIA</div>
+            {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(ci[ph].mag*rtc)} A</span></div>)}
+            <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3I₀ pri</span><span className="rp-val">{ff(i0.mag*rtc,3)} A</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">MÚLTIPLO TC (×In)</div>
+            {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}/In</span><span className="rp-val">{Inom>0?(ci[ph].mag/Inom).toFixed(3):"-"}×</span></div>)}
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">SEQ. NEGATIVA (I₂)</div>
+            <div className="rp-row"><span className="rp-lbl">I₂ sec</span><span className="rp-val">{ff(i2lcd.mag,3)} A ∠{fa(i2lcd.ang)}°</span></div>
+            <div className="rp-row"><span className="rp-lbl">I₂ pri</span><span className="rp-val">{ff(i2lcd.mag*rtc,3)} A</span></div>
+            <div className="rp-row"><span className="rp-lbl">I₂/I₁</span><span className="rp-val">{i1mag>0.01?(i2lcd.mag/i1mag*100).toFixed(1)+"%":"—"}</span></div>
+          </div>
+        </div>)}
+        {mensTab==="tens"&&(<div>
+          <div className="rp-section"><div className="rp-stitle">V SECUNDÁRIA</div>
+            {["Va","Vb","Vc"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(vi[ph].mag)} V ∠{fa(vi[ph].ang)}°</span></div>)}
+            <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3V₀</span><span className="rp-val">{ff(v0.mag,3)} V ∠{fa(v0.ang)}°</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">V PRIMÁRIA</div>
+            {["Va","Vb","Vc"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(vi[ph].mag*rtp)} V</span></div>)}
+            <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3V₀ pri</span><span className="rp-val">{ff(v0.mag*rtp,3)} V</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">{"% NOMINAL ("+sys.tp.secV+"V)"}</div>
+            {["Va","Vb","Vc"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}/Vn</span><span className="rp-val">{Vnom>0?(vi[ph].mag/Vnom*100).toFixed(1):"-"}%</span></div>)}
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">SEQ. NEGATIVA (V₂)</div>
+            <div className="rp-row"><span className="rp-lbl">V₂ sec</span><span className="rp-val">{v2mag.toFixed(2)} V ∠{fa(v2ang)}°</span></div>
+            <div className="rp-row"><span className="rp-lbl">V₂ pri</span><span className="rp-val">{ff(v2mag*rtp,2)} V</span></div>
+            <div className="rp-row"><span className="rp-lbl">V₂/Vn</span><span className="rp-val">{Vnom>0?(v2mag/Vnom*100).toFixed(1)+"%":"—"}</span></div>
+          </div>
+        </div>)}
+        {mensTab==="pot"&&(<div>
+          <div className="rp-section"><div className="rp-stitle">TRIFÁSICO SECUNDÁRIO</div>
+            <div className="rp-row"><span className="rp-lbl">P ativa</span><span className="rp-val">{fmtPwr(pTotal.P,"W")}</span></div>
+            <div className="rp-row"><span className="rp-lbl">Q reativa</span><span className="rp-val">{fmtPwr(pTotal.Q,"VAr")}</span></div>
+            <div className="rp-row"><span className="rp-lbl">S aparente</span><span className="rp-val">{fmtPwr(pTotal.S,"VA")}</span></div>
+            <div className="rp-row"><span className="rp-lbl">FP</span><span className="rp-val">{pTotal.fp.toFixed(3)}</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">TRIFÁSICO PRIMÁRIO</div>
+            <div className="rp-row"><span className="rp-lbl">P ativa</span><span className="rp-val">{fmtPwr(pTotal.P*pk,"W")}</span></div>
+            <div className="rp-row"><span className="rp-lbl">Q reativa</span><span className="rp-val">{fmtPwr(pTotal.Q*pk,"VAr")}</span></div>
+            <div className="rp-row"><span className="rp-lbl">S aparente</span><span className="rp-val">{fmtPwr(pTotal.S*pk,"VA")}</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">POR FASE (SECUNDÁRIO)</div>
+            {[["A",pA],["B",pB],["C",pC]].map(([ph,pw])=>(<div key={ph}>
+              <div className="rp-row"><span className="rp-lbl">P{ph}</span><span className="rp-val">{fmtPwr(pw.P,"W")}</span></div>
+              <div className="rp-row"><span className="rp-lbl">Q{ph}</span><span className="rp-val">{fmtPwr(pw.Q,"VAr")}</span></div>
+              <div className="rp-row"><span className="rp-lbl">S{ph}</span><span className="rp-val">{fmtPwr(pw.S,"VA")}</span></div>
+              {ph!=="C"&&<div className="rp-sep"/>}
+            </div>))}
+          </div>
+        </div>)}
+        {mensTab==="sist"&&(<div>
+          <div className="rp-section"><div className="rp-stitle">FREQUÊNCIA</div>
+            <div className="rp-row"><span className="rp-lbl">Frequência</span><span className="rp-val">{freqLcd.toFixed(1)} Hz</span></div>
+            <div className="rp-row"><span className="rp-lbl">Δf (60 Hz)</span><span className="rp-val">{df>=0?"+":""}{df.toFixed(1)} Hz</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">RELAÇÕES TC / TP</div>
+            <div className="rp-row"><span className="rp-lbl">TC</span><span className="rp-val">{sys.tc.priA}/{sys.tc.secA} A</span></div>
+            <div className="rp-row"><span className="rp-lbl">RTC</span><span className="rp-val">{rtc.toFixed(2)}</span></div>
+            <div className="rp-sep"/>
+            <div className="rp-row"><span className="rp-lbl">TP</span><span className="rp-val">{sys.tp.priV}/{sys.tp.secV} V</span></div>
+            <div className="rp-row"><span className="rp-lbl">RTP</span><span className="rp-val">{rtp.toFixed(2)}</span></div>
+          </div>
+          <div className="rp-sep" style={{margin:"0 10px"}}/>
+          <div className="rp-section"><div className="rp-stitle">DESEQUILÍBRIO</div>
+            <div className="rp-row"><span className="rp-lbl">I₂/I₁</span><span className="rp-val">{i1mag>0.01?(i2lcd.mag/i1mag*100).toFixed(1)+"%":"—"}</span></div>
+            <div className="rp-row"><span className="rp-lbl">V₂/Vn</span><span className="rp-val">{Vnom>0?(v2mag/Vnom*100).toFixed(1)+"%":"—"}</span></div>
+            <div className="rp-row"><span className="rp-lbl">3I₀</span><span className="rp-val">{ff(i0.mag,3)} A</span></div>
+            <div className="rp-row"><span className="rp-lbl">3V₀</span><span className="rp-val">{ff(v0.mag,3)} V</span></div>
+          </div>
+        </div>)}
+      </div>
+    </div>);
+  };
 
   const renderProtecaoTab=()=>(<div>
     {protOrder.map(fid=>{
