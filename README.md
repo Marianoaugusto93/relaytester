@@ -1,13 +1,14 @@
-# Relay Tester Pro
+# RelayLab 360
 
-**Advanced Protection System Simulator** — ferramenta web para treinamento e comissionamento de relés de proteção em subestações. Simula injeção trifásica de correntes e tensões, avalia atuação de funções ANSI/IEC, exibe circuito de comando animado e gera arquivos COMTRADE.
+**INTEGRAL PROTECTION ENGINEERING PLATFORM** — plataforma web para treinamento e comissionamento de relés de proteção em subestações. Simula injeção trifásica de correntes e tensões, avalia atuação de funções ANSI/IEC, exibe circuito de comando animado e gera arquivos COMTRADE.
 
-**Deploy:** [relaytester](https://relaytester.augustocesar-mariano.workers.dev/)  
+**Deploy:** [relaytester.augustocesar-mariano.workers.dev](https://relaytester.augustocesar-mariano.workers.dev/)  
+**Repositório:** [github.com/Marianoaugusto93/relaytester](https://github.com/Marianoaugusto93/relaytester)  
 **Stack:** React 18 · Vite 6 · Web Audio API · JSZip · Cloudflare Pages
 
 ---
 
-## Funcionalidades — v1.5.0
+## Funcionalidades — v2.0.0
 
 ### Página CAMPO
 Simulador de cabeamento físico entre maleta de testes e relé.
@@ -55,11 +56,15 @@ Configuração, simulação e análise de atuação.
 - **Tolerâncias realistas**: 50/50N ±20 ms ou ±5%; 51/51N ±40 ms ou ±5%.
 - **Monitoramento autônomo da 27**: relé detecta subtensão mesmo fora da simulação.
 
-#### Relay Virtual (LCD + LEDs)
-- Display LCD com **10 páginas**: I sec., I prim., I múltiplo TC, V sec., V prim., V múltiplo TP, P sec., P prim., Seq./Freq. (I₂, V₂, freq.), Fault Record.
-- **8 LEDs** mapeáveis pela Output Matrix.
-- Botões **RESET / 0 (Abrir) / I (Fechar)** no frontal do relé.
-- Indicador de trip piscante com latch.
+#### ReGrid Pro 1000 — IED Virtual
+Painel de controle de software integrado à interface, substituindo a emulação de hardware.
+
+- **Aba MENS.** — Correntes e tensões secundárias (Ia/Ib/Ic/Va/Vb/Vc/3I₀/3V₀) em tempo real, frequência, relações TC/TP. Valores em Electric Cyan `#0EA5E9`.
+- **Aba PROT.** — Status de todas as funções ANSI habilitadas (EN / OFF / TRIP) com dot colorido por estado.
+- **Aba LÓGICA** — 8 LEDs de saída mapeáveis pela Output Matrix com estado atual.
+- **Aba EVENTOS** — Log cronológico dos últimos 10 eventos de simulação e trip.
+- Botões **RESET / 0 (Abrir) / I (Fechar)** no frontal do IED.
+- Banner de status **SISTEMA OK / TRIP ATUADO** com identificação do estágio que atuou.
 
 #### Matrizes de Saída/Entrada
 - **Output Matrix** — 6 BO × 6 LED; mapeia estágios de proteção, CB status e CB commands para saídas físicas.
@@ -80,6 +85,22 @@ Simulação do circuito de comando do disjuntor.
 
 ---
 
+## Identidade Visual — Design System
+
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--orange` | `#F97316` | PRIMARY BRAND — logo, nav ativo, botão Injetar, CTAs |
+| `--cyan` | `#0EA5E9` | TECHNICAL ACCENT — medições, fasores, valores de entrada |
+| `--green` | `#4ADE80` | ESTADO — disjuntor fechado, sistema energizado |
+| `--red` | `#F87171` | ESTADO — trip atuado, fault |
+| `--amber` | `#FBBF24` | ESTADO — mola carregando, transitório |
+| `--bg` | `#0E1015` | Carbon Black — fundo principal |
+| `--card` | `#181B22` | Card background |
+
+**Tipografia:** Rajdhani (interface/títulos) · JetBrains Mono (dados/valores) · Inter (body)
+
+---
+
 ## Arquitetura
 
 ```
@@ -91,8 +112,7 @@ src/
 └── comtrade.js       # Gerador COMTRADE IEEE C37.111-1999
 
 public/
-├── favicon.svg
-├── _redirects        # Cloudflare SPA routing
+├── favicon.svg       # Ícone SVG — lente da proteção (anel laranja + onda senoidal)
 └── sounds/           # abrir.mp3  fechar.mp3  mola.mp3
 ```
 
@@ -117,39 +137,64 @@ App.jsx (phasors + protections + sys)
 
 ### Pré-requisitos
 - Node.js 18+
-- Conta GitHub
-- Conta Cloudflare (plano gratuito suficiente)
+- Conta GitHub com acesso ao repositório `Marianoaugusto93/relaytester`
+- Conta Cloudflare com o projeto Pages já configurado
 
 ### 1. Desenvolvimento local
 
 ```bash
-git clone https://github.com/SEU_USUARIO/relaytester-pro.git
-cd relaytester-pro
+git clone https://github.com/Marianoaugusto93/relaytester.git
+cd relaytester
 npm install
 npm run dev        # http://localhost:5173
-npm run build      # gera /dist
+npm run build      # gera /dist  (verifica erros antes do push)
 npm run preview    # serve /dist localmente
 ```
 
-### 2. Push para GitHub
-
-Se ainda não tiver o remote configurado:
+### 2. Fazer o deploy (fluxo completo)
 
 ```bash
-git remote add origin https://github.com/SEU_USUARIO/relaytester-pro.git
-git push -u origin master
+# 1. Verifique o estado atual
+git status
+
+# 2. Adicione os arquivos modificados
+git add src/App.jsx src/PainelPage.jsx src/comtrade.js index.html public/favicon.svg README.md
+
+# 3. Commit com mensagem descritiva
+git commit -m "rebrand: RelayLab 360 — nova identidade visual e ReGrid Pro 1000"
+
+# 4. Push para o repositório (dispara deploy automático no Cloudflare)
+git push origin master
 ```
 
-Ou com o GitHub CLI:
-
-```bash
-gh repo create relaytester-pro --public --source=. --push
+O Cloudflare Pages detecta o push e executa automaticamente:
+```
+npm run build   →   /dist   →   deploy em ~60 s
 ```
 
-### 3. Deploy no Cloudflare Pages
+Acompanhe em: **dash.cloudflare.com → Workers & Pages → relaytester → Deployments**
 
-1. Acesse **dash.cloudflare.com** → **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**
-2. Autorize o acesso ao GitHub e selecione o repositório `relaytester-pro`
+### 3. Verificar o deploy
+
+Após o Cloudflare marcar o deployment como **Success**, acesse:
+
+```
+https://relaytester.augustocesar-mariano.workers.dev/
+```
+
+e confirme:
+- [ ] Título da aba: `RelayLab 360`
+- [ ] Topbar: logo SVG + "RelayLab 360"
+- [ ] Nav pills com cor laranja ao ativar
+- [ ] Aba Relé → coluna direita mostra "ReGrid Pro 1000" com abas MENS./PROT./LÓGICA/EVENTOS
+- [ ] Medições em cyan, estados do disjuntor em verde/vermelho
+
+### Configuração do Cloudflare Pages (primeira vez)
+
+Se precisar reconfigurar o projeto do zero:
+
+1. **dash.cloudflare.com** → **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**
+2. Autorize o GitHub e selecione `Marianoaugusto93/relaytester`
 3. Configure o build:
 
 | Campo | Valor |
@@ -160,13 +205,23 @@ gh repo create relaytester-pro --public --source=. --push
 | Node.js version | `20` |
 | Root directory | `/` |
 
-4. Clique **Save and Deploy** — o primeiro deploy leva ~1 min.
+4. **Save and Deploy** — o primeiro build leva ~1 min.
 
 **Variáveis de ambiente:** nenhuma necessária.
 
-**Roteamento SPA:** o arquivo `public/_redirects` contém `/* /index.html 200`, que garante que refresh e deep links não retornem 404.
+**Roteamento SPA:** adicione o arquivo `public/_redirects` com o conteúdo `/* /index.html 200` para evitar 404 em refresh.
 
-**Deploys automáticos:** após a configuração inicial, qualquer `git push` para `master` dispara um novo deploy automaticamente.
+---
+
+## Desenvolvimento local
+
+```bash
+npm run dev      # Servidor de desenvolvimento com HMR (hot reload)
+npm run build    # Build de produção → /dist
+npm run preview  # Serve o /dist localmente (valida antes do deploy)
+```
+
+**Sem TypeScript, sem framework de testes, sem linter configurado** — contribuições devem manter o estilo JSX inline existente. CSS como template literals por componente (`campoCSS`, `S`). Sem dependências externas além de `react`, `react-dom` e `jszip`.
 
 ---
 
@@ -181,21 +236,21 @@ gh repo create relaytester-pro --public --source=. --push
 - [ ] **24** — Sobreexcitação V/Hz (proteção de transformador e gerador)
 
 ### Melhorias de simulação
-- [ ] **Coordenograma TCC** — curvas de tempo-corrente sobrepostas em escala log-log (Recharts); exportação SVG/PNG
+- [ ] **Coordenograma TCC** — curvas de tempo-corrente sobrepostas em escala log-log; exportação SVG/PNG
 - [ ] **Cálculo de seletividade** — margem de tempo automática entre estágios coordenados
-- [ ] **Harmônicas** — injeção de 2ª/3ª/5ª/7ª harmônicas nos fasores; análise de bloqueio de diferencial
-- [ ] **Cálculo de curto-circuito completo** — modelo de rede com impedância de sequência Z1/Z2/Z0 do sistema para todos os tipos de falta
+- [ ] **Harmônicas** — injeção de 2ª/3ª/5ª/7ª harmônicas nos fasores
+- [ ] **Cálculo de curto-circuito completo** — modelo de rede com impedância Z1/Z2/Z0
 
 ### Exportação e relatórios
-- [ ] **Relatório PDF** — sumário do ensaio: configurações, resultados, fasores, diagrama unifilar (jsPDF + html2canvas)
-- [ ] **COMTRADE v2013** — suporte ao formato IEEE C37.111-2013 (binário + ASCII)
-- [ ] **Planilha de resultados** — exportação CSV/XLSX com tempo teórico × simulado × erro por estágio
+- [ ] **Relatório PDF** — sumário do ensaio: configurações, resultados, fasores, diagrama unifilar
+- [ ] **COMTRADE v2013** — suporte ao formato IEEE C37.111-2013
+- [ ] **Planilha de resultados** — exportação CSV/XLSX com tempo teórico × simulado × erro
 
-### UX e treinamento
-- [ ] **Banco de relés** — presets de nameplate reais: SIEMENS 7SJ85, SEL-751A, GE T35, ABB REF 615, Schneider Sepam
-- [ ] **Modo guiado** — roteiro de ensaio passo a passo com checklist e validação automática de resultados
-- [ ] **Responsividade mobile** — layout adaptado para tablets de campo (modo retrato/paisagem)
-- [ ] **Modo turma** — sessões compartilhadas via Cloudflare D1 + Workers para uso em cursos
+### UX e plataforma
+- [ ] **Banco de relés** — presets de nameplate reais: SIEMENS 7SJ85, SEL-751A, GE T35, ABB REF 615
+- [ ] **Modo guiado** — roteiro de ensaio passo a passo com checklist e validação automática
+- [ ] **Responsividade mobile** — layout adaptado para tablets de campo
+- [ ] **Modo turma** — sessões compartilhadas via Cloudflare D1 + Workers
 
 ---
 
@@ -210,15 +265,3 @@ gh repo create relaytester-pro --public --source=. --push
 | ANSI/IEEE C37.102 | Proteção de geradores síncronos |
 | ANSI/IEEE C37.112 | Curvas de tempo inverso (IEEE/ANSI) |
 | NBR IEC 60255 | Versão ABNT das normas de relés de proteção |
-
----
-
-## Desenvolvimento
-
-```bash
-npm run dev      # Servidor de desenvolvimento com HMR
-npm run build    # Build de produção → /dist
-npm run preview  # Serve o /dist localmente (verifica build antes do deploy)
-```
-
-**Sem TypeScript, sem framework de testes, sem linter configurado** — contribuições devem manter o estilo JSX inline existente. CSS como template literals por componente (`campoCSS`, `S`). Sem dependências externas além de `react`, `react-dom` e `jszip`.

@@ -20,7 +20,7 @@ const S = `
 .painel-bk-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:10px 14px 12px;gap:6px;min-height:0;overflow:hidden}
 .painel-bk-svg{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .painel-tab-row{display:flex;gap:0;padding:3px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:rgba(0,0,0,.1)}
-.pt{padding:7px 16px;border:none;background:transparent;color:var(--tx3);font-size:11px;font-weight:700;font-family:var(--fh);cursor:pointer;border-radius:6px;white-space:nowrap;letter-spacing:1px;text-transform:uppercase;transition:all .2s}.pt:hover{color:var(--tx2)}.pt.on{color:var(--mint);background:var(--mint-dim)}
+.pt{padding:7px 16px;border:none;background:transparent;color:var(--tx3);font-size:11px;font-weight:700;font-family:var(--fh);cursor:pointer;border-radius:6px;white-space:nowrap;letter-spacing:1px;text-transform:uppercase;transition:all .2s}.pt:hover{color:var(--tx2)}.pt.on{color:var(--orange);background:var(--orange-dim)}
 .painel-tab-content{flex:1;min-height:0;padding:8px 12px;display:flex;align-items:stretch}
 .bk-close-btn,.bk-open-btn,.bk-reset-btn{width:100%;padding:10px;border-radius:var(--rs);font-size:12px;font-weight:800;font-family:var(--fh);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
 .bk-close-btn{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.1);color:#22c55e}

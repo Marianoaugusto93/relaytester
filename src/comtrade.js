@@ -30,7 +30,7 @@ const AMOSTRAS_POR_CICLO = 16;
 const TAXA_AMOSTRAGEM = AMOSTRAS_POR_CICLO * FREQUENCIA_NOMINAL; // 960
 
 const NOME_ESTACAO = "local";
-const NOME_EQUIPAMENTO = "VPR-700";
+const NOME_EQUIPAMENTO = "ReGrid Pro 1000";
 const ANO_NORMA = 1999;
 
 function fmtDate(d) {
@@ -243,10 +243,10 @@ export function generateComtrade(record) {
 
   // Gerar HDR
   const hdrLines = [];
-  hdrLines.push(`${"VPR-700 - OSCILOGRAFIA".padStart(60)}`);
+  hdrLines.push(`${"ReGrid Pro 1000 - OSCILOGRAFIA".padStart(60)}`);
   hdrLines.push("");
-  hdrLines.push("Fabricante: RELAY TESTER PRO");
-  hdrLines.push("Unidade: VPR-700");
+  hdrLines.push("Plataforma: RELAYLAB 360");
+  hdrLines.push("Unidade: ReGrid Pro 1000");
   hdrLines.push(`Total de registros: ${totalAmostras}`);
   hdrLines.push(`Stages: ${record.stages.join(", ")}`);
   hdrLines.push(`Trip time: ${isSnapshotIdle ? "SNAPSHOT (idle)" : (record.tripTime !== null ? record.tripTime.toFixed(3) + "s" : "N/A")}`);
