@@ -5,3 +5,10 @@ dist
 .omc/
 *.zip
 run.bat
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
