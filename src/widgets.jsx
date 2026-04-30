@@ -1,0 +1,2 @@
+export function Tgl({value,onChange,label}){return(<div className="tw"><button className={`tg ${value?"on":""}`} onClick={()=>onChange(!value)}><div className="dk"/></button>{label&&<span className="tl">{label}</span>}</div>)}
+export function IB({unit,value,onChange,step="0.1",warm=false}){return(<div className="ib">{unit&&<span className="iu">{unit}</span>}<input className={`iv${warm?" warm":""}`} type="number" value={value} step={step} onChange={e=>onChange(parseFloat(e.target.value)||0)}/></div>)}

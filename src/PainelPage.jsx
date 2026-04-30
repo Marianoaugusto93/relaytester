@@ -40,6 +40,17 @@ const S = `
 .ps-mola-bar{width:100%;max-width:200px;height:4px;background:var(--card3);border-radius:2px;overflow:hidden;margin:2px 0}
 .ps-mola-fill{height:100%;border-radius:2px;transition:width .12s linear}
 .ps-mola-loaded{background:#fbbf24}.ps-mola-chg{background:var(--tx3)}
+.painel-status-indicators{display:flex;flex-direction:column;gap:8px;width:100%;padding:12px;background:rgba(0,0,0,.2);border-radius:var(--rs)}
+.ps-ind-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-family:var(--fh);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.ps-ind-label{color:var(--tx3)}
+.ps-ind-value{color:var(--tx2);font-family:var(--fm);font-size:12px}
+.ps-ind-value.active-green{color:var(--green)}
+.ps-ind-value.active-amber{color:var(--amber)}
+.ps-mola-container{display:flex;align-items:center;gap:6px}
+.ps-mola-label{color:var(--tx3);font-size:10px;font-family:var(--fh);font-weight:700}
+.ps-mola-bar-wrap{flex:1;height:6px;background:rgba(0,0,0,.4);border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.ps-mola-bar-fill{height:100%;background:linear-gradient(90deg, #fbbf24 0%, #f97316 100%);border-radius:3px;transition:width .15s linear}
+.ps-mola-percent{color:var(--tx2);font-size:9px;font-family:var(--fm);font-weight:700;min-width:28px;text-align:right}
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -185,10 +196,10 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
   const MID  = (CY1 + CY2) / 2;
 
   // ── Paleta ──────────────────────────────────────────────────────────────
-  const BUS  = '#c8d4e0';
-  const WIRE = '#b0bec8';
-  const NODE = '#8a9aaa';
-  const OFF_C = '#4a5a6a';
+  const BUS  = '#e2e8f0';  // mais branco/luminoso
+  const WIRE = '#cbd5e1';  // fios mais visíveis
+  const NODE = '#94a3b8';  // nós com melhor contraste
+  const OFF_C = '#475569'; // desligado em tom mais legível
 
   // ── Estados dos elementos ────────────────────────────────────────────────
   const eBCS = col(true,         'orange');   // BCS — alimentação sempre presente
@@ -213,15 +224,16 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
   // Contato NO: duas barras verticais paralelas, diagonal se ativo
   const Contact = ({x, y, active, nc}) => {
     const s  = active ? (nc ? C.red.f : C.orange.f) : OFF_C;
-    const BH = 10, BG = 6, BW = 2;
+    const BH = 10, BG = 6, BW = active ? 2.5 : 2;
+    const glow = active ? (nc ? 'drop-shadow(0 0 5px rgba(239,68,68,.8))' : 'drop-shadow(0 0 6px rgba(249,115,22,.9))') : 'none';
     return (
-      <g>
+      <g filter={glow}>
         <line x1={x-BG} y1={y-BH} x2={x-BG} y2={y+BH} stroke={s} strokeWidth={BW} strokeLinecap="round"/>
         <line x1={x+BG} y1={y-BH} x2={x+BG} y2={y+BH} stroke={s} strokeWidth={BW} strokeLinecap="round"/>
         {/* diagonal indicando estado ativo */}
         {active && (
           <line x1={x-BG-2} y1={y+BH} x2={x+BG+2} y2={y-BH}
-                stroke={s} strokeWidth="1.3" opacity="0.65" strokeLinecap="round"/>
+                stroke={s} strokeWidth="1.5" opacity="0.8" strokeLinecap="round"/>
         )}
       </g>
     );
@@ -238,7 +250,7 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
       <g>
         {segs.map(([a, b], i) => (
           <line key={i} x1={x} y1={a} x2={x} y2={b}
-                stroke={WIRE} strokeWidth="1.5" strokeLinecap="round"/>
+                stroke={WIRE} strokeWidth="1.8" strokeLinecap="round" opacity="0.9"/>
         ))}
         {sorted.map((c, i) => (
           <Contact key={i} x={x} y={c.y} active={c.active} nc={c.nc}/>
@@ -250,22 +262,22 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
   // Bobina circular (abaixo do barramento inferior)
   const Coil = ({x, c2, label}) => {
     const on = c2.f !== C.off.f;
-    const r = 14;
+    const r = 15;
     return (
       <g>
-        <line x1={x} y1={Y2} x2={x} y2={COIL_Y - r} stroke={WIRE} strokeWidth="1.5"/>
+        <line x1={x} y1={Y2} x2={x} y2={COIL_Y - r} stroke={WIRE} strokeWidth="1.8" opacity="0.9"/>
         {on && c2.g !== 'none' && (
-          <circle cx={x} cy={COIL_Y} r={r+5} fill="none" stroke={c2.g} strokeWidth="1" opacity="0.35"/>
+          <circle cx={x} cy={COIL_Y} r={r+6} fill="none" stroke={c2.g} strokeWidth="1.2" opacity="0.5"/>
         )}
         <circle cx={x} cy={COIL_Y} r={r}
-                fill={c2.f} stroke={c2.s} strokeWidth="1.5"
-                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 6px ${c2.g})` : 'none'}/>
-        <text x={x} y={COIL_Y + 4.5} textAnchor="middle"
-              fill={on ? 'white' : '#2a3848'}
-              fontSize="8.5" fontWeight="800" fontFamily="monospace">{label}</text>
-        <text x={x} y={COIL_Y + r + 13} textAnchor="middle"
-              fill={on ? '#9ca3af' : '#1e2a38'}
-              fontSize="7" fontFamily="monospace">{label}</text>
+                fill={c2.f} stroke={c2.s} strokeWidth={on ? 2 : 1.5}
+                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 8px ${c2.g})` : 'none'}/>
+        <text x={x} y={COIL_Y + 5} textAnchor="middle"
+              fill={on ? 'white' : '#4a5a6a'}
+              fontSize="9" fontWeight="900" fontFamily="var(--fh)" letterSpacing="0.5">{label}</text>
+        <text x={x} y={COIL_Y + r + 14} textAnchor="middle"
+              fill={on ? '#cbd5e1' : '#64748b'}
+              fontSize="7.5" fontFamily="var(--fm)" fontWeight="700">{label}</text>
       </g>
     );
   };
@@ -273,61 +285,61 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
   // Bobina quadrada — relé K na lateral esquerda
   const CoilSqLeft = ({x, y, c2, label}) => {
     const on = c2.f !== C.off.f;
-    const s = 12;
+    const s = 13;
     return (
       <g>
         {/* fio horizontal ligando ao barramento esquerdo */}
-        <line x1={x + s} y1={y} x2={X0} y2={y} stroke={WIRE} strokeWidth="1.5"/>
+        <line x1={x + s} y1={y} x2={X0} y2={y} stroke={WIRE} strokeWidth="1.8" opacity="0.9"/>
         {on && c2.g !== 'none' && (
-          <rect x={x-s-3} y={y-s-3} width={(s+3)*2} height={(s+3)*2} rx="2"
-                fill="none" stroke={c2.g} strokeWidth="1" opacity="0.35"/>
+          <rect x={x-s-4} y={y-s-4} width={(s+4)*2} height={(s+4)*2} rx="3"
+                fill="none" stroke={c2.g} strokeWidth="1.2" opacity="0.5"/>
         )}
-        <rect x={x-s} y={y-s} width={s*2} height={s*2} rx="3"
-              fill={c2.f} stroke={c2.s} strokeWidth="1.5"
-              filter={on && c2.g !== 'none' ? `drop-shadow(0 0 6px ${c2.g})` : 'none'}/>
-        <text x={x} y={y + 4.5} textAnchor="middle"
-              fill={on ? 'white' : '#2a3848'}
-              fontSize="9" fontWeight="800" fontFamily="monospace">{label}</text>
-        <text x={x} y={y - s - 6} textAnchor="middle"
-              fill={on ? '#9ca3af' : '#1e2a38'}
-              fontSize="7.5" fontFamily="monospace">{label}</text>
+        <rect x={x-s} y={y-s} width={s*2} height={s*2} rx="4"
+              fill={c2.f} stroke={c2.s} strokeWidth={on ? 2 : 1.5}
+              filter={on && c2.g !== 'none' ? `drop-shadow(0 0 8px ${c2.g})` : 'none'}/>
+        <text x={x} y={y + 5} textAnchor="middle"
+              fill={on ? 'white' : '#4a5a6a'}
+              fontSize="10" fontWeight="900" fontFamily="var(--fh)" letterSpacing="0.5">{label}</text>
+        <text x={x} y={y - s - 7} textAnchor="middle"
+              fill={on ? '#cbd5e1' : '#64748b'}
+              fontSize="8" fontFamily="var(--fm)" fontWeight="700">{label}</text>
       </g>
     );
   };
 
   // Indicador acima do barramento — círculo
-  const IndC = ({x, label, c2, r=11}) => {
+  const IndC = ({x, label, c2, r=12}) => {
     const on = c2.f !== C.off.f;
     return (
       <g>
-        <line x1={x} y1={Y1} x2={x} y2={IND_Y + r} stroke={WIRE} strokeWidth="1.2"/>
+        <line x1={x} y1={Y1} x2={x} y2={IND_Y + r} stroke={WIRE} strokeWidth="1.5" opacity="0.9"/>
         {on && c2.g !== 'none' && (
-          <circle cx={x} cy={IND_Y} r={r+5} fill="none" stroke={c2.g} strokeWidth="1.5" opacity="0.4"/>
+          <circle cx={x} cy={IND_Y} r={r+6} fill="none" stroke={c2.g} strokeWidth="1.5" opacity="0.5"/>
         )}
         <circle cx={x} cy={IND_Y} r={r}
-                fill={c2.f} stroke={c2.s} strokeWidth="1.5"
-                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 7px ${c2.g})` : 'none'}/>
-        <text x={x} y={IND_Y - r - 5} textAnchor="middle"
-              fill={on ? '#c0cad4' : '#2e3d4e'} fontSize="8" fontFamily="monospace" fontWeight="600">{label}</text>
+                fill={c2.f} stroke={c2.s} strokeWidth={on ? 2 : 1.5}
+                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 8px ${c2.g})` : 'none'}/>
+        <text x={x} y={IND_Y - r - 6} textAnchor="middle"
+              fill={on ? 'white' : '#64748b'} fontSize="8" fontFamily="var(--fm)" fontWeight="700" letterSpacing="0.5">{label}</text>
       </g>
     );
   };
 
   // Indicador acima do barramento — quadrado
-  const IndS = ({x, label, c2, s=9}) => {
+  const IndS = ({x, label, c2, s=10}) => {
     const on = c2.f !== C.off.f;
     return (
       <g>
-        <line x1={x} y1={Y1} x2={x} y2={IND_Y + s} stroke={WIRE} strokeWidth="1.2"/>
+        <line x1={x} y1={Y1} x2={x} y2={IND_Y + s} stroke={WIRE} strokeWidth="1.5" opacity="0.9"/>
         {on && c2.g !== 'none' && (
-          <rect x={x-s-4} y={IND_Y-s-4} width={(s+4)*2} height={(s+4)*2} rx="2"
-                fill="none" stroke={c2.g} strokeWidth="1" opacity="0.35"/>
+          <rect x={x-s-4} y={IND_Y-s-4} width={(s+4)*2} height={(s+4)*2} rx="3"
+                fill="none" stroke={c2.g} strokeWidth="1.2" opacity="0.5"/>
         )}
-        <rect x={x-s} y={IND_Y-s} width={s*2} height={s*2} rx="2"
-              fill={c2.f} stroke={c2.s} strokeWidth="1.5"
-              filter={on && c2.g !== 'none' ? `drop-shadow(0 0 6px ${c2.g})` : 'none'}/>
-        <text x={x} y={IND_Y - s - 5} textAnchor="middle"
-              fill={on ? '#c0cad4' : '#2e3d4e'} fontSize="8" fontFamily="monospace" fontWeight="600">{label}</text>
+        <rect x={x-s} y={IND_Y-s} width={s*2} height={s*2} rx="3"
+              fill={c2.f} stroke={c2.s} strokeWidth={on ? 2 : 1.5}
+              filter={on && c2.g !== 'none' ? `drop-shadow(0 0 8px ${c2.g})` : 'none'}/>
+        <text x={x} y={IND_Y - s - 6} textAnchor="middle"
+              fill={on ? 'white' : '#64748b'} fontSize="8" fontFamily="var(--fm)" fontWeight="700" letterSpacing="0.5">{label}</text>
       </g>
     );
   };
@@ -335,30 +347,30 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
   // Indicador AP — X quando ativo (contato de trip)
   const IndAP = ({x, label, c2}) => {
     const on = tripLatch;
-    const r = 11;
+    const r = 12;
     return (
       <g>
-        <line x1={x} y1={Y1} x2={x} y2={IND_Y + r} stroke={WIRE} strokeWidth="1.2"/>
+        <line x1={x} y1={Y1} x2={x} y2={IND_Y + r} stroke={WIRE} strokeWidth="1.5" opacity="0.9"/>
         {on && (
-          <circle cx={x} cy={IND_Y} r={r+5} fill="none" stroke={c2.g} strokeWidth="1.5" opacity="0.4"/>
+          <circle cx={x} cy={IND_Y} r={r+6} fill="none" stroke={c2.g} strokeWidth="1.5" opacity="0.5"/>
         )}
         <circle cx={x} cy={IND_Y} r={r}
-                fill={on ? c2.f : C.off.f} stroke={on ? c2.s : C.off.s} strokeWidth="1.5"
-                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 7px ${c2.g})` : 'none'}/>
+                fill={on ? c2.f : C.off.f} stroke={on ? c2.s : C.off.s} strokeWidth={on ? 2 : 1.5}
+                filter={on && c2.g !== 'none' ? `drop-shadow(0 0 8px ${c2.g})` : 'none'}/>
         {on ? (
           <>
-            <line x1={x-6} y1={IND_Y-6} x2={x+6} y2={IND_Y+6} stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
-            <line x1={x+6} y1={IND_Y-6} x2={x-6} y2={IND_Y+6} stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
+            <line x1={x-7} y1={IND_Y-7} x2={x+7} y2={IND_Y+7} stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1={x+7} y1={IND_Y-7} x2={x-7} y2={IND_Y+7} stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
           </>
         ) : (
           // símbolo de X desligado
           <>
-            <line x1={x-5} y1={IND_Y-5} x2={x+5} y2={IND_Y+5} stroke={OFF_C} strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1={x+5} y1={IND_Y-5} x2={x-5} y2={IND_Y+5} stroke={OFF_C} strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1={x-6} y1={IND_Y-6} x2={x+6} y2={IND_Y+6} stroke={OFF_C} strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1={x+6} y1={IND_Y-6} x2={x-6} y2={IND_Y+6} stroke={OFF_C} strokeWidth="1.5" strokeLinecap="round"/>
           </>
         )}
-        <text x={x} y={IND_Y - r - 5} textAnchor="middle"
-              fill={on ? '#c0cad4' : '#2e3d4e'} fontSize="8" fontFamily="monospace" fontWeight="600">{label}</text>
+        <text x={x} y={IND_Y - r - 6} textAnchor="middle"
+              fill={on ? 'white' : '#64748b'} fontSize="8" fontFamily="var(--fm)" fontWeight="700" letterSpacing="0.5">{label}</text>
       </g>
     );
   };
@@ -379,54 +391,64 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
          style={{width:'100%',height:'100%'}} preserveAspectRatio="xMidYMid meet"
          onMouseLeave={handleTipLeave}>
 
+      <defs>
+        <pattern id="cmdGrid" width="50" height="50" patternUnits="userSpaceOnUse">
+          <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="0.5"/>
+        </pattern>
+      </defs>
+
+      {/* Fundo com grid */}
+      <rect width={VW} height={VH} fill="var(--card)"/>
+      <rect width={VW} height={VH} fill="url(#cmdGrid)" opacity="0.6"/>
+
       {/* ── Barramentos ── */}
       {/* Superior */}
-      <line x1={X0} y1={Y1} x2={X1} y2={Y1} stroke={BUS} strokeWidth="2.5"/>
+      <line x1={X0} y1={Y1} x2={X1} y2={Y1} stroke={BUS} strokeWidth="2.8" opacity="0.95"/>
       {/* Inferior */}
-      <line x1={X0} y1={Y2} x2={X1} y2={Y2} stroke={BUS} strokeWidth="2.5"/>
+      <line x1={X0} y1={Y2} x2={X1} y2={Y2} stroke={BUS} strokeWidth="2.8" opacity="0.95"/>
       {/* Esquerdo */}
-      <line x1={X0} y1={Y1} x2={X0} y2={Y2} stroke={BUS} strokeWidth="2.5"/>
+      <line x1={X0} y1={Y1} x2={X0} y2={Y2} stroke={BUS} strokeWidth="2.8" opacity="0.95"/>
       {/* Direito */}
-      <line x1={X1} y1={Y1} x2={X1} y2={Y2} stroke={BUS} strokeWidth="2.5"/>
+      <line x1={X1} y1={Y1} x2={X1} y2={Y2} stroke={BUS} strokeWidth="2.8" opacity="0.95"/>
 
       {/* ── Numeração dos nós ── */}
       {/* Topo: ímpares 1..19 */}
       {XS.map((x, i) => (
-        <text key={`t${i}`} x={x} y={Y1 - 4} textAnchor="middle"
-              fill="#28394a" fontSize="8" fontFamily="monospace">{2*i+1}</text>
+        <text key={`t${i}`} x={x} y={Y1 - 6} textAnchor="middle"
+              fill="#64748b" fontSize="8.5" fontFamily="var(--fm)" fontWeight="600">{2*i+1}</text>
       ))}
       {/* Base: pares 2..20 */}
       {XS.map((x, i) => (
-        <text key={`b${i}`} x={x} y={Y2 + 13} textAnchor="middle"
-              fill="#28394a" fontSize="8" fontFamily="monospace">{2*i+2}</text>
+        <text key={`b${i}`} x={x} y={Y2 + 14} textAnchor="middle"
+              fill="#64748b" fontSize="8.5" fontFamily="var(--fm)" fontWeight="600">{2*i+2}</text>
       ))}
 
       {/* ── Pontos de nó nos barramentos ── */}
       {XS.map((x, i) => (
         <g key={`n${i}`}>
-          <circle cx={x} cy={Y1} r="3.5" fill={NODE}/>
-          <circle cx={x} cy={Y2} r="3.5" fill={NODE}/>
+          <circle cx={x} cy={Y1} r="4" fill={NODE} opacity="0.8"/>
+          <circle cx={x} cy={Y2} r="4" fill={NODE} opacity="0.8"/>
         </g>
       ))}
 
       {/* ── Caixa tracejada do relé (vãos 3-7) ── */}
       <rect x={XS[3]-22} y={Y1+8} width={XS[7]-XS[3]+44} height={Y2-Y1-16}
-            rx="4" fill="rgba(249,115,22,.02)"
-            stroke="#253040" strokeWidth="1" strokeDasharray="5,3"/>
-      <text x={XS[3]-14} y={Y1+22} fill="#253040"
-            fontSize="7.5" fontFamily="monospace" letterSpacing="0.5">RELÉ</text>
+            rx="6" fill="rgba(249,115,22,.03)"
+            stroke="rgba(249,115,22,.15)" strokeWidth="1.2" strokeDasharray="6,4"/>
+      <text x={XS[3]-14} y={Y1+22} fill="#f97316"
+            fontSize="8" fontFamily="var(--fh)" letterSpacing="1" fontWeight="700">RELÉ</text>
 
       {/* ── Rail horizontal superior (CY1) ligando vãos 0-5 ── */}
       <line x1={XS[0]} y1={CY1} x2={XS[5]} y2={CY1}
-            stroke={WIRE} strokeWidth="1.2" opacity="0.55"/>
+            stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
 
       {/* ── Rail horizontal inferior (CY2) ligando vãos 3-8 ── */}
       <line x1={XS[3]} y1={CY2} x2={XS[8]} y2={CY2}
-            stroke={WIRE} strokeWidth="1.2" opacity="0.55"/>
+            stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
 
       {/* ── Rail horizontal médio (MID) ligando vãos 6-9 ── */}
       <line x1={XS[6]} y1={MID} x2={XS[9]} y2={MID}
-            stroke={WIRE} strokeWidth="1.2" opacity="0.55"/>
+            stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
       {/*  INDICADORES acima do barramento superior                         */}
@@ -478,7 +500,7 @@ function CommandDiagram({ bkState, springLoaded, tripLatch }) {
 
       {/* ── Ligação horizontal extra em BB→5 (selo de fechamento) ── */}
       <line x1={XS[4]} y1={CY2} x2={XS[5]} y2={CY2}
-            stroke={WIRE} strokeWidth="1.2" opacity="0.45" strokeDasharray="3,2"/>
+            stroke={WIRE} strokeWidth="1.2" opacity="0.6" strokeDasharray="4,3"/>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
       {/*  K — relé auxiliar na lateral esquerda do barramento              */}
@@ -560,7 +582,7 @@ function Unifilar({ bkState, tripLatch, springLoaded, sys, relayReadings, inject
   const Ia_pri = energized ? Ia * (priA / secA) : 0;
   const Va_pri = energized ? Va * (priV / secV) : 0;
 
-  const wire = energized ? '#22c55e' : closed ? '#3d5060' : '#253040';
+  const wire = energized ? '#22c55e' : closed ? '#e2e8f0' : '#cbd5e1';
   const wireW = energized ? 2.5 : 1.5;
   const glow  = energized ? 'drop-shadow(0 0 4px rgba(34,197,94,.6))' : 'none';
 
@@ -582,11 +604,13 @@ function Unifilar({ bkState, tripLatch, springLoaded, sys, relayReadings, inject
 
   const LBox = ({ x, y, title, val, unit, color }) => (
     <g>
-      <rect x={x-36} y={y-22} width="72" height="44" rx="5"
-            fill="#1a2232" stroke={energized?'rgba(34,197,94,.25)':'rgba(255,255,255,.06)'} strokeWidth="1"/>
-      <text x={x} y={y-8} textAnchor="middle" fill="#5a7080" fontSize="7.5" fontFamily="monospace" fontWeight="600" letterSpacing="0.5">{title}</text>
-      <text x={x} y={y+8} textAnchor="middle" fill={color||'#9ab0c8'} fontSize="12" fontFamily="monospace" fontWeight="700">{val}</text>
-      {unit && <text x={x} y={y+20} textAnchor="middle" fill="#3d5060" fontSize="7" fontFamily="monospace">{unit}</text>}
+      <rect x={x-40} y={y-24} width="80" height="48" rx="6"
+            fill={energized?'rgba(34,197,94,.08)':'rgba(200,212,224,.12)'}
+            stroke={energized?'rgba(34,197,94,.35)':'rgba(100,120,150,.3)'}
+            strokeWidth="1.5"/>
+      <text x={x} y={y-10} textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fh)" fontWeight="700" letterSpacing="0.5">{title}</text>
+      <text x={x} y={y+10} textAnchor="middle" fill={color||'#1e293b'} fontSize="13" fontFamily="var(--fm)" fontWeight="800">{val}</text>
+      {unit && <text x={x} y={y+22} textAnchor="middle" fill="#64748b" fontSize="7.5" fontFamily="monospace" fontWeight="600">{unit}</text>}
     </g>
   );
 
@@ -594,20 +618,21 @@ function Unifilar({ bkState, tripLatch, springLoaded, sys, relayReadings, inject
     <svg viewBox={`0 0 ${VW} ${VH}`} xmlns="http://www.w3.org/2000/svg"
          style={{width:'100%',height:'100%'}} preserveAspectRatio="xMidYMid meet">
       <defs>
-        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,.025)" strokeWidth="0.5"/>
+        <pattern id="gridUni" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="0.5"/>
         </pattern>
       </defs>
-      <rect width={VW} height={VH} fill="url(#grid)" opacity="0.7"/>
-      <text x={VW/2} y="20" textAnchor="middle" fill="#253040" fontSize="9" fontFamily="monospace" letterSpacing="2" fontWeight="700">
+      <rect width={VW} height={VH} fill="var(--card)"/>
+      <rect width={VW} height={VH} fill="url(#gridUni)" opacity="0.5"/>
+      <text x={VW/2} y="22" textAnchor="middle" fill="#c8d4e0" fontSize="10" fontFamily="var(--fh)" letterSpacing="2" fontWeight="800">
         DIAGRAMA UNIFILAR — BAY-01 — {priV/1000} kV / {secV} V
       </text>
       <g transform={`translate(${X0},${CY})`}>
-        <circle cx="0" cy="0" r="26" fill="#182030" stroke={wire} strokeWidth={wireW} filter={glow}/>
-        <text x="0" y="-8" textAnchor="middle" fill={energized?'#22c55e':'#3d5060'} fontSize="10" fontWeight="700" fontFamily="monospace">~</text>
-        <text x="0" y="8" textAnchor="middle" fill={energized?'#22c55e':'#3d5060'} fontSize="7" fontFamily="monospace">3φ</text>
-        <text x="0" y="42" textAnchor="middle" fill="#3d5060" fontSize="7.5" fontFamily="monospace">FONTE</text>
-        <text x="0" y="-36" textAnchor="middle" fill={energized?'var(--amber)':'#3d5060'} fontSize="9" fontFamily="monospace" fontWeight="700">
+        <circle cx="0" cy="0" r="26" fill="white" stroke={wire} strokeWidth={wireW} filter={glow}/>
+        <text x="0" y="-8" textAnchor="middle" fill={energized?'#22c55e':'#475569'} fontSize="11" fontWeight="800" fontFamily="var(--fm)">~</text>
+        <text x="0" y="8" textAnchor="middle" fill={energized?'#22c55e':'#475569'} fontSize="8" fontFamily="var(--fm)" fontWeight="700">3φ</text>
+        <text x="0" y="42" textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fh)" fontWeight="700">FONTE</text>
+        <text x="0" y="-40" textAnchor="middle" fill={energized?'#f97316':'#475569'} fontSize="10" fontFamily="var(--fm)" fontWeight="800">
           {energized ? `${(Va_pri/1000).toFixed(1)} kV` : `${(priV/1000).toFixed(1)} kV`}
         </text>
       </g>
@@ -633,50 +658,51 @@ function Unifilar({ bkState, tripLatch, springLoaded, sys, relayReadings, inject
         });
       })()}
       <g transform={`translate(200,${CY})`}>
-        <circle cx="0" cy="-14" r="16" fill="#182030" stroke={wire} strokeWidth={wireW} filter={glow}/>
-        <circle cx="0" cy="14" r="16" fill="#182030" stroke={wire} strokeWidth={wireW} filter={glow}/>
-        <rect x="-18" y="-2" width="36" height="4" rx="2" fill={wire} opacity="0.7"/>
-        <text x="0" y="48" textAnchor="middle" fill="#3d5060" fontSize="7.5" fontFamily="monospace">TC</text>
-        <text x="0" y="60" textAnchor="middle" fill="#2d3d50" fontSize="6.5" fontFamily="monospace">{priA}/{secA} A</text>
-        <LBox x="0" y={-70} title="Ia PRIMARY" val={energized ? `${Ia_pri.toFixed(1)}` : '—'} unit="A" color={energized?'#22c55e':'#2d3d50'}/>
+        <circle cx="0" cy="-14" r="16" fill="white" stroke={wire} strokeWidth={wireW} filter={glow}/>
+        <circle cx="0" cy="14" r="16" fill="white" stroke={wire} strokeWidth={wireW} filter={glow}/>
+        <rect x="-18" y="-2" width="36" height="4" rx="2" fill={wire} opacity="0.8"/>
+        <text x="0" y="48" textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fh)" fontWeight="700">TC</text>
+        <text x="0" y="60" textAnchor="middle" fill="#64748b" fontSize="7" fontFamily="var(--fm)">{priA}/{secA} A</text>
+        <LBox x="0" y={-75} title="Ia PRIMARY" val={energized ? `${Ia_pri.toFixed(1)}` : '—'} unit="A" color={energized?'#22c55e':'#1e293b'}/>
       </g>
       <g transform={`translate(360,${CY})`}>
-        <circle cx="0" cy="-14" r="16" fill="#182030" stroke={wire} strokeWidth={wireW} filter={glow}/>
-        <circle cx="0" cy="14" r="16" fill="#182030" stroke={wire} strokeWidth={wireW} filter={glow}/>
-        <rect x="-18" y="-2" width="36" height="4" rx="2" fill={wire} opacity="0.7"/>
-        <text x="0" y="48" textAnchor="middle" fill="#3d5060" fontSize="7.5" fontFamily="monospace">TP</text>
-        <text x="0" y="60" textAnchor="middle" fill="#2d3d50" fontSize="6.5" fontFamily="monospace">{(priV/1000).toFixed(1)}k/{secV} V</text>
-        <LBox x="0" y={-70} title="Va PRIMARY" val={energized ? `${(Va_pri/1000).toFixed(2)}` : '—'} unit="kV" color={energized?'var(--amber)':'#2d3d50'}/>
+        <circle cx="0" cy="-14" r="16" fill="white" stroke={wire} strokeWidth={wireW} filter={glow}/>
+        <circle cx="0" cy="14" r="16" fill="white" stroke={wire} strokeWidth={wireW} filter={glow}/>
+        <rect x="-18" y="-2" width="36" height="4" rx="2" fill={wire} opacity="0.8"/>
+        <text x="0" y="48" textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fh)" fontWeight="700">TP</text>
+        <text x="0" y="60" textAnchor="middle" fill="#64748b" fontSize="7" fontFamily="var(--fm)">{(priV/1000).toFixed(1)}k/{secV} V</text>
+        <LBox x="0" y={-75} title="Va PRIMARY" val={energized ? `${(Va_pri/1000).toFixed(2)}` : '—'} unit="kV" color={energized?'#f97316':'#1e293b'}/>
       </g>
       <g transform={`translate(520,${CY})`}>
         <rect x="-22" y="-22" width="44" height="44" rx="5"
-              fill={closed?'rgba(34,197,94,.08)':'rgba(239,68,68,.08)'}
+              fill="white"
               stroke={closed?'#22c55e':tripLatch?'#ef4444':'#dc2626'}
-              strokeWidth={closed?2:1.5}
-              filter={closed?'drop-shadow(0 0 6px rgba(34,197,94,.4))':'drop-shadow(0 0 4px rgba(239,68,68,.3))'}/>
+              strokeWidth={closed?2.5:1.5}
+              filter={closed?'drop-shadow(0 0 8px rgba(34,197,94,.35))':'drop-shadow(0 0 6px rgba(239,68,68,.25))'}/>
         {closed
-          ? <line x1="-14" y1="0" x2="14" y2="0" stroke="#22c55e" strokeWidth="3" strokeLinecap="round"/>
-          : <line x1="-6" y1="-14" x2="10" y2="0" stroke="#f87171" strokeWidth="3" strokeLinecap="round" transform="rotate(-30)"/>
+          ? <line x1="-14" y1="0" x2="14" y2="0" stroke="#22c55e" strokeWidth="3.5" strokeLinecap="round"/>
+          : <line x1="-6" y1="-14" x2="10" y2="0" stroke="#ef4444" strokeWidth="3.5" strokeLinecap="round" transform="rotate(-30)"/>
         }
         <text x="0" y="38" textAnchor="middle"
-              fill={closed?'#22c55e':tripLatch?'#ef4444':'#f87171'}
-              fontSize="9" fontFamily="monospace" fontWeight="700">
+              fill={closed?'#22c55e':tripLatch?'#ef4444':'#ef4444'}
+              fontSize="10" fontFamily="var(--fh)" fontWeight="800">
           {closed?'FECHADO':tripLatch?'TRIP':'ABERTO'}
         </text>
-        <text x="0" y="50" textAnchor="middle" fill="#2d3d50" fontSize="7" fontFamily="monospace">52</text>
+        <text x="0" y="50" textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fm)" fontWeight="700">52</text>
       </g>
       <g transform={`translate(${X1},${CY})`}>
         <rect x="-20" y="-20" width="40" height="40" rx="4"
-              fill={energized?'rgba(125,211,252,.08)':'#182030'}
-              stroke={energized?'#7dd3fc':'#253040'} strokeWidth="1.5"
-              filter={energized?'drop-shadow(0 0 5px rgba(125,211,252,.4))':'none'}/>
-        <text x="0" y="5" textAnchor="middle" fill={energized?'#7dd3fc':'#3d5060'} fontSize="11" fontFamily="monospace">Z</text>
-        <text x="0" y="36" textAnchor="middle" fill="#3d5060" fontSize="7.5" fontFamily="monospace">CARGA</text>
-        <LBox x="0" y={-70} title="P ATIVA" val={energized ? `${(Va_pri*Ia_pri*Math.sqrt(3)/1e6).toFixed(2)}` : '—'} unit="MVA" color={energized?'#7dd3fc':'#2d3d50'}/>
+              fill="white"
+              stroke={energized?'#0ea5e9':'#cbd5e1'}
+              strokeWidth={energized?2:1.5}
+              filter={energized?'drop-shadow(0 0 8px rgba(14,165,233,.3))':'none'}/>
+        <text x="0" y="6" textAnchor="middle" fill={energized?'#0ea5e9':'#475569'} fontSize="12" fontFamily="var(--fm)" fontWeight="800">Z</text>
+        <text x="0" y="36" textAnchor="middle" fill="#475569" fontSize="8" fontFamily="var(--fh)" fontWeight="700">CARGA</text>
+        <LBox x="0" y={-75} title="P ATIVA" val={energized ? `${(Va_pri*Ia_pri*Math.sqrt(3)/1e6).toFixed(2)}` : '—'} unit="MVA" color={energized?'#0ea5e9':'#1e293b'}/>
       </g>
       <g transform={`translate(12,${VH-28})`}>
-        <circle cx="6" cy="6" r="4" fill={energized?'#22c55e':'#2d3d50'}/>
-        <text x="16" y="10" fill={energized?'#22c55e':'#3d5060'} fontSize="7.5" fontFamily="monospace">
+        <circle cx="6" cy="6" r="5" fill={energized?'#22c55e':'#cbd5e1'}/>
+        <text x="18" y="11" fill={energized?'#22c55e':'#475569'} fontSize="8" fontFamily="var(--fm)" fontWeight="700">
           {energized?'ENERGIZADO — corrente fluindo':'DESENERGIZADO'}
         </text>
       </g>
@@ -839,6 +865,30 @@ export default function PainelPage({
               <div className="painel-bk-svg">
                 <BreakerSVG bkState={bkState} springLoaded={springLoaded} tripLatch={tripLatch}/>
               </div>
+
+              {/* Status Indicators */}
+              <div className="painel-status-indicators">
+                <div className="ps-ind-row">
+                  <span className="ps-ind-label">● Posição</span>
+                  <span className={`ps-ind-value ${isClosed ? 'active-green' : ''}`}>
+                    {isClosed ? 'FECHADO' : 'ABERTO'}
+                  </span>
+                </div>
+                <div className="ps-ind-row">
+                  <span className="ps-ind-label">● Mola</span>
+                  <span className={`ps-ind-value ${springLoaded ? 'active-green' : 'active-amber'}`}>
+                    {springLoaded ? 'CARREGADA' : 'CARREGANDO'}
+                  </span>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span className="ps-mola-label">CARGA</span>
+                  <div className="ps-mola-bar-wrap">
+                    <div className="ps-mola-bar-fill" style={{width: `${springPct}%`}}/>
+                  </div>
+                  <span className="ps-mola-percent">{Math.round(springPct)}%</span>
+                </div>
+              </div>
+
               <div style={{display:'flex',flexDirection:'column',gap:5,width:'100%'}}>
                 {isOpen && !isBusy && (
                   <button className="bk-close-btn" disabled={!springLoaded}

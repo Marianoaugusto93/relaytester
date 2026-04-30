@@ -1,0 +1,63 @@
+import{Tgl,IB}from"./widgets.jsx";
+import{protOrder,curveTypes,TEST_PRESETS,biRows,cbStatusRows,cbCmdRows,protStageRows,allRows,boCols,ledCols,allCols,inMatrixRows}from"./defaults.js";
+
+export default function SettingsPanel({prot,outMatrix,inMatrix,sys,tab,si,mainTab,uPr,uSt,uS,setSi,setTab,toggleMatrix,toggleInMatrix,applyTestPreset,rtp,rtc}){
+  const getStages=()=>{const f=prot[tab];if(tab==="27/59")return[...(f.stages27||[]),...(f.stages59||[])];if(tab==="81")return[...(f.stages81u||[]),...(f.stages81o||[])];if(tab==="32")return[...(f.stages32r||[]),...(f.stages32f||[])];if(tab==="79")return[];return f.stages||[]};
+  const getCur=()=>{if(tab==="27/59"){return si<3?prot["27/59"].stages27?.[si]:prot["27/59"].stages59?.[si-3]}if(tab==="81"){return si<3?prot["81"].stages81u?.[si]:prot["81"].stages81o?.[si-3]}if(tab==="32"){return si<2?prot["32"].stages32r?.[si]:prot["32"].stages32f?.[si-2]}if(tab==="79")return null;return(prot[tab].stages||[])[si]};
+  const isOC=["50","51","50N","51N","67","67N"].includes(tab);const isTm=["51","51N","67","67N"].includes(tab);const isDir=["67","67N"].includes(tab);const isVlt=tab==="27/59";const is46=tab==="46";const is81=tab==="81";const is32=tab==="32";const is79=tab==="79";
+  const stages=getStages();const cur=getCur();
+
+  if(mainTab==="sys")return(<div className="card-scroll"><div className="cp"><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}><div><div className="fn" style={{marginBottom:10}}>Potential Transformer (TP)</div><div className="fr"><div className="fg"><div className="fl">V Pri</div><IB unit="V" value={sys.tp.priV} onChange={v=>uS("tp","priV",v)}/></div><div className="fg"><div className="fl">V Sec</div><IB unit="V" value={sys.tp.secV} onChange={v=>uS("tp","secV",v)}/></div></div><div className="fl" style={{margin:"6px 0 3px"}}>Primary</div><div className="conn-r"><button className={`conn-b ${sys.tp.priConn==="estrela"?"on":""}`} onClick={()=>uS("tp","priConn","estrela")}>Y</button><button className={`conn-b ${sys.tp.priConn==="delta"?"on":""}`} onClick={()=>uS("tp","priConn","delta")}>Δ</button></div><div className="fl" style={{margin:"6px 0 3px"}}>Secondary</div><div className="conn-r"><button className={`conn-b ${sys.tp.secConn==="estrela"?"on":""}`} onClick={()=>uS("tp","secConn","estrela")}>Y</button><button className={`conn-b ${sys.tp.secConn==="delta"?"on":""}`} onClick={()=>uS("tp","secConn","delta")}>Δ</button></div><div className="ratio">RTP = {rtp.toFixed(2)}</div></div><div><div className="fn" style={{marginBottom:10}}>Current Transformer (TC)</div><div className="fr"><div className="fg"><div className="fl">I Pri</div><IB unit="A" value={sys.tc.priA} onChange={v=>uS("tc","priA",v)}/></div><div className="fg"><div className="fl">I Sec</div><IB unit="A" value={sys.tc.secA} onChange={v=>uS("tc","secA",v)}/></div></div><div className="ratio">RTC = {rtc.toFixed(2)}</div></div></div></div></div>);
+
+  if(mainTab==="relay")return(<><div className="tp-strip"><span className="tp-lbl">PRESET</span>{TEST_PRESETS.map(p=><button key={p.id} className="tp-btn" title={p.desc} onClick={()=>applyTestPreset(p)}>{p.label}</button>)}</div><div className="tbar">{protOrder.map(id=><button key={id} className={`ti ${tab===id?"on":""}`} onClick={()=>{setTab(id);setSi(0)}}>{id}</button>)}</div><div className="card-scroll"><div className="cp">
+    <div className="fh"><span className="fn">{prot[tab].name}</span><Tgl value={prot[tab].enabled} onChange={v=>uPr(tab,"enabled",v)} label={prot[tab].enabled?"Enabled":"Disabled"}/></div>
+    {isOC&&<div className="bs"><label>Adjustment Base</label><select className="sl" value={prot[tab].base} onChange={e=>uPr(tab,"base",e.target.value)}><option value="primario">Primary Value</option><option value="secundario">Secondary Value</option><option value="multiplo">CT Multiple</option></select></div>}
+    {isVlt&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+      <div className="bs"><label>Start Phases</label><select className="sl" value={prot[tab].startPhases||"any"} onChange={e=>uPr(tab,"startPhases",e.target.value)}><option value="any">Any (qualquer 1φ)</option><option value="all">All (todas 3φ)</option></select></div>
+      <div className="bs"><label>Voltage Selection</label><select className="sl" value={prot[tab].voltageSelection||"ph-n"} onChange={e=>uPr(tab,"voltageSelection",e.target.value)}><option value="ph-n">Fase-Terra (Ph-N)</option><option value="ph-ph">Fase-Fase (Ph-Ph)</option></select></div>
+      <div className="bs"><label>Hysteresis (%)</label><IB unit="%" value={prot[tab].hysteresis||4.0} onChange={v=>uPr(tab,"hysteresis",v)} step="0.1"/></div>
+      <div className="bs"><Tgl value={prot[tab].lowVoltageBlockEnabled||false} onChange={v=>uPr(tab,"lowVoltageBlockEnabled",v)} label="Low-V Block (27)"/>{prot[tab].lowVoltageBlockEnabled&&<div style={{marginTop:4}}><IB unit="pu" value={prot[tab].voltageBlockPu||0.20} onChange={v=>uPr(tab,"voltageBlockPu",v)} step="0.01"/></div>}</div>
+    </div>}
+    <div className="stbar">{stages.map((s,i)=><button key={s.id} className={`stb ${i===si?"on":""} ${!s.enabled?"dis":""}`} onClick={()=>setSi(i)}>{s.id}</button>)}</div>
+    {is46&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>Pickup = I₂ (seq. negativa) em Ampères secundários. Tempo Definido.</div>}
+    {is81&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>81U-1..3 = subfrequência · 81O-1..3 = sobrefrequência · Frequência ajustada no painel lateral (Frequency).</div>}
+    {is32&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>32R-1..2 = potência reversa (P3φ &lt; −pickup) · 32F-1..2 = potência direta (P3φ &gt; pickup) · Pickup em Watts secundários.</div>}
+    {is79&&<div style={{marginTop:4}}><div style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>Dead time = tempo aberto antes de religar. Reclaim time = tempo após religamento bem-sucedido para resetar o contador de shots.</div><div className="pg"><div className="pi"><label>Nº de Shots</label><IB unit="shots" value={prot["79"].shots??3} onChange={v=>uPr("79","shots",Math.max(1,Math.round(v)))}/></div><div className="pi"><label>Reclaim Time</label><IB unit="s" value={prot["79"].reclaimTime??3.0} onChange={v=>uPr("79","reclaimTime",v)} step="0.1"/></div></div><div style={{marginTop:8}}><div className="fl" style={{marginBottom:4}}>Dead Times (s) por shot</div>{(prot["79"].deadTimes||[0.5,5.0,15.0]).map((dt,i)=><div key={i} className="fr" style={{marginBottom:4}}><div className="fg"><div className="fl">Shot {i+1}</div><IB unit="s" value={dt} onChange={v=>{const dts=[...(prot["79"].deadTimes||[0.5,5.0,15.0])];dts[i]=v;uPr("79","deadTimes",dts);}} step="0.1"/></div></div>)}</div></div>}
+    {cur&&<div><Tgl value={cur.enabled} onChange={v=>uSt(tab,si,"enabled",v)} label={`Stage ${cur.id}`}/><div className="pg">
+      {(isOC||isDir)&&<div className="pi"><label>{tab.includes("50")?"Pickup (Inst)":"Pickup (Time)"}</label><IB unit="A" value={cur.pickup} onChange={v=>uSt(tab,si,"pickup",v)}/></div>}
+      {(isVlt||tab==="47")&&<div className="pi"><label>Pickup (pu)</label><IB unit="pu" value={cur.pickup} onChange={v=>uSt(tab,si,"pickup",v)} step="0.01"/></div>}
+      {is46&&<div className="pi"><label>Pickup I₂ (A)</label><IB unit="A" value={cur.pickup} onChange={v=>uSt(tab,si,"pickup",v)} step="0.01"/></div>}
+      {is81&&<div className="pi"><label>{cur.id.startsWith("81U")?"Pickup subfreq (Hz)":"Pickup sobrefreq (Hz)"}</label><IB unit="Hz" value={cur.pickup} onChange={v=>uSt(tab,si,"pickup",v)} step="0.05"/></div>}
+      {is32&&<div className="pi"><label>{cur.id.startsWith("32R")?"Pickup 32R (W)":"Pickup 32F (W)"}</label><IB unit="W" value={cur.pickup} onChange={v=>uSt(tab,si,"pickup",v)} step="1"/></div>}
+      {isTm&&<><div className="pi"><label>Time Dial</label><IB value={cur.timeDial} onChange={v=>uSt(tab,si,"timeDial",v)} step="0.01"/></div><div className="pi"><label>Curve</label><select className="sl" value={cur.curve} onChange={e=>uSt(tab,si,"curve",e.target.value)}>{curveTypes.map(c=><option key={c} value={c}>{c}</option>)}</select></div></>}
+      {(!isTm&&!isVlt&&tab!=="47"&&!is46&&!is81&&!is32)&&<div className="pi"><label>Time Op. (s)</label><IB unit="s" value={cur.timeOp} onChange={v=>uSt(tab,si,"timeOp",v)} step="0.01"/></div>}
+      {(isVlt||tab==="47"||is46||is81||is32)&&<div className="pi"><label>Time Op. (s)</label><IB unit="s" value={cur.timeOp} onChange={v=>uSt(tab,si,"timeOp",v)} step="0.01"/></div>}
+      {isDir&&<><div className="pi"><label>MTA (°)</label><IB unit="°" value={cur.mta} onChange={v=>uSt(tab,si,"mta",v)} step="1"/></div><div className="pi"><label>Polarization</label><select className="sl" value={cur.pol} onChange={e=>uSt(tab,si,"pol",e.target.value)}>{tab==="67"?<><option value="quadratura">Quadrature</option><option value="quad_loop">Quad. Loop</option><option value="seq_pos">Positive Seq.</option><option value="seq_pos_loop">Pos. Seq. Loop</option></>:<><option value="-V0">−V₀</option><option value="V0">V₀</option></>}</select></div><div className="pi"><label>Direction</label><select className="sl" value={cur.dir||"forward"} onChange={e=>uSt(tab,si,"dir",e.target.value)}><option value="forward">Forward</option><option value="reverse">Reverse</option></select></div>{tab==="67N"&&<div className="pi"><label>Vmin Pol.</label><IB unit="V" value={cur.minPolV} onChange={v=>uSt(tab,si,"minPolV",v)} step="0.1"/></div>}</>}
+    </div></div>}
+  </div></div></>);
+
+  if(mainTab==="output")return(<div className="card-scroll"><div className="mx-wrap"><table className="mx"><thead><tr><th className="corner">Signal</th>{boCols.map(c=><th key={c} className="col-bo">{c}</th>)}{ledCols.map(c=><th key={c} className="col-led">{c}</th>)}</tr></thead><tbody>
+    <tr className="mx-section"><td colSpan={allCols.length+1}>Binary Inputs</td></tr>
+    {biRows.map(r=><tr key={r}><td className="row-label is-bi">{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
+    <tr className="mx-section"><td colSpan={allCols.length+1}>CB Status</td></tr>
+    {cbStatusRows.map(r=><tr key={r}><td className="row-label" style={{color:'var(--sky)'}}>{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
+    <tr className="mx-section"><td colSpan={allCols.length+1}>CB Commands</td></tr>
+    {cbCmdRows.map(r=><tr key={r}><td className="row-label" style={{color:'var(--amber)'}}>{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
+    <tr className="mx-section"><td colSpan={allCols.length+1}>Protection Stages</td></tr>
+    {protStageRows.map(r=><tr key={r}><td className="row-label is-prot">{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
+  </tbody></table></div></div>);
+
+  return(<div className="card-scroll"><div className="mx-wrap">
+    <table className="mx"><thead><tr>
+      <th className="corner">Signal</th>
+      {biRows.map(c=><th key={c} className="col-bo">{c}</th>)}
+    </tr></thead><tbody>
+      <tr className="mx-section"><td colSpan={biRows.length+1}>CB Status</td></tr>
+      {inMatrixRows.map(r=><tr key={r}><td className="row-label" style={{color:'var(--sky)'}}>{r}</td>{biRows.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${inMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleInMatrix(r,c)}/></div></td>)}</tr>)}
+    </tbody></table>
+    <div style={{marginTop:16,padding:'10px 12px',background:'var(--card2)',borderRadius:'var(--rs)',border:'1px solid var(--bdr)',fontSize:10,fontFamily:'var(--fm)',color:'var(--tx3)',lineHeight:1.7}}>
+      <span style={{color:'var(--sky)',fontWeight:700}}>CB_Opened</span> → BI mapeada recebe sinal quando o disjuntor <b>abre</b> (contato 52b). A contagem de tempo do trip para neste instante.<br/>
+      <span style={{color:'var(--sky)',fontWeight:700}}>CB_Closed</span> → BI mapeada recebe sinal quando o disjuntor <b>fecha</b> (contato 52a). Registrado no Event Log.
+    </div>
+  </div></div>);
+}

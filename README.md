@@ -8,7 +8,7 @@
 
 ---
 
-## Funcionalidades — v2.0.0
+## Funcionalidades — v2.1.0
 
 ### Página CAMPO
 Simulador de cabeamento físico entre maleta de testes e relé.
@@ -77,11 +77,39 @@ Painel de controle de software integrado à interface, substituindo a emulação
 Simulação do circuito de comando do disjuntor.
 
 - **SVG do Disjuntor Siemens SION** responsivo com estados: aberto, fechando, fechado, abrindo, disparando.
+- **Status Indicators** — exibe POSIÇÃO (aberto/fechado), MOLA (carregada/carregando) e barra de carga progressiva com percentual.
 - **Diagrama de Comando Ladder animado** — BCS, LM, BL, BO2, BO1, BD, CL, OP, BI1, BI2, K, M, BF, AB, BA, BM com iluminação de contatos em tempo real.
+  - ✨ **Melhorias v2.1**: cores mais luminosas, glows dinâmicos em elementos ativos, tipografia em Rajdhani/JetBrains Mono, melhor contraste
 - **Diagrama Unifilar** — fonte → TC/TP → disjuntor → carga com correntes e tensões primárias animadas.
+  - ✨ **Melhorias v2.1**: fundo cinzento padrão (var(--card)), linhas em branco para melhor contraste, grid sutil
 - **Mola de Fechamento** — carregamento progressivo (~5 s), bloqueio de fechamento sem mola pronta.
 - **Sonoplastia** — abertura, fechamento e carregamento de mola via Web Audio API (zero latência).
 - **Contador de Operações** por sessão.
+
+---
+
+## Melhorias Visuais — v2.1.0
+
+### Diagrama de Comando (Ladder)
+- ✅ Barramentos e fios com maior luminosidade e contraste (`#e2e8f0`, `#cbd5e1`)
+- ✅ Contatos com glows dinâmicos ao ativar (orange/red drop-shadow)
+- ✅ Bobinas circulares e quadradas com melhor destaque (stroke duplo, r=15)
+- ✅ Indicadores com tamanho aumentado e melhor feedback visual
+- ✅ Tipografia padronizada: **Rajdhani** para labels, **JetBrains Mono** para valores
+- ✅ Fundo com padrão grid sutil e profundidade
+
+### Diagrama Unifilar
+- ✅ Fundo cinzento padrão do projeto (`var(--card)`)
+- ✅ Linhas do unifilar em branco (`#e2e8f0` / `#cbd5e1`) — visibilidade máxima
+- ✅ Caixas de valores (LBox) com dimensões maiores, bordas nítidas, cores dinâmicas
+- ✅ Posicionamento vertical ajustado para evitar sobreposição
+- ✅ Tipografia: Rajdhani (interface), JetBrains Mono (dados)
+
+### Painel do Disjuntor
+- ✅ Status Indicators abaixo do SVG: POSIÇÃO, MOLA, CARGA (%)
+- ✅ Barra de carregamento com gradiente laranja→amarelo
+- ✅ Cores dinâmicas: verde (ativo), âmbar (transitório)
+- ✅ Integração com design system (variáveis CSS)
 
 ---
 
@@ -158,10 +186,10 @@ npm run preview    # serve /dist localmente
 git status
 
 # 2. Adicione os arquivos modificados
-git add src/App.jsx src/PainelPage.jsx src/comtrade.js index.html public/favicon.svg README.md
+git add src/ README.md funcoes.md
 
 # 3. Commit com mensagem descritiva
-git commit -m "rebrand: RelayLab 360 — nova identidade visual e ReGrid Pro 1000"
+git commit -m "feat: v2.1.0 — melhorias visuais (diagrama comando/unifilar), status indicators disjuntor"
 
 # 4. Push para o repositório (dispara deploy automático no Cloudflare)
 git push origin master
@@ -183,11 +211,14 @@ https://relaytester.augustocesar-mariano.workers.dev/
 ```
 
 e confirme:
-- [ ] Título da aba: `RelayLab 360`
-- [ ] Topbar: logo SVG + "RelayLab 360"
-- [ ] Nav pills com cor laranja ao ativar
-- [ ] Aba Relé → coluna direita mostra "ReGrid Pro 1000" com abas MENS./PROT./LÓGICA/EVENTOS
-- [ ] Medições em cyan, estados do disjuntor em verde/vermelho
+- [x] Título da aba: `RelayLab 360`
+- [x] Topbar: logo SVG + "RelayLab 360"
+- [x] Nav pills com cor laranja ao ativar
+- [x] Aba Relé → coluna direita mostra "ReGrid Pro 1000" com abas MENS./PROT./LÓGICA/EVENTOS
+- [x] Medições em cyan, estados do disjuntor em verde/vermelho
+- [x] **v2.1.0**: Diagrama de comando com cores luminosas e glows
+- [x] **v2.1.0**: Diagrama unifilar com linhas brancas e fundo padrão
+- [x] **v2.1.0**: Status indicators (Posição, Mola, Carga %) abaixo do disjuntor
 
 ### Configuração do Cloudflare Pages (primeira vez)
 
@@ -222,6 +253,27 @@ npm run preview  # Serve o /dist localmente (valida antes do deploy)
 ```
 
 **Sem TypeScript, sem framework de testes, sem linter configurado** — contribuições devem manter o estilo JSX inline existente. CSS como template literals por componente (`campoCSS`, `S`). Sem dependências externas além de `react`, `react-dom` e `jszip`.
+
+---
+
+## Changelog
+
+### v2.1.0 (2026-04-30)
+**Melhorias Visuais & UX**
+- ✨ Status Indicators no painel do disjuntor: POSIÇÃO, MOLA, CARGA (%)
+- ✨ Diagrama de Comando (Ladder) com cores luminosas e glows dinâmicos
+- ✨ Diagrama Unifilar com linhas brancas e melhor contraste
+- ✨ Tipografia padronizada (Rajdhani + JetBrains Mono)
+- 📚 Guia de próximas funcionalidades (`funcoes.md`)
+- 🎨 Design System completo: paleta orange/cyan/green/red/amber + variables CSS
+
+### v2.0.0 (2026-04-20)
+- 🎨 Rebranding: RelayLab 360 (era "Relay Tester Pro")
+- 🎨 ReGrid Pro 1000: IED virtual com abas MENS/PROT/LÓGICA/EVENTOS
+- ✅ 12 funções de proteção ANSI/IEC implementadas (50/51/67/27/59/47/46/81/32/79)
+- ✅ Matrizes de Saída/Entrada mapeáveis
+- ✅ COMTRADE IEEE C37.111-1999 export
+- ✅ Simulador elétrico (Union-Find) com detecção de trip via BO→BI
 
 ---
 
