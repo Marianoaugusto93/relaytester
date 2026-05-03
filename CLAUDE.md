@@ -27,6 +27,10 @@ This is a single-page React 18 app (Vite + JSX, no TypeScript) that simulates a 
 | `CampoPage.jsx` | "Campo" tab — physical wiring simulator (suitcase ↔ switch ↔ terminal block) |
 | `PainelPage.jsx` | "Painel" tab — circuit breaker, command diagram (ladder), single-line diagram |
 | `comtrade.js` | Pure function: generates IEEE C37.111-1999 COMTRADE files from a trip record |
+| `HelpContext.jsx` | React Context for help system state management (v2.1+) |
+| `HelpModal.jsx` | Help modal component with 6 reference topics (v2.1+) |
+| `Tutorial.jsx` | Interactive 6-step onboarding tutorial with clip-path highlighting (v2.1+) |
+| `scenarios/educational-scenarios.js` | 5+ preset test cases for training (3-phase, L-G, L-L, inrush, underfrequency) (v2.1+) |
 
 ### Data flow
 
@@ -87,3 +91,111 @@ All CSS is written as template-literal strings inside each component (`campoCSS`
 ### State persistence
 
 App state (phasors, protections, system parameters, matrix, trip history) is saved/loaded as JSON via the browser's `<input type="file">` / `URL.createObjectURL` pattern — no backend, no localStorage.
+
+## Phase 2 Features (v2.1)
+
+### Help System
+- **HelpContext**: React Context managing help state and tutorial visibility
+- **HelpModal**: Modal component (z-index 3000) with 6 reference topics:
+  - Getting Started
+  - Wiring Basics
+  - Phasors 101
+  - Protection Settings
+  - Relay Outputs
+  - COMTRADE Export
+- **Help Button**: (?) icon in topbar — toggles help modal
+
+### Interactive Tutorial
+- **Tutorial.jsx**: 6-step onboarding (Portuguese language)
+  - Clip-path highlighting on target elements
+  - Step progression with Previous/Next/Skip buttons
+  - localStorage persistence (`tutorial_completed` key)
+  - Auto-triggers on first visit (2s delay)
+  - ESC key dismiss with confirmation
+  - Z-index 4000 (above help modal)
+
+### Code Documentation
+- **JSDoc coverage**: 80%+ of public functions documented
+  - `protection.js`: ~30 functions with parameter types, return shapes, algorithm descriptions
+  - `App.jsx`: State management, callbacks, hooks
+  - `CampoPage.jsx`: Electrical graph, relay readings, wiring validation (Portuguese comments preserved)
+  - `fileIO.js` / `comtrade.js`: Save/load and COMTRADE generation
+- All comments follow WHAT/HOW pattern (no explanations of WHY)
+
+### Educational Scenarios
+- **src/scenarios/educational-scenarios.js**: 5+ preset test cases
+  - Three-phase symmetrical fault
+  - Single line-to-ground (L-G) fault
+  - Line-to-line (L-L) fault
+  - Startup inrush transient
+  - Underfrequency (81 function)
+  - Each includes: phasors, protection settings, learning objective, expected trip stage
+- **Status**: Data structure ready, UI integration pending (Phase 3)
+
+## Roadmap & Next Steps
+
+### Phase 3: Educational Scenarios UI Integration
+**Priority**: HIGH | **Estimated effort**: 3 hours
+
+1. **Add Educational Scenarios section to SettingsPanel**
+   - Display alongside existing Quick Presets
+   - Group by fault type (Symmetrical, Ground Faults, Transients, etc.)
+   - Hover tooltips with learning objectives
+
+2. **Wire scenarios to applyTestPreset()**
+   - Ensure data structure compatibility (validate stages shape)
+   - Add scenario descriptions to help system
+
+3. **Test all 5 scenarios end-to-end**
+   - Verify phasors load correctly
+   - Verify protection settings apply
+   - Verify trip behavior matches expected stage and time
+
+### Phase 4: UI/UX Polish
+**Priority**: MEDIUM | **Estimated effort**: 2 hours
+
+1. **Tutorial refinements**
+   - Replace inline styles with CSS classes from appStyles.js
+   - Fix selector brittleness (use data-attributes instead of :nth-child)
+   - Add resize/scroll listener for highlight box tracking
+
+2. **Help system enhancements**
+   - Add expandable sections for complex topics
+   - Add keyboard navigation (Tab → next topic, Shift+Tab → prev)
+   - Link protection functions to their JSDoc in help system
+
+3. **Design system audit**
+   - Verify all orange/cyan colors follow brand guidelines
+   - Ensure accessibility (contrast ratios, keyboard nav, screen reader support)
+
+### Phase 5: Testing & Accessibility
+**Priority**: MEDIUM | **Estimated effort**: 4 hours
+
+1. **Accessibility audit**
+   - WCAG 2.1 Level AA compliance check
+   - Keyboard-only navigation test
+   - Screen reader compatibility (NVDA/JAWS)
+
+2. **Cross-browser testing**
+   - Chrome, Firefox, Safari, Edge
+   - Mobile responsiveness (iPad, iPhone)
+
+3. **Performance optimization**
+   - Bundle size audit (currently 257 kB / 65 kB gzipped)
+   - Lazy-load tutorial and help modal
+
+### Phase 6: Advanced Features
+**Priority**: LOW | **Estimated effort**: 6 hours
+
+1. **Custom scenario builder**
+   - UI to create and save custom test cases
+   - Export scenarios as shareable JSON
+   - Difficulty levels (Beginner / Intermediate / Advanced)
+
+2. **Waveform visualization**
+   - Real-time phasor animation during injection
+   - Trip time on timeline
+
+3. **Multi-language support**
+   - UI translations (Portuguese ✓, English, Spanish)
+   - Help topics in multiple languages
