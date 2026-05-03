@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useRef } from "react";
 
 const HelpContext = createContext(null);
 
@@ -7,7 +7,7 @@ export function HelpProvider({ children }) {
   const [activeTopicId, setActiveTopicId] = useState("getting-started");
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
-  const setPageRef = require('react').useRef(null);
+  const setPageRef = useRef(null);
 
   function openHelp(topicId = "getting-started") {
     setActiveTopicId(topicId);
