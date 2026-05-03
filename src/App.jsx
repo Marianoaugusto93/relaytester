@@ -4,10 +4,14 @@ import PainelPage from "./PainelPage.jsx";
 import { generateComtrade } from "./comtrade.js";
 import JSZip from "jszip";
 import { deepClone, defaultPhasors, defaultSystem, defaultProtections, protOrder, biRows, allRows, boCols, ledCols, buildDefaultMatrix, buildDefaultInMatrix, mainTabs, TEST_PRESETS, fmtTs, nowShort } from "./defaults.js";
+import { EDUCATIONAL_SCENARIOS } from "./scenarios/educational-scenarios.js";
 import { calc3, calcPower, calcI2 } from "./protection.js";
 import { buildSaveContent, parseSaveFile } from "./fileIO.js";
 import { S } from "./appStyles.js";
 import { Tgl, IB } from "./widgets.jsx";
+import { HelpProvider, useHelp } from "./HelpContext.jsx";
+import HelpModal from "./HelpModal.jsx";
+import Tutorial from "./Tutorial.jsx";
 import FaultCalculator from "./FaultCalculator.jsx";
 import PhasorDiagram from "./PhasorDiagram.jsx";
 import RelayDisplay from "./RelayDisplay.jsx";
@@ -15,7 +19,7 @@ import SettingsPanel from "./SettingsPanel.jsx";
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
 
-export default function App(){
+function AppInner(){
   // ── State ──────────────────────────────────────────────────────────────────
   const[page,setPage]=useState(1);
   const[p,setP]=useState(defaultPhasors);const[sys,setSys]=useState(defaultSystem);
@@ -42,6 +46,16 @@ export default function App(){
   const[phasorVis,setPhasorVis]=useState({Ia:true,Ib:true,Ic:true,Va:true,Vb:true,Vc:true,Vab:false,Vbc:false,Vca:false,I0:false,I1:false,I2:false,V0:false,V1:false,V2:false});
   const[simPhase,setSimPhase]=useState("idle");
   const[fieldState,setFieldState]=useState({connections:[],internalConns:[]});
+  const{openHelp,closeHelp,tutorialOpen,closeTutorial,registerSetPage,startTutorial}=useHelp();
+
+  // Auto-trigger tutorial on first visit
+  useEffect(()=>{
+    let done;
+    try{ done=localStorage.getItem("tutorial_completed"); }catch{ done="true"; }
+    if(done==="true") return;
+    const tid=setTimeout(()=>startTutorial(0),2000);
+    return ()=>clearTimeout(tid);
+  },[startTutorial]);
   const fieldStateRef=useRef(fieldState);
   const onFieldStateChange=useCallback((fs)=>{setFieldState(fs);fieldStateRef.current=fs;},[]);
   const[bkState,setBkState]=useState('open');const[bkSpring,setBkSpring]=useState(true);const[bkTripLatch,setBkTripLatch]=useState(false);
@@ -83,6 +97,13 @@ export default function App(){
   const{check27IdleCondition}=use27Monitor({relayProt,relayReadings,sys,injecting,trippedStageIds,setTrippedStageIds,setIsTripped,setFaultRecord,setTripHistory,setDiag,setEvts,rtc,rtp});
 
   // ── Breaker callback ───────────────────────────────────────────────────────
+  /**
+   * Handle breaker state changes (open/closed) and automatic reclosing logic.
+   * Manages 79 function (auto-reclose) sequence: dead time → reclose → reclaim.
+   * @param {string} state - Breaker state: "open" or "closed"
+   * @param {boolean} spring - Spring loaded status
+   * @param {boolean} latch - Trip latch status
+   */
   const onBreakerChange=useCallback((state,spring,latch)=>{
     setBkState(prev=>{
       if(prev!==state){
@@ -139,22 +160,56 @@ export default function App(){
   },[tr,ar79Ref]);
 
   // ── Phasor helpers ─────────────────────────────────────────────────────────
+  /**
+   * Apply balanced three-phase phasors with angular offsets based on sequence.
+   * @param {Object} o - Current phasor object
+   * @param {string} type - "currents" or "voltages"
+   * @param {string} keyA - Reference phase key (Ia/Va)
+   * @param {string} field - "mag" or "ang"
+   * @param {number} value - New value
+   * @param {string} seq - Phase sequence "ABC" or "ACB"
+   * @returns {Object} Updated phasor object
+   */
   const fillBalanced=(o,type,keyA,field,value,seq)=>{
     const offB=seq==="ABC"?-120:120;const offC=seq==="ABC"?120:-120;
     const keys=type==="currents"?["Ia","Ib","Ic"]:["Va","Vb","Vc"];
     const phA={...o[type][keys[0]],[field]:value};
     return{...o,[type]:{[keys[0]]:{mag:phA.mag,ang:phA.ang},[keys[1]]:{mag:phA.mag,ang:phA.ang+offB},[keys[2]]:{mag:phA.mag,ang:phA.ang+offC}}};
   };
+  /**
+   * Update injection phasors (fault condition).
+   * Applies balanced three-phase or individual phase update.
+   * @param {string} t - "currents" or "voltages"
+   * @param {string} ph - Phase (Ia/Ib/Ic or Va/Vb/Vc)
+   * @param {string} f - Field ("mag" or "ang")
+   * @param {number} v - New value
+   */
   const uP=(t,ph,f,v)=>{
     const isBal=(t==="currents"&&balI==="balanced")||(t==="voltages"&&balV==="balanced");
     if(isBal){const seq=t==="currents"?seqI:seqV;const keyA=t==="currents"?"Ia":"Va";setP(o=>fillBalanced(o,t,keyA,f,v,seq));return;}
     setP(o=>({...o,[t]:{...o[t],[ph]:{...o[t][ph],[f]:v}}}));
   };
+  /**
+   * Update pre-fault phasors.
+   * Applies balanced three-phase or individual phase update.
+   * @param {string} t - "currents" or "voltages"
+   * @param {string} ph - Phase (Ia/Ib/Ic or Va/Vb/Vc)
+   * @param {string} f - Field ("mag" or "ang")
+   * @param {number} v - New value
+   */
   const uPf=(t,ph,f,v)=>{
     const isBal=(t==="currents"&&balI==="balanced")||(t==="voltages"&&balV==="balanced");
     if(isBal){const seq=t==="currents"?seqI:seqV;const keyA=t==="currents"?"Ia":"Va";setPf(o=>fillBalanced(o,t,keyA,f,v,seq));return;}
     setPf(o=>({...o,[t]:{...o[t],[ph]:{...o[t][ph],[f]:v}}}));
   };
+  /**
+   * Rebalance phasors when phase sequence changes.
+   * Maintains magnitude from reference phase with new angular offsets.
+   * @param {string} type - "currents" or "voltages"
+   * @param {string} seq - Phase sequence "ABC" or "ACB"
+   * @param {Function} setter - setState function (setP or setPf)
+   * @param {Object} src - Source phasor object
+   */
   const rebalance=(type,seq,setter,src)=>{
     const keys=type==="currents"?["Ia","Ib","Ic"]:["Va","Vb","Vc"];
     const offB=seq==="ABC"?-120:120;const offC=seq==="ABC"?120:-120;
@@ -171,6 +226,11 @@ export default function App(){
   const toggleMatrix=(row,col)=>{setOutMatrix(m=>{const n=deepClone(m);n[row][col]=!n[row][col];return n})};
   const toggleInMatrix=(row,col)=>{setInMatrix(m=>{const n=deepClone(m);n[row][col]=!n[row][col];return n})};
 
+  /**
+   * Apply test preset to protection functions, output matrix, and input matrix.
+   * Enables/disables stages and updates relay matrix mappings per preset config.
+   * @param {Object} preset - Preset object with fns, stages, patch, out, inp properties
+   */
   const applyTestPreset=useCallback((preset)=>{
     const base=deepClone(defaultProtections);
     protOrder.forEach(fid=>{
@@ -189,13 +249,21 @@ export default function App(){
     Object.keys(preset.inp||{}).forEach(row=>{Object.keys(preset.inp[row]).forEach(col=>{if(nextIn[row]&&nextIn[row][col]!==undefined)nextIn[row][col]=preset.inp[row][col];})});
     setInMatrix(nextIn);
     const firstFid=preset.fns[0];if(protOrder.includes(firstFid)){setTab(firstFid);setSi(0);}
+    if(preset.phasors){setP(deepClone(preset.phasors));}
     setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);
     setEvts(ev=>[{time:nowShort(),icon:'⚡',text:`Preset "${preset.label}" aplicado — configurações enviadas ao relé.`,dt:''},...ev.slice(0,20)]);
   },[]);
 
   const sendSettings=()=>{setRelayProt(deepClone(prot));setRelayMatrix(deepClone(outMatrix));setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↑",text:"Settings uploaded to relay.",dt:""},...ev.slice(0,20)])};
   const getSettings=()=>{setProt(deepClone(relayProt));setOutMatrix(deepClone(relayMatrix));setGetFlash(true);setTimeout(()=>setGetFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↓",text:"Settings downloaded from relay.",dt:""},...ev.slice(0,20)])};
+  /**
+   * Reset fault simulation and clear event/diagnostic history.
+   */
   const resetFault=()=>{if(tr.current)clearInterval(tr.current);stop79();setSs("idle");setSimPhase("idle");setStime(0);stimeRef.current=0;setDiag([]);setEvts([]);setMaletaTripped(false);setBkResetCtr(c=>c+1)};
+  /**
+   * Reset tripped stages and fault record.
+   * Prevents reset if 27 function is active (low-voltage protection).
+   */
   const resetRelay=()=>{
     if(!injecting){const active27=check27IdleCondition();if(active27.length>0){setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`Reset bloqueado: 27 ativa (${active27.map(s=>s.id).join(", ")}). Habilite Low-V Block ou injete tensão.`,dt:""},...ev.slice(0,20)]);return;}}
     setTrippedStageIds([]);setIsTripped(false);setFaultRecord(null);
@@ -209,6 +277,11 @@ export default function App(){
   const freqLcd=sys.freq??60;
 
   // ── File I/O ───────────────────────────────────────────────────────────────
+  /**
+   * Record current relay readings and fault state to trip history.
+   * Creates a snapshot object with pre-fault, fault, and primary-side values.
+   * Limited to 5 most recent snapshots.
+   */
   const takeSnapshot=()=>{
     const isInj=ss==="running";
     const z={mag:0,ang:0};const zI={Ia:{...z},Ib:{...z},Ic:{...z}};const zV={Va:{...z},Vb:{...z},Vc:{...z}};
@@ -228,6 +301,11 @@ export default function App(){
     setEvts(ev=>[{time:nowShort(),icon:"📷",text:`Snapshot: ${isInj?"recording":"idle (zeros)"}`,dt:""},...ev.slice(0,20)]);
   };
 
+  /**
+   * Export complete system state as plaintext.
+   * Includes system, phasors, protections, matrices, and relay readings.
+   * Copies to clipboard or downloads as file if clipboard unavailable.
+   */
   const dumpFullState=()=>{
     const L=[];
     L.push("═══ RELAY TESTER PRO — DUMP COMPLETO ═══");L.push(`Timestamp: ${fmtTs()}`);L.push("");
@@ -249,12 +327,21 @@ export default function App(){
     navigator.clipboard.writeText(text).then(()=>setEvts(ev=>[{time:nowShort(),icon:"📋",text:"Full state dump copied to clipboard.",dt:""},...ev.slice(0,20)])).catch(()=>{const blob=new Blob([text],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dump_state.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>[{time:nowShort(),icon:"📋",text:"Full state dump saved to file.",dt:""},...ev.slice(0,20)]);});
   };
 
+  /**
+   * Save system configuration to file.
+   * Includes system parameters, protections, output matrix, and field wiring.
+   * Uses native showSaveFilePicker or fallback download.
+   */
   const saveFile=async()=>{
     const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}});
     try{const handle=await window.showSaveFilePicker({suggestedName:'relay_config.txt',types:[{description:'Text File',accept:{'text/plain':['.txt']}}]});const writable=await handle.createWritable();await writable.write(content);await writable.close();setEvts(ev=>[{time:nowShort(),icon:"💾",text:`Configuration saved: ${handle.name}`,dt:""},...ev.slice(0,20)]);}
     catch(err){if(err.name!=='AbortError'){const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='relay_config.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>[{time:nowShort(),icon:"💾",text:"Configuration saved to file.",dt:""},...ev.slice(0,20)]);}}
   };
 
+  /**
+   * Load system configuration from file.
+   * Parses saved settings and applies system, protections, matrix, and wiring.
+   */
   const loadFile=()=>{
     const input=document.createElement('input');input.type='file';input.accept='.txt';
     input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>[{time:nowShort(),icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""},...ev2.slice(0,20)]);}catch(err){setEvts(ev2=>[{time:nowShort(),icon:"✗",text:`Error loading file: ${err.message}`,dt:""},...ev2.slice(0,20)]);}};reader.readAsText(file);};
@@ -268,6 +355,7 @@ export default function App(){
       <div className="tb-r">
         <div className="nav-pills"><button className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>Campo</button><button className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>Relé</button><button className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>Painel{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button></div>
         <div className="tb-status"><div className="tb-dot"/>Online</div>
+        <button className="help-btn" onClick={()=>openHelp("getting-started")} title="Help &amp; Reference">?</button>
       </div>
     </div>
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
@@ -405,5 +493,11 @@ export default function App(){
   </div>}
   {phasorDiagOpen&&<PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/>}
   {fcOpen&&<FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/>}
+  <HelpModal/>
+  <Tutorial show={tutorialOpen} onDismiss={closeTutorial}/>
   </>);
+}
+
+export default function App(){
+  return(<HelpProvider><AppInner/></HelpProvider>);
 }

@@ -33,6 +33,11 @@ const NOME_ESTACAO = "local";
 const NOME_EQUIPAMENTO = "ReGrid Pro 1000";
 const ANO_NORMA = 1999;
 
+/**
+ * Format date for COMTRADE CFG file.
+ * @param {Date} d - Date object
+ * @returns {{data: string, hora: string}} - DD/MM/YYYY and HH:MM:SS.ffffff
+ */
 function fmtDate(d) {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -45,16 +50,23 @@ function fmtDate(d) {
 }
 
 /**
- * Gera os 3 arquivos COMTRADE a partir de um registro de trip.
+ * Generate IEEE C37.111-1999 COMTRADE files from a trip record.
+ * Creates CFG, DAT, and HDR files for oscillography export.
  *
- * @param {Object} record - Registro do tripHistory com todos os dados
- *   record.prefault.enabled, .duration, .relayCurrents, .relayVoltages
- *   record.fault.relayCurrents, .relayVoltages
- *   record.tripTime (tempo de operação da proteção em s — primeiro trip do relé)
- *   record.maletaStopTime (tempo de parada do cronômetro da maleta em s)
- *   record.system.rtc, .rtp
- *   record.timestamp
- * @returns {{cfg: string, dat: string, hdr: string}}
+ * Algorithm: Combines pre-fault and fault waveforms in 1-second recording.
+ * Trip event anchored at 500ms pre-trigger point. Waveform continues through trip,
+ * stops at relay suitcase stop time. Handles snapshot (idle/injecting) modes.
+ *
+ * @param {Object} record - Trip history record with:
+ *   - prefault: {enabled, duration, relayCurrents, relayVoltages}
+ *   - fault: {relayCurrents, relayVoltages}
+ *   - tripTime: Protection operation time (s)
+ *   - maletaStopTime: Suitcase stop time (s), defaults to tripTime
+ *   - tripPhase: "trip" | "snapshot" | "snapshot_inj"
+ *   - system: {rtc, rtp} - Transformer ratios
+ *   - stages: [string] - Tripped stages
+ *   - timestamp: ISO datetime
+ * @returns {{cfg: string, dat: string, hdr: string}} - COMTRADE file contents
  */
 export function generateComtrade(record) {
   const omega = 2.0 * Math.PI * FREQUENCIA_NOMINAL;

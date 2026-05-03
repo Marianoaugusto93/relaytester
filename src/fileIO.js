@@ -4,6 +4,16 @@ import { resolveCurveName } from './protection.js';
 export const FILE_HEADER='# RELAYLAB 360 — Parametrization File';
 export const FILE_VERSION='v1.0';
 
+/**
+ * Build plaintext save file content.
+ * Serializes system parameters, protection settings, output matrix, and field wiring.
+ * Format: INI-style sections with key=value pairs.
+ * @param {Object} sys - System parameters (TP, TC ratios)
+ * @param {Object} prot - Protection functions config (51, 50, 67, 27/59, etc.)
+ * @param {Object} outMatrix - Output matrix (stages → relay outputs)
+ * @param {Object} wiring - Field wiring (switch state, manual connections)
+ * @returns {string} INI-formatted configuration text
+ */
 export function buildSaveContent(sys,prot,outMatrix,wiring){
   const lines=[FILE_HEADER,`# Version: ${FILE_VERSION}`,`# Date: ${new Date().toISOString()}`,''];
 
@@ -83,6 +93,14 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
   return lines.join('\n');
 }
 
+/**
+ * Parse plaintext save file and extract configuration.
+ * Reads INI-style format and reconstructs system, protections, matrices, and wiring.
+ * @param {string} text - File content
+ * @param {Object} currentProt - Current protection config (used as base/fallback)
+ * @param {Object} currentMatrix - Current output matrix (used as base/fallback)
+ * @returns {{sys: Object, prot: Object, outMatrix: Object, wiring: Object|null}} - Parsed configuration
+ */
 export function parseSaveFile(text,currentProt,currentMatrix){
   const sys={tp:{priV:13800,secV:115,priConn:'estrela',secConn:'estrela'},tc:{priA:600,secA:5}};
   const prot=deepClone(currentProt);

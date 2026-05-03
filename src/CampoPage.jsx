@@ -8,6 +8,9 @@ const BORNE_ANILHAS=['BO3-1','BO3-2','BO4-1','BO4-2','BO5-1','BO5-2','BO6-1','BO
 // TB 13–14: TC trip coil, TB 15–16: FC close coil
 const BORNE_TYPE={9:'52a',10:'52a',11:'52b',12:'52b',13:'tc',14:'tc',15:'fc',16:'fc'};
 
+// ── HARDWARE COLORS (IEC 60445 Standard) ──
+// Phase A = Blue, Phase B = Red, Phase C = Gray/Black, Ground = Green
+// These colors represent real relay hardware and must not change for educational accuracy
 const CHAVE_POLES=[
   {id:'ia1',group:'ia',body:'#1565C0',dark:'#0D47A1',shine:'#42A5F5',cable:'#1E88E5',topAnilha:'A',botAnilha:'S1',kind:'normal'},
   {id:'ia2',group:'ia',body:'#1565C0',dark:'#0D47A1',shine:'#42A5F5',cable:'#1E88E5',topAnilha:'T',botAnilha:'S2',kind:'normal'},
@@ -27,8 +30,22 @@ const AO_V=[mkPair('V',1),mkPair('V',2),mkPair('V',3)];
 const BO_PAIRS=[mkPair('BO',1),mkPair('BO',2),mkPair('BO',3),mkPair('BO',4)];
 const BI_PAIRS=[mkPair('BI',1),mkPair('BI',2),mkPair('BI',3),mkPair('BI',4)];
 
+/**
+ * Darken hex color by multiplying RGB components.
+ * @param {string} hex - Hex color code
+ * @param {number} f - Factor (0-1)
+ * @returns {string} RGB color string
+ */
 function darken(hex,f){if(!hex||!hex.startsWith('#'))return hex;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`;}
 
+// Cable color by phase (IEC 60445 wiring standard)
+// A (phase 1) = Gold/Yellow, B (phase 2) = Red, C (phase 3) = Gray, Neutral/Return = Light Gray
+/**
+ * Determine cable color based on terminal phase.
+ * @param {string} a - First terminal ID
+ * @param {string} b - Second terminal ID
+ * @returns {string} Hex color code
+ */
 function cableColorFor(a,b){
   const isC=id=>id.endsWith('_top')||id.endsWith('_bot');
   const isB=id=>id.startsWith('tb_');
@@ -73,7 +90,12 @@ const CURRENT_GROUPS=[
 ];
 const VOLTAGE_POLES=['va','vb','vc'];
 
-// Retorna array de pares [tidA, tidB] com conexões internas ativas da chave
+/**
+ * Get internal connections from switch and terminal block state.
+ * Always includes: T phase interconnects, terminal block top↔bottom shorts.
+ * @param {Object} switchSt - Switch positions per pole
+ * @returns {Array<[string, string]>} - Internal connection pairs
+ */
 function getInternalConnections(switchSt){
   const conns=[];
 
@@ -121,6 +143,13 @@ function getBreakerConns(bkStatus){
 
 // Union-Find para determinar grupos elétricos (quais terminais compartilham
 // o mesmo ponto elétrico considerando cabos manuais + chave de aferição)
+/**
+ * Build electrical connectivity graph using Union-Find.
+ * Resolves which terminals are electrically connected via manual cables and switch state.
+ * @param {Array<{from: string, to: string}>} manualConnections - User-created cable connections
+ * @param {Array<[string, string]>} internalConns - Internal switch connections (tuple pairs)
+ * @returns {{areConnected: Function, getGroup: Function}} - Graph with connectivity queries
+ */
 export function buildElectricalGraph(manualConnections,internalConns){
   const parent={};
   // Union-Find iterativo (evita stack overflow em cadeias longas)
@@ -204,6 +233,14 @@ export const MALETA_VOLTAGE_OUTPUTS=[
 // Calcula o que o relé REALMENTE vê baseado na conectividade elétrica.
 // Se a maleta não estiver conectada corretamente, o relé vê 0.
 // Se estiver conectada invertida, o ângulo é deslocado 180°.
+/**
+ * Compute relay current and voltage readings based on electrical connectivity.
+ * Maps suitcase outputs to relay sensor inputs using the electrical graph.
+ * Detects reversed polarity by applying 180° phase shift.
+ * @param {Object} phasors - Fault phasors with currents and voltages
+ * @param {Object} electricalGraph - Graph from buildElectricalGraph
+ * @returns {{currents: Object, voltages: Object}} - What relay actually sees
+ */
 export function computeRelayReadings(phasors,electricalGraph){
   const currents={Ia:{mag:0,ang:0},Ib:{mag:0,ang:0},Ic:{mag:0,ang:0}};
   const voltages={Va:{mag:0,ang:0},Vb:{mag:0,ang:0},Vc:{mag:0,ang:0}};
@@ -280,6 +317,14 @@ export const MALETA_BI=[
 // - fieldState: {connections, internalConns} do campo (cabos + chave)
 // Retorna true se a maleta detecta o trip (algum BI tem pos↔neg conectados
 // através da cadeia: BO ativado → bornes → cabos → BI da maleta)
+/**
+ * Check if suitcase detects relay trip via binary inputs.
+ * Traces path: tripped stages → activated BOs → terminal block → suitcase BIs.
+ * @param {Array<string>} stageIds - Tripped protection stages
+ * @param {Object} relayMatrix - Output matrix (stage → BO mappings)
+ * @param {Object} fieldState - Field connectivity state
+ * @returns {boolean} True if at least one BI is electrically connected
+ */
 export function checkMaletaTripDetection(stageIds,relayMatrix,fieldState){
   if(!stageIds||!relayMatrix||!fieldState)return false;
   const boCols=['BO3','BO4','BO5','BO6'];
@@ -317,6 +362,14 @@ export function checkMaletaTripDetection(stageIds,relayMatrix,fieldState){
 
 // Verifica se o circuito da bobina de disparo (TC — TB_13/TB_14) está completo
 // via um BO ativo do relé. Quando verdadeiro, o disjuntor deve abrir.
+/**
+ * Check if trip coil circuit is complete via activated breaker BO.
+ * Determines if breaker can trip when a protection stage activates.
+ * @param {Array<string>} stageIds - Tripped protection stages
+ * @param {Object} relayMatrix - Output matrix (stage → BO mappings)
+ * @param {Object} fieldState - Field connectivity state
+ * @returns {boolean} True if TB_13 and TB_14 are electrically connected
+ */
 export function checkBreakerTripCoil(stageIds,relayMatrix,fieldState){
   if(!stageIds||!relayMatrix||!fieldState)return false;
   const boCols=['BO3','BO4','BO5','BO6'];
@@ -401,6 +454,14 @@ const SWITCH_TID_TO_POLE={
   'va_top':'va','vb_top':'vb','vc_top':'vc',
 };
 
+/**
+ * Validate electrical connection between two terminals.
+ * Enforces wiring rules: current ↔ voltage isolation, switch position checks, analog ↔ binary separation.
+ * @param {string} tidA - First terminal ID
+ * @param {string} tidB - Second terminal ID
+ * @param {Object} switchSt - Switch state object (position per pole)
+ * @returns {{valid: boolean, msg: string}} - Validation result with error message
+ */
 function validateConnection(tidA,tidB,switchSt){
   const gA=getTerminalGroup(tidA),gB=getTerminalGroup(tidB);
   // Parte inferior da chave: sempre proibido
