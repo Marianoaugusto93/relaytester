@@ -189,7 +189,7 @@ export default function RelayDisplay({ci,vi,i0,v0,i2lcd,rtc,rtp,Inom,freqLcd,pTo
       <button className={`rtab ${relayTab==="logica"?"on":""}`} onClick={()=>setRelayTab("logica")}>LÓGICA</button>
       <button className={`rtab ${relayTab==="eventos"?"on":""}`} onClick={()=>setRelayTab("eventos")}>EVENTOS</button>
     </div>
-    <div className="relay-panel">
+    <div className="relay-panel" data-tutorial-target="relay-output">
       {relayTab==="mensuracao"&&renderMensuracaoTab()}
       {relayTab==="protecao"&&renderProtecaoTab()}
       {relayTab==="logica"&&renderLogicaTab()}

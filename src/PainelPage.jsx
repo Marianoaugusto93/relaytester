@@ -867,7 +867,7 @@ export default function PainelPage({
               </div>
 
               {/* Status Indicators */}
-              <div className="painel-status-indicators">
+              <div className="painel-status-indicators" data-tutorial-target="breaker-status">
                 <div className="ps-ind-row">
                   <span className="ps-ind-label">● Posição</span>
                   <span className={`ps-ind-value ${isClosed ? 'active-green' : ''}`}>

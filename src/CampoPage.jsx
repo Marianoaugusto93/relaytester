@@ -913,7 +913,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
   return(<>
     <style>{campoCSS}</style>
-    <div className="campo-root" ref={rootRef} style={{position:'relative'}}>
+    <div className="campo-root" data-tutorial-target="campo-wiring" ref={rootRef} style={{position:'relative'}}>
       <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
 
       {/* RÉGUA DE BORNES */}
@@ -922,7 +922,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
         <div style={{display:'flex',alignItems:'flex-end',marginLeft:12}}>
           {Array.from({length:16},(_,i)=><BorneCable key={i+1} n={i+1} anilha={BORNE_ANILHAS[i]} side="top"/>)}
         </div>
-        <div className="borne-wrap">
+        <div className="borne-wrap" data-tutorial-target="terminal-block">
           <div className="borne-arrow-l"/>
           <div className="borne-chassis">
             {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}

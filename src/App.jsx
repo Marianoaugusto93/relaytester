@@ -232,6 +232,7 @@ function AppInner(){
    * @param {Object} preset - Preset object with fns, stages, patch, out, inp properties
    */
   const applyTestPreset=useCallback((preset)=>{
+    if(!preset||!Array.isArray(preset.fns)||typeof preset.stages!=="object"||preset.stages===null){console.warn("invalid preset",preset);return;}
     const base=deepClone(defaultProtections);
     protOrder.forEach(fid=>{
       base[fid].enabled=preset.fns.includes(fid);
@@ -353,7 +354,7 @@ function AppInner(){
     <div className="topbar">
       <div className="tb-l"><div className="tb-ico"><svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="9" fill="#181b22"/><circle cx="18" cy="18" r="13" fill="none" stroke="#f97316" strokeWidth="1.8"/><circle cx="18" cy="18" r="9.5" fill="#0e1015"/><line x1="18" y1="5" x2="18" y2="8" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="18" y1="28" x2="18" y2="31" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="5" y1="18" x2="8" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="28" y1="18" x2="31" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 18 Q12.5 13 15 18 Q17.5 23 20 18" fill="none" stroke="#f3f4f6" strokeWidth="1.5" strokeLinecap="round"/><path d="M20 18 L22 14 L24 22 L26 16" fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div><div className="tb-t">RelayLab <span>360</span></div><div className="tb-s">INTEGRAL PROTECTION ENGINEERING PLATFORM</div></div></div>
       <div className="tb-r">
-        <div className="nav-pills"><button className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>Campo</button><button className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>Relé</button><button className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>Painel{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button></div>
+        <div className="nav-pills"><button data-tutorial-target="nav-campo" className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>Campo</button><button data-tutorial-target="nav-relay" className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>Relé</button><button data-tutorial-target="nav-panel" className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>Painel{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button></div>
         <div className="tb-status"><div className="tb-dot"/>Online</div>
         <button className="help-btn" onClick={()=>openHelp("getting-started")} title="Help &amp; Reference">?</button>
       </div>
