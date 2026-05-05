@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useHelp } from "./HelpContext.jsx";
 
+// Topics with expandable flag for complex sections
 const TOPICS = [
   {
     id: "getting-started",
     label: "Getting Started",
+    expandable: false,
     content: [
       {
         heading: "Welcome to RelayLab 360",
@@ -19,6 +21,7 @@ const TOPICS = [
   {
     id: "wiring-basics",
     label: "Wiring Basics",
+    expandable: false,
     content: [
       {
         heading: "Campo Tab",
@@ -37,6 +40,7 @@ const TOPICS = [
   {
     id: "phasors-101",
     label: "Phasors 101",
+    expandable: false,
     content: [
       {
         heading: "What is a Phasor?",
@@ -55,6 +59,7 @@ const TOPICS = [
   {
     id: "protection-settings",
     label: "Protection Settings",
+    expandable: true,
     content: [
       {
         heading: "ANSI/IEC Functions",
@@ -73,6 +78,7 @@ const TOPICS = [
   {
     id: "relay-outputs",
     label: "Relay Outputs",
+    expandable: true,
     content: [
       {
         heading: "Binary Outputs (BO)",
@@ -91,6 +97,7 @@ const TOPICS = [
   {
     id: "comtrade-export",
     label: "COMTRADE Export",
+    expandable: false,
     content: [
       {
         heading: "What is COMTRADE?",
@@ -109,58 +116,179 @@ const TOPICS = [
 ];
 
 export default function HelpModal() {
-  const { helpOpen, activeTopicId, closeHelp, openHelp } = useHelp();
+  const { helpOpen, activeTopicId, closeHelp } = useHelp();
   const [localTopic, setLocalTopic] = useState(activeTopicId);
+  // Track which expandable sections are open (by topic id)
+  const [expanded, setExpanded] = useState({});
+
+  const modalRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const prevFocusRef = useRef(null);
 
   useEffect(() => {
     setLocalTopic(activeTopicId);
   }, [activeTopicId]);
 
+  // Escape key to close
   useEffect(() => {
     if (!helpOpen) return;
-    function onKey(e) {
+    const onKey = (e) => {
       if (e.key === "Escape") closeHelp();
-    }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [helpOpen, closeHelp]);
 
+  // Focus trap inside modal
+  useEffect(() => {
+    if (!helpOpen) {
+      // Restore focus to the element that opened the modal
+      if (prevFocusRef.current) {
+        prevFocusRef.current.focus();
+      }
+      return;
+    }
+    // Capture the element that had focus before opening
+    prevFocusRef.current = document.activeElement;
+
+    // Focus close button on open
+    const frame = requestAnimationFrame(() => {
+      if (closeButtonRef.current) closeButtonRef.current.focus();
+    });
+
+    const trapFocus = (e) => {
+      if (!modalRef.current) return;
+      const focusable = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.key === "Tab") {
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", trapFocus);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("keydown", trapFocus);
+    };
+  }, [helpOpen]);
+
+  const toggleExpanded = useCallback((topicId) => {
+    setExpanded(prev => ({ ...prev, [topicId]: !prev[topicId] }));
+  }, []);
+
+  // Keyboard handler for expandable section headers
+  const handleSectionKeyDown = useCallback((e, topicId) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleExpanded(topicId);
+    }
+  }, [toggleExpanded]);
+
   if (!helpOpen) return null;
 
   const topic = TOPICS.find((t) => t.id === localTopic) || TOPICS[0];
+  const isExpanded = expanded[topic.id] ?? false;
 
   return (
-    <div className="help-overlay" onClick={closeHelp}>
-      <div className="help-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="help-overlay"
+      onClick={closeHelp}
+      role="presentation"
+    >
+      <div
+        className="help-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-modal-title"
+        ref={modalRef}
+      >
         <div className="help-header">
-          <div className="help-title">HELP &amp; REFERENCE</div>
-          <button className="help-close" onClick={closeHelp} aria-label="Close help">
+          <div className="help-title" id="help-modal-title">HELP &amp; REFERENCE</div>
+          <button
+            className="help-close"
+            onClick={closeHelp}
+            aria-label="Close help"
+            ref={closeButtonRef}
+          >
             &#x2715;
           </button>
         </div>
         <div className="help-body">
-          <nav className="help-nav">
+          <nav className="help-nav" aria-label="Help topics">
             {TOPICS.map((t) => (
               <button
                 key={t.id}
                 className={`help-nav-btn${localTopic === t.id ? " on" : ""}`}
                 onClick={() => setLocalTopic(t.id)}
+                aria-current={localTopic === t.id ? "true" : undefined}
+                tabIndex={0}
               >
                 {t.label}
               </button>
             ))}
           </nav>
-          <div className="help-content">
-            {topic.content.map((section, i) => (
-              <div key={i} className="help-section">
-                <div className="help-section-title">{section.heading}</div>
-                <div className="help-section-body">
-                  {section.body.split("\n").map((line, j) => (
-                    <p key={j}>{line}</p>
+          <div className="help-content" role="region" aria-label={topic.label}>
+            {topic.expandable ? (
+              // Expandable topic: single collapsible card
+              <div
+                className="help-section-card"
+                aria-expanded={isExpanded ? "true" : "false"}
+              >
+                <div
+                  className="help-section-header"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleExpanded(topic.id)}
+                  onKeyDown={(e) => handleSectionKeyDown(e, topic.id)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`help-section-content-${topic.id}`}
+                >
+                  {topic.label}
+                </div>
+                <div
+                  className="help-section-content"
+                  id={`help-section-content-${topic.id}`}
+                >
+                  {topic.content.map((section, i) => (
+                    <div key={i} style={{ marginBottom: i < topic.content.length - 1 ? 14 : 0 }}>
+                      <div className="help-section-title">{section.heading}</div>
+                      <div className="help-section-body">
+                        {section.body.split("\n").map((line, j) => (
+                          <p key={j}>{line}</p>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
-            ))}
+            ) : (
+              // Static topic: render sections directly
+              topic.content.map((section, i) => (
+                <div key={i} className="help-section">
+                  <div className="help-section-title">{section.heading}</div>
+                  <div className="help-section-body">
+                    {section.body.split("\n").map((line, j) => (
+                      <p key={j}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
