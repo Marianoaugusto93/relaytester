@@ -1,49 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "./i18n/useTranslation.js";
+import { useLanguage } from "./i18n/LanguageContext.jsx";
 
-const TUTORIAL_STEPS = [
-  {
-    id: "step1",
-    title: "Bem-vindo ao RelayLab 360",
-    description: "Uma plataforma integral para engenharia de proteção. Clique em 'Próximo' para começar o tour.",
-    targetSelector: null,
-    position: "center"
-  },
-  {
-    id: "step2",
-    title: "Aba Campo — Simulador de Fiação",
-    description: "Configure a fiação física do teste. Conecte os terminais da maleta ao bloco de terminais e à chave de aferição.",
-    targetSelector: '[data-tutorial-target="nav-campo"]',
-    position: "bottom"
-  },
-  {
-    id: "step3",
-    title: "Aba Relé — Injeção de Corrente",
-    description: "Injete correntes trifásicas e tensões para simular faltas. Configure os fasores (magnitude e ângulo) para testar diferentes cenários de proteção.",
-    targetSelector: '[data-tutorial-target="nav-relay"]',
-    position: "bottom"
-  },
-  {
-    id: "step4",
-    title: "Aba Painel — Circuito e Proteção",
-    description: "Visualize o disjuntor, diagrama de comando (ladder) e diagrama unifilar. Monitore os estados da proteção e saídas binárias.",
-    targetSelector: '[data-tutorial-target="nav-panel"]',
-    position: "bottom"
-  },
-  {
-    id: "step5",
-    title: "Configurações de Proteção",
-    description: "Na aba Relé, configure os estágios de proteção (50/51, 67, 27/59, etc.) com seus parâmetros técnicos e curvas características.",
-    targetSelector: null,
-    position: "center"
-  },
-  {
-    id: "step6",
-    title: "Executar Simulação",
-    description: "Clique em 'Injetar' para iniciar a simulação. O relé detectará a falta e disparará o disjuntor de acordo com as configurações de proteção.",
-    targetSelector: null,
-    position: "center"
-  }
+const STEP_SELECTORS = [
+  null,
+  '[data-tutorial-target="nav-campo"]',
+  '[data-tutorial-target="nav-relay"]',
+  '[data-tutorial-target="nav-panel"]',
+  null,
+  null,
 ];
 
 function computeClipPos(selector) {
@@ -61,50 +27,50 @@ function computeClipPos(selector) {
 }
 
 export default function Tutorial({ show, onDismiss }) {
+  const { t } = useTranslation();
+  const { locale } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
   const [clipPos, setClipPos] = useState(null);
   const debounceRef = useRef(null);
 
-  const step = TUTORIAL_STEPS[currentStep];
+  // Get steps from locale directly (array access)
+  const steps = useMemo(() => {
+    try { return locale.tutorial.steps || []; } catch { return []; }
+  }, [locale]);
 
-  // Compute clipPos synchronously for first render (eliminates flash)
+  const totalSteps = steps.length;
+  const step = steps[currentStep] || { title: "", description: "" };
+  const selector = STEP_SELECTORS[currentStep] || null;
+
   const initialClipPos = useMemo(() => {
-    return show ? computeClipPos(step.targetSelector) : null;
-  }, [show, currentStep]);
+    return show ? computeClipPos(selector) : null;
+  }, [show, currentStep, selector]);
 
-  // Recalculate highlight position for current step
   const recalcPos = useCallback(() => {
-    setClipPos(computeClipPos(step.targetSelector));
-  }, [step.targetSelector]);
+    setClipPos(computeClipPos(selector));
+  }, [selector]);
 
-  // Sync clipPos with computed value on show/step change
   useEffect(() => {
     setClipPos(initialClipPos);
   }, [initialClipPos]);
 
-  // Resize/scroll listener with 200ms debounce
   useEffect(() => {
-    if (!show || !step.targetSelector) return;
-
+    if (!show || !selector) return;
     const handler = () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        recalcPos();
-      }, 200);
+      debounceRef.current = setTimeout(() => { recalcPos(); }, 200);
     };
-
     window.addEventListener("resize", handler);
     window.addEventListener("scroll", handler, true);
-
     return () => {
       window.removeEventListener("resize", handler);
       window.removeEventListener("scroll", handler, true);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [show, step.targetSelector, recalcPos]);
+  }, [show, selector, recalcPos]);
 
   const handleNext = () => {
-    if (currentStep < TUTORIAL_STEPS.length - 1) {
+    if (currentStep < totalSteps - 1) {
       setCurrentStep(c => c + 1);
     } else {
       localStorage.setItem("tutorial_completed", "true");
@@ -125,7 +91,7 @@ export default function Tutorial({ show, onDismiss }) {
     if (!show) return;
     const handleEscape = (e) => {
       if (e.key === "Escape") {
-        const confirmed = window.confirm("Descartar tour?");
+        const confirmed = window.confirm(t("tutorial.discardTour"));
         if (confirmed) {
           localStorage.setItem("tutorial_completed", "true");
           onDismiss();
@@ -134,15 +100,14 @@ export default function Tutorial({ show, onDismiss }) {
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [show, onDismiss]);
+  }, [show, onDismiss, t]);
 
-  if (!show) return null;
+  if (!show || totalSteps === 0) return null;
 
   const maskPath = clipPos
     ? `polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, ${clipPos.x1}px ${clipPos.y1}px, ${clipPos.x1}px ${clipPos.y2}px, ${clipPos.x2}px ${clipPos.y2}px, ${clipPos.x2}px ${clipPos.y1}px, ${clipPos.x1}px ${clipPos.y1}px)`
     : "polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%)";
 
-  // Bubble position: anchored to highlight box or centered
   const bubbleStyle = clipPos
     ? {
         position: "fixed",
@@ -156,7 +121,6 @@ export default function Tutorial({ show, onDismiss }) {
         transform: "translate(-50%, -50%)"
       };
 
-  // Highlight box dimensions
   const highlightStyle = clipPos
     ? {
         left: `${clipPos.x1}px`,
@@ -178,14 +142,14 @@ export default function Tutorial({ show, onDismiss }) {
       )}
       <div className="tut-bubble" style={bubbleStyle}>
         <div className="tut-step-counter">
-          <span>PASSO {currentStep + 1} DE {TUTORIAL_STEPS.length}</span>
+          <span>{t("tutorial.step")} {currentStep + 1} {t("tutorial.of")} {totalSteps}</span>
           <div className="tut-dots">
-            {TUTORIAL_STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <button
                 key={i}
                 className={`tut-dot${i === currentStep ? " on" : ""}`}
                 onClick={() => setCurrentStep(i)}
-                aria-label={`Ir para passo ${i + 1}`}
+                aria-label={`${t("tutorial.goToStep")} ${i + 1}`}
               />
             ))}
           </div>
@@ -201,21 +165,21 @@ export default function Tutorial({ show, onDismiss }) {
                 else localStorage.removeItem("tutorial_completed");
               }}
             />
-            Não mostrar novamente
+            {t("tutorial.dontShow")}
           </label>
           <div className="tut-btns">
             <button className="tut-btn tut-skip" onClick={handleSkip}>
-              PULAR
+              {t("tutorial.skip")}
             </button>
             <button
               className="tut-btn tut-prev"
               onClick={handlePrev}
               disabled={currentStep === 0}
             >
-              ANTERIOR
+              {t("tutorial.prev")}
             </button>
             <button className="tut-btn tut-next" onClick={handleNext}>
-              {currentStep === TUTORIAL_STEPS.length - 1 ? "CONCLUIR" : "PRÓXIMO"}
+              {currentStep === totalSteps - 1 ? t("tutorial.finish") : t("tutorial.next")}
             </button>
           </div>
         </div>

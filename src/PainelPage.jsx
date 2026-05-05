@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import WaveformDisplay from "./WaveformDisplay.jsx";
 
 // ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
 const C = {
@@ -725,6 +726,8 @@ export default function PainelPage({
   sys          = null,
   relayReadings = null,
   injecting    = false,
+  phasors      = null,
+  tripHistory  = [],
 }) {
   const [bkState,      setBkState]      = useState('open');
   const [springLoaded, setSpringLoaded] = useState(true);
@@ -927,9 +930,12 @@ export default function PainelPage({
                 <button className={`pt ${rightTab==='uni'?'on':''}`} onClick={()=>setRightTab('uni')}>
                   Unifilar
                 </button>
+                <button className={`pt ${rightTab==='onda'?'on':''}`} onClick={()=>setRightTab('onda')}>
+                  Forma de Onda
+                </button>
               </div>
 
-              <div className="painel-tab-content">
+              <div className="painel-tab-content" style={rightTab==='onda'?{padding:0,overflow:'hidden'}:{}}>
                 {rightTab==='cmd' && (
                   <CommandDiagram
                     bkState={bkState}
@@ -945,6 +951,15 @@ export default function PainelPage({
                     sys={sys}
                     relayReadings={relayReadings}
                     injecting={injecting}
+                  />
+                )}
+                {rightTab==='onda' && (
+                  <WaveformDisplay
+                    phasors={phasors}
+                    isInjecting={injecting}
+                    injectionTime={0}
+                    tripHistory={tripHistory}
+                    freq={sys?.freq ?? 60}
                   />
                 )}
               </div>
