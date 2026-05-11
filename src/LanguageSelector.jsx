@@ -77,6 +77,8 @@ export default function LanguageSelector() {
           fontFamily: "var(--fh)", cursor: "pointer",
           letterSpacing: ".5px", transition: "all .2s", whiteSpace: "nowrap",
         }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(249,115,22,.4)"; e.currentTarget.style.color = "var(--orange)"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--bdr)"; e.currentTarget.style.color = "var(--tx2)"; }}
       >
         <span style={{ fontSize: 14, lineHeight: 1 }}>{FLAG[language]}</span>
         <span>{language.toUpperCase()}</span>
@@ -89,7 +91,7 @@ export default function LanguageSelector() {
           onKeyDown={handleListKeyDown}
           style={{
             position: "absolute", top: "calc(100% + 4px)", right: 0,
-            zIndex: 5000, background: "var(--card)", border: "1px solid var(--bdr)",
+            zIndex: 5000, background: "var(--card)", border: "1px solid rgba(249,115,22,.2)",
             borderRadius: 8, overflow: "hidden",
             boxShadow: "0 8px 24px rgba(0,0,0,.5)", minWidth: 130,
           }}

@@ -19,6 +19,7 @@ import FaultCalculator from "./FaultCalculator.jsx";
 import PhasorDiagram from "./PhasorDiagram.jsx";
 import RelayDisplay from "./RelayDisplay.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
+import WaveformDisplay from "./WaveformDisplay.jsx";
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
 
@@ -45,6 +46,7 @@ function AppInner(){
   const onBkFieldCommand=useCallback((cmd)=>{if(cmd==='close')setBkCloseCtr(c=>c+1);},[]);
   const[campoLoadWiring,setCampoLoadWiring]=useState(null);
   const[wfModalOpen,setWfModalOpen]=useState(false);const[wfSelected,setWfSelected]=useState(null);
+  const[wfDisplayOpen,setWfDisplayOpen]=useState(false);
   const[phasorDiagOpen,setPhasorDiagOpen]=useState(false);
   const[fcOpen,setFcOpen]=useState(false);
   const[phasorVis,setPhasorVis]=useState({Ia:true,Ib:true,Ic:true,Va:true,Vb:true,Vc:true,Vab:false,Vbc:false,Vca:false,I0:false,I1:false,I2:false,V0:false,V1:false,V2:false});
@@ -455,6 +457,7 @@ function AppInner(){
             <div className="relay-actions">
               <button className={`ra-btn ${sendFlash?"flash-g":""}`} onClick={sendSettings}><div className="ra-ico send">↑</div><span className="ra-lbl">{t("controls.send").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
               <button className={`ra-btn ${getFlash?"flash-b":""}`} onClick={getSettings}><div className="ra-ico get">↓</div><span className="ra-lbl">{t("controls.get").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
+              <button className="ra-btn" onClick={()=>setWfDisplayOpen(true)}><div className="ra-ico wave">📊</div><span className="ra-lbl">Live<br/>Waveform</span></button>
               <button className="ra-btn" onClick={()=>setWfModalOpen(true)}><div className="ra-ico wave">∿</div><span className="ra-lbl">{t("controls.getWaveform").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
             </div>
             <div className="relay-actions">
@@ -499,6 +502,7 @@ function AppInner(){
   </div>}
   {phasorDiagOpen&&<PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/>}
   {fcOpen&&<FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/>}
+  {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></div></div></div>}
   <HelpModal/>
   <Tutorial show={tutorialOpen} onDismiss={closeTutorial}/>
   </>);
