@@ -247,7 +247,7 @@ function AppInner(){
       else if(fid==='32'){const s=preset.stages['32']||{};base[fid].stages32r?.forEach((st,i)=>{st.enabled=!!(s.s32r?.includes(i));});base[fid].stages32f?.forEach((st,i)=>{st.enabled=!!(s.s32f?.includes(i));});}
       else if(fid!=='79'){const idxs=preset.stages[fid]||[];base[fid].stages?.forEach((st,i)=>{st.enabled=idxs.includes(i);})}
     });
-    if(preset.patch){Object.keys(preset.patch).forEach(fid=>{if(!base[fid])return;const p=preset.patch[fid];p.stages?.forEach((s,i)=>{if(base[fid].stages?.[i])Object.assign(base[fid].stages[i],s);});})}
+    if(preset.patch){Object.keys(preset.patch).forEach(fid=>{if(!base[fid])return;const p=preset.patch[fid];p.stages?.forEach((s,i)=>{if(base[fid].stages?.[i])Object.assign(base[fid].stages[i],s);});p.stages81u?.forEach((s,i)=>{if(base[fid].stages81u?.[i])Object.assign(base[fid].stages81u[i],s);});p.stages81o?.forEach((s,i)=>{if(base[fid].stages81o?.[i])Object.assign(base[fid].stages81o[i],s);});p.stages27?.forEach((s,i)=>{if(base[fid].stages27?.[i])Object.assign(base[fid].stages27[i],s);});p.stages59?.forEach((s,i)=>{if(base[fid].stages59?.[i])Object.assign(base[fid].stages59[i],s);});p.stages32r?.forEach((s,i)=>{if(base[fid].stages32r?.[i])Object.assign(base[fid].stages32r[i],s);});p.stages32f?.forEach((s,i)=>{if(base[fid].stages32f?.[i])Object.assign(base[fid].stages32f[i],s);});})}
     setProt(base);setRelayProt(deepClone(base));
     const nextOut=buildDefaultMatrix();
     Object.keys(preset.out||{}).forEach(row=>{Object.keys(preset.out[row]).forEach(col=>{if(nextOut[row]&&nextOut[row][col]!==undefined)nextOut[row][col]=preset.out[row][col];})});

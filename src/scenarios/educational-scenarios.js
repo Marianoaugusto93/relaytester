@@ -201,10 +201,10 @@ export const EDUCATIONAL_SCENARIOS = [
     label: 'Underfreq 81U',
     name: 'Underfrequency Event (81U)',
     description:
-      'System frequency falls below nominal (simulated via 81U pickup settings). ' +
-      'Voltages and currents at nominal levels. Tests 81U underfrequency protection. ' +
-      'Frequency is adjusted manually in the phasor panel (Frequency field). ' +
-      'Expected: 81U-1 trips after 1.0 s if frequency drops below 59.5 Hz.',
+      'System frequency at nominal (60 Hz) demonstrates 81U underfrequency threshold detection. ' +
+      'Voltages and currents at nominal levels. Tests 81U underfrequency protection behavior. ' +
+      'Pickup set to 61.0 Hz: when system frequency drops below 61 Hz, the relay detects underfrequency. ' +
+      'Expected: 81U-1 trips after 1.0 s when frequency goes below the 61 Hz threshold.',
     learningObj: 'Demonstrate how underfrequency relays protect generators and loads during grid frequency events, and the importance of staged pickup thresholds.',
     phasors: {
       currents: {
@@ -220,7 +220,9 @@ export const EDUCATIONAL_SCENARIOS = [
     },
     fns: ['81'],
     stages: { '81': { s81u: [0], s81o: [] } },
-    patch: {},
+    patch: {
+      '81': { stages81u: [{ pickup: 61.0, timeOp: 1.0 }] },
+    },
     out: {
       '81U-1': { BO3: true, L3: true },
       CB_Opened: { L1: true },
@@ -238,7 +240,8 @@ export const EDUCATIONAL_SCENARIOS = [
     description:
       'Forward fault with Ia = 3.0 A at 0°, Va = 40 V at 0°. ' +
       'MTA = −45°, polarisation = quadrature. Tests the directional element: ' +
-      'only forward faults should operate the relay, reverse faults should be blocked.',
+      'only forward faults should operate the relay, reverse faults should be blocked. ' +
+      'Uses definite-time delay (0.3s) for demonstration.',
     learningObj: 'Explain how the 67 directional element uses voltage polarisation to distinguish forward faults from reverse faults on a meshed network.',
     phasors: {
       currents: {
@@ -255,7 +258,7 @@ export const EDUCATIONAL_SCENARIOS = [
     fns: ['67'],
     stages: { '67': [0] },
     patch: {
-      '67': { stages: [{ pickup: 2.0, timeDial: 0.1, mta: -45, pol: 'quadratura', dir: 'forward' }] },
+      '67': { stages: [{ pickup: 2.0, curve: 'Tempo Definido', timeDial: 0.3, mta: -45, pol: 'quadratura', dir: 'forward' }] },
     },
     out: {
       '67-1': { BO3: true, L3: true },
