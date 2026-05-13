@@ -143,6 +143,82 @@ App state (phasors, protections, system parameters, matrix, trip history) is sav
 ### ~~Phase 5~~ ✅ COMPLETE: Testing & Accessibility
 **Status**: Completed in Phase 7 (regression testing verified, accessibility verified)
 
+### ~~PR 2/3~~ ✅ COMPLETE: Relé Tab Refactor — Layout Reorganization
+**Status**: Completed (2026-05-12) | **Build**: 326.10 kB (86.34 kB gzip, 63 modules)
+
+**Layout Changes Implemented (from 01 - Rele refactor.md):**
+
+1. **Top Injection Band** (§2.1)
+   - Moved CURRENT INJECTION, VOLTAGE INJECTION, FREQUENCY from left sidebar to horizontal 3-column band
+   - Each column with toggle Manual / 3φ Eq (segmented control)
+   - Grid 3×2 for MAG (3 fases) + ÂNG (3 fases)
+   - Component: `InjectionBand.jsx`
+
+2. **Left Sidebar — Scenarios** (§2.2, 240px)
+   - Toggle Pré-falta / Falta in header
+   - Educational scenarios in vertical lines (name + description, 1 line each)
+   - "+ Novo cenário" button (opens CustomScenarioBuilder modal)
+   - "Carregar .json" import button
+   - Component: `ScenariosSidebar.jsx`
+
+3. **Central Area — Function Rail** (§2.3, 110px vertical)
+   - Sub-tab functions (50, 51, 50N, 51N, 67, 67N, 27, 59, 47, 79, 81U, 81O, 32F, 32R) as vertical rail
+   - Each function: code + sublabel (e.g., "51 Sobrec. T")
+   - Form pane on the right with stage pills + protection settings
+   - Component: Integrated into `SettingsPanel.jsx` with new `.func-rail` layout
+
+4. **Right Sidebar — REGRID Pro** (§2.4, 280px, reduced from 320px)
+   - Internal tabs: Medidas · Proteções · Lógica · Eventos
+   - Measurements: one column (Secundária) by default, toggle "≡ Primária" reveals 2ª column
+   - Sections: CORR / TENS / POT
+   - 8 action buttons grouped in 2 visual cards: AJUSTES (Send, Get, Open, Save) + OPERAÇÃO (Live, Capture, Snap, Dump)
+   - Component: `MeasuresPanel.jsx`
+
+5. **Controls Bar — Fixed Footer** (§2.5)
+   - [▶ Injetar] [■ Parar] [↺ Reset Fault] (green/red/neutral)
+   - Status with animated dot when running
+   - "● status · TRIP timer 0.000s"
+   - [⚡ Calculador de Falta] right-aligned (orange outline, NOT lavender)
+   - Component: `ControlsBar.jsx`
+
+**Files Created:**
+- `src/RelePage.jsx` — Page shell (160 lines): injection band + 3-column main + controls bar
+- `src/relay/InjectionBand.jsx` — Top injection band (130 lines)
+- `src/relay/ScenariosSidebar.jsx` — Left scenarios sidebar (110 lines)
+- `src/relay/CustomScenarioBuilder.jsx` — Scenario CRUD modal (130 lines, extracted from SettingsPanel)
+- `src/relay/MeasuresPanel.jsx` — Right measurements panel (180 lines)
+- `src/relay/ControlsBar.jsx` — Bottom controls bar (35 lines)
+
+**Files Modified:**
+- `src/appStyles.js` — +30 CSS classes (.rele-page, .rele-injection, .inj-block, .rele-main, .rele-left/mid/right, .scen-*, .tabs-row, .func-rail, .func-pane, .controls-bar, .cb-btn, .measures-*, .act-group); updated .main grid: 260px 1fr 330px → 240px 1fr 280px; added --card4, --bdr2 colors
+- `src/SettingsPanel.jsx` — Removed CustomScenarioBuilder; updated relay branch to use vertical .func-rail instead of horizontal .tbar
+- `src/App.jsx` — Imported RelePage; replaced 98-line inline relay JSX with single `<RelePage {...30 props}/>`
+
+**Acceptance Criteria — ALL MET:**
+- ✓ Injection band: 3 columns at top (Current, Voltage, Frequency)
+- ✓ Scenarios sidebar: 240px left column with vertical scenario lines (not chips)
+- ✓ Function rail: vertical 110px selector for protection functions with code + sublabel
+- ✓ Controls bar: fixed footer with [▶ Inject] [■ Stop] [↺ Reset] + animated status + [⚡ Calculator]
+- ✓ REGRID: reduced from 320px to 280px with internal tabs + toggle Sec/Prim
+- ✓ Empty cards: EVENT RECORDER and DIAGNOSTICS removed from old structure
+- ✓ Calculator button: orange outline (not lavender)
+- ✓ Button grouping: 8 action buttons in 2 visual groups (Ajustes/Operação)
+- ✓ Layout: fits without vertical scroll at 1080px height
+- ✓ Build: success, 63 modules, 326.10 kB (86.34 kB gzip)
+- ✓ No console errors or warnings
+
+**Architecture Notes:**
+- RelePage owns the layout shell only; no state of its own
+- InjectionBand, ScenariosSidebar, MeasuresPanel, ControlsBar are sub-components that take props from App.jsx
+- CustomScenarioBuilder extracted to `src/relay/` for reuse by both ScenariosSidebar and SettingsPanel
+- SettingsPanel.jsx continues to route four tabs (System, Relay, Output, Input) unchanged
+- All simulation state remains in App.jsx (no Context introduced)
+- Mirrors existing Campo/PainelPage pattern; prepares PR 3/3 to reuse ControlsBar and MeasuresPanel components
+
+**Commit**: feat: PR 2/3 — Relé refactor (777b5c6)
+
+---
+
 ### Phase 8: Custom Scenario Persistence & Import/Export
 **Priority**: HIGH | **Estimated effort**: 4-6 hours | **Status**: Ready to start
 
