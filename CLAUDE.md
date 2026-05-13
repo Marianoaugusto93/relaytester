@@ -461,3 +461,36 @@ Before deploying to production:
 - Build time: 1.55s
 - Exit code: 0
 - No console errors or warnings
+
+---
+
+### Phase 7.1: Injection Stability & UI Font Improvements
+**Status**: ✅ COMPLETE | **Date**: 2026-05-12 | **Commit**: 73f9a6d
+
+**Issue Fixed:**
+- **Blank screen on [▶ Injetar]** — ReferenceError from undefined `stime` variable in MeasuresPanel
+  - Root cause: `stime` was referenced in JSX but not passed as prop from RelePage
+  - Fix: Removed `stime` reference and simplified status display to "● Injeção" / "● Parado"
+  - Impact: Injection now works without errors; status bar remains functional
+
+**UI Improvements:**
+1. **MeasuresPanel status font** — Increased from 11px to 14px for better visibility
+2. **ControlsBar TRIP timer font** — Increased from ~11px to **18px** with fontWeight 600
+   - Status display: "Parado · TRIP timer 0.550 s" now clearly visible
+   - Applies to all states: Parado, Injetando, TRIP
+
+**Files Modified:**
+- `src/relay/MeasuresPanel.jsx` — Removed `stime` ref, increased font 11→14px
+- `src/relay/ControlsBar.jsx` — Increased timer font 11→18px with weight 600
+
+**Build Verification:**
+- Production build: ✅ 327.15 kB (86.22 kB gzip)
+- Module count: 63 modules
+- Exit code: 0
+- No console errors
+
+**Tested Functionality:**
+- ✅ [▶ Injetar] no longer triggers blank screen
+- ✅ Injection status displays correctly
+- ✅ TRIP timer font size increased for readability
+- ✅ Dev server running on http://localhost:5173
