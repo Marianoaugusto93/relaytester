@@ -19,6 +19,7 @@ import FaultCalculator from "./FaultCalculator.jsx";
 import PhasorDiagram from "./PhasorDiagram.jsx";
 import RelayDisplay from "./RelayDisplay.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
+import RelePage from "./RelePage.jsx";
 import WaveformDisplay from "./WaveformDisplay.jsx";
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
@@ -371,104 +372,35 @@ function AppInner(){
       <div className="slide-pg"><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring}/></div>
 
       {/* RELÉ */}
-      <div className="slide-pg"><div className="relay-pg"><div className="main">
-        <div className="col">
-          <div style={{display:"flex",gap:0,background:"var(--card2)",borderRadius:10,padding:3,marginBottom:4}}>
-            <button className={`nav-pill ${pfMode==="prefault"?"on":""}`} style={{flex:1,fontSize:11}} onClick={()=>setPfMode("prefault")}>{t("tabs.preFault")}</button>
-            <button className={`nav-pill ${pfMode==="fault"?"on":""}`} style={{flex:1,fontSize:11}} onClick={()=>setPfMode("fault")}>{t("tabs.fault")}</button>
-          </div>
-          {pfMode==="prefault"&&<div className="card" style={{marginBottom:4}}><div className="cp" style={{padding:"8px 14px",display:"flex",flexDirection:"column",gap:6}}>
-            <Tgl value={pfEnabled} onChange={v=>setPfEnabled(v)} label={pfEnabled?t("labels.preFaultEnabled"):t("labels.preFaultDisabled")}/>
-            {pfEnabled&&<div className="fg"><div className="fl">{t("labels.preFaultDuration")}</div><IB unit="s" value={pfDuration} onChange={v=>setPfDuration(v)} step="0.1"/></div>}
-          </div></div>}
-          <div className="card"><div className="ph"><div className="bar bar-warm"/><span className="ph-t">{pfMode==="prefault"?t("labels.preFaultCurrent"):t("labels.currentInjection")}</span></div><div className="cp">
-            <div style={{display:"flex",gap:4,marginBottom:4}}>
-              <button className="nav-pill" style={{flex:1,fontSize:9,padding:"3px 0",background:balI==="manual"?"var(--warm)":"transparent",color:balI==="manual"?"#0e1015":"var(--tx3)"}} onClick={()=>onBalChangeI("manual")}>{t("labels.manual")}</button>
-              <button className="nav-pill" style={{flex:1,fontSize:9,padding:"3px 0",background:balI==="balanced"?"var(--warm)":"transparent",color:balI==="balanced"?"#0e1015":"var(--tx3)"}} onClick={()=>onBalChangeI("balanced")}>{t("labels.balanced")}</button>
-              {balI==="balanced"&&<select className="sl" style={{width:70,fontSize:9,padding:"2px 4px"}} value={seqI} onChange={e=>onSeqChangeI(e.target.value)}><option value="ABC">ABC</option><option value="ACB">ACB</option></select>}
-            </div>
-            {balI==="balanced"?<div>
-              <div className="fl" style={{marginBottom:2}}>Ia (ref.)</div>
-              <div className="fr"><div className="fg"><div className="fl">Mag</div><IB unit="A" value={pfMode==="prefault"?pf.currents.Ia.mag:p.currents.Ia.mag} onChange={v=>pfMode==="prefault"?uPf("currents","Ia","mag",v):uP("currents","Ia","mag",v)}/></div><div className="fg"><div className="fl">Ang</div><IB unit="°" value={pfMode==="prefault"?pf.currents.Ia.ang:p.currents.Ia.ang} onChange={v=>pfMode==="prefault"?uPf("currents","Ia","ang",v):uP("currents","Ia","ang",v)} step="1" warm/></div></div>
-              <div style={{fontSize:9,color:"var(--tx3)",marginTop:4,letterSpacing:.5}}>Ib: {(pfMode==="prefault"?pf:p).currents.Ib.mag.toFixed(2)}A ∠{(pfMode==="prefault"?pf:p).currents.Ib.ang.toFixed(1)}° · Ic: {(pfMode==="prefault"?pf:p).currents.Ic.mag.toFixed(2)}A ∠{(pfMode==="prefault"?pf:p).currents.Ic.ang.toFixed(1)}°</div>
-            </div>:["Ia","Ib","Ic"].map(ph=><div key={ph}><div className="fl" style={{marginBottom:2}}>{ph}</div><div className="fr"><div className="fg"><div className="fl">Mag</div><IB unit="A" value={pfMode==="prefault"?pf.currents[ph].mag:p.currents[ph].mag} onChange={v=>pfMode==="prefault"?uPf("currents",ph,"mag",v):uP("currents",ph,"mag",v)}/></div><div className="fg"><div className="fl">Ang</div><IB unit="°" value={pfMode==="prefault"?pf.currents[ph].ang:p.currents[ph].ang} onChange={v=>pfMode==="prefault"?uPf("currents",ph,"ang",v):uP("currents",ph,"ang",v)} step="1" warm/></div></div></div>)}
-          </div></div>
-          <div className="card"><div className="ph"><div className="bar bar-lav"/><span className="ph-t">{pfMode==="prefault"?t("labels.preFaultVoltage"):t("labels.voltageInjection")}</span></div><div className="cp">
-            <div style={{display:"flex",gap:4,marginBottom:4}}>
-              <button className="nav-pill" style={{flex:1,fontSize:9,padding:"3px 0",background:balV==="manual"?"var(--lav)":"transparent",color:balV==="manual"?"#0e1015":"var(--tx3)"}} onClick={()=>onBalChangeV("manual")}>{t("labels.manual")}</button>
-              <button className="nav-pill" style={{flex:1,fontSize:9,padding:"3px 0",background:balV==="balanced"?"var(--lav)":"transparent",color:balV==="balanced"?"#0e1015":"var(--tx3)"}} onClick={()=>onBalChangeV("balanced")}>{t("labels.balanced")}</button>
-              {balV==="balanced"&&<select className="sl" style={{width:70,fontSize:9,padding:"2px 4px"}} value={seqV} onChange={e=>onSeqChangeV(e.target.value)}><option value="ABC">ABC</option><option value="ACB">ACB</option></select>}
-            </div>
-            {balV==="balanced"?<div>
-              <div className="fl" style={{marginBottom:2}}>Va (ref.)</div>
-              <div className="fr"><div className="fg"><div className="fl">Mag</div><IB unit="V" value={pfMode==="prefault"?pf.voltages.Va.mag:p.voltages.Va.mag} onChange={v=>pfMode==="prefault"?uPf("voltages","Va","mag",v):uP("voltages","Va","mag",v)}/></div><div className="fg"><div className="fl">Ang</div><IB unit="°" value={pfMode==="prefault"?pf.voltages.Va.ang:p.voltages.Va.ang} onChange={v=>pfMode==="prefault"?uPf("voltages","Va","ang",v):uP("voltages","Va","ang",v)} step="1" warm/></div></div>
-              <div style={{fontSize:9,color:"var(--tx3)",marginTop:4,letterSpacing:.5}}>Vb: {(pfMode==="prefault"?pf:p).voltages.Vb.mag.toFixed(2)}V ∠{(pfMode==="prefault"?pf:p).voltages.Vb.ang.toFixed(1)}° · Vc: {(pfMode==="prefault"?pf:p).voltages.Vc.mag.toFixed(2)}V ∠{(pfMode==="prefault"?pf:p).voltages.Vc.ang.toFixed(1)}°</div>
-            </div>:["Va","Vb","Vc"].map(ph=><div key={ph}><div className="fl" style={{marginBottom:2}}>{ph}</div><div className="fr"><div className="fg"><div className="fl">Mag</div><IB unit="V" value={pfMode==="prefault"?pf.voltages[ph].mag:p.voltages[ph].mag} onChange={v=>pfMode==="prefault"?uPf("voltages",ph,"mag",v):uP("voltages",ph,"mag",v)}/></div><div className="fg"><div className="fl">Ang</div><IB unit="°" value={pfMode==="prefault"?pf.voltages[ph].ang:p.voltages[ph].ang} onChange={v=>pfMode==="prefault"?uPf("voltages",ph,"ang",v):uP("voltages",ph,"ang",v)} step="1" warm/></div></div></div>)}
-          </div></div>
-          <div className="card"><div className="ph" style={{padding:"6px 14px"}}><div className="bar bar-sky"/><span className="ph-t" style={{fontSize:11}}>Frequency</span></div><div className="cp" style={{padding:"8px 14px"}}><div className="fr"><div className="fg"><div className="fl">f (Hz)</div><IB unit="Hz" value={sys.freq??60} onChange={v=>setSys(o=>({...o,freq:v}))} step="0.1"/></div><div className="fg"><div className="fl">Nominal</div><div className="conn-r"><button className={`conn-b ${(sys.freq??60)===60?"on":""}`} onClick={()=>setSys(o=>({...o,freq:60}))}>60 Hz</button><button className={`conn-b ${(sys.freq??60)===50?"on":""}`} onClick={()=>setSys(o=>({...o,freq:50}))}>50 Hz</button></div></div></div></div></div>
-          <button className="pd-open-btn" onClick={()=>setPhasorDiagOpen(true)}>◎ Phasor Diagram</button>
-        </div>
-        <div className="ccol">
-          <div className="card ccol-top">
-            <div className="main-tabs">{mainTabs.map(t=><button key={t.id} className={`mt ${mainTab===t.id?"on":""}`} onClick={()=>setMainTab(t.id)}>{t.label}</button>)}</div>
-            <SettingsPanel prot={prot} outMatrix={outMatrix} inMatrix={inMatrix} sys={sys} tab={tab} si={si} mainTab={mainTab} uPr={uPr} uSt={uSt} uS={uS} setSi={setSi} setTab={setTab} toggleMatrix={toggleMatrix} toggleInMatrix={toggleInMatrix} applyTestPreset={applyTestPreset} rtp={rtp} rtc={rtc} phasors={p}/>
-          </div>
-          <div className="ccol-mid">
-            <div className="card"><div className="ph"><div className="bar bar-green"/><span className="ph-t">Controls</span></div><div className="cp" style={{display:"flex",flexDirection:"column",gap:8}}>
-              <div className="ctrl-r"><button className="ctrl-big" onClick={runSim} disabled={isTripped} title={isTripped?"Reset relay before injecting":""}><div className="ctrl-ico ci-p">▶</div><span className="ctrl-lbl">{t("controls.inject")}</span></button><button className="ctrl-big" onClick={stopSim}><div className="ctrl-ico ci-s">■</div><span className="ctrl-lbl">{t("controls.stop")}</span></button></div>
-              <button className="ctrl-sec" onClick={resetFault}>{t("controls.resetFault")}</button>
-              <button className="ctrl-sec" style={{background:"var(--lav)",color:"#1a1a2e",border:"none",fontWeight:700}} onClick={()=>setFcOpen(true)}>{t("controls.faultCalculator")}</button>
-            </div></div>
-            <div className="card"><div className="ph"><div className="bar bar-rose"/><span className="ph-t">Status & Results</span></div><div className="cp">
-              <div className="st-hd"><div className="st-tt">{t("status.simulation")}</div><div className={`st-pill ${maletaTripped?"sp-trip":ss==="running"?"sp-run":"sp-idle"}`}>{maletaTripped?t("status.tripped"):ss==="running"?t("status.running"):t("status.stopped")}</div></div>
-              <div className="tmr"><div className="tmr-l">{t("status.tripTimer")}</div><div className="tmr-v">{stime.toFixed(3)}</div></div>
-              <div className="st-hd" style={{marginTop:6,paddingTop:6,borderTop:'1px solid var(--bdr)'}}><div className="st-tt">{t("status.breaker")}</div><div className={`st-pill ${bkState==='closed'?'sp-run':bkTripLatch?'sp-trip':'sp-idle'}`}>{bkState==='closed'?t("status.closed52a"):bkTripLatch?t("status.open52bTrip"):t("status.open52b")}</div></div>
-              <div className="tmr" style={{opacity:.7}}><div className="tmr-l">{t("status.spring")}</div><div className="tmr-v" style={{fontSize:12,color:bkSpring?'var(--amber)':'var(--tx3)'}}>{bkSpring?t("status.springLoaded"):t("status.springLoading")}</div></div>
-            </div></div>
-          </div>
-          <div className="ccol-bot">
-            <div className="card"><div className="ph"><div className="bar bar-warm"/><span className="ph-t">{t("events.title")}</span></div><div className="cp"><div className="ev-box">{evts.length===0?<div style={{textAlign:"center",color:"var(--tx3)",padding:14,fontSize:10}}>{t("events.noEvents")}</div>:evts.map((e,i)=><div key={i} className="ev-e"><span className="ev-t">[{e.time}]</span><span className="ev-i">{e.icon}</span><span className="ev-x">{e.text}</span><span className="ev-d">{e.dt}</span></div>)}</div></div></div>
-            <div className="card"><div className="ph"><div className="bar bar-warm"/><span className="ph-t">{t("diagnostics.title")}</span></div><div className="cp"><div className="dg-box"><table className="dt"><thead><tr><th>{t("diagnostics.func")}</th><th>{t("diagnostics.status")}</th><th>{t("diagnostics.stage")}</th><th>{t("diagnostics.time")}</th><th>{t("diagnostics.notes")}</th></tr></thead><tbody>{diag.length===0?<tr><td colSpan={5} style={{textAlign:"center",color:"var(--tx3)",padding:14}}>{t("diagnostics.noSim")}</td></tr>:diag.map((d,i)=><tr key={i}><td style={{fontWeight:700,color:"var(--tx)"}}>{d.label}</td><td><span className={`badge b-${d.status}`}>{d.status.toUpperCase()}</span></td><td>{d.stage}</td><td style={{fontFamily:"var(--fm)"}}>{d.time}{d.time!=="-"?"s":""}</td><td style={{fontSize:8}}>{d.obs}</td></tr>)}</tbody></table></div></div></div>
-          </div>
-        </div>
-        <div className="rcol">
-          <div className="card" style={{flex:1,display:"flex",flexDirection:"column"}}>
-            <div className="ph"><div className="bar bar-orange"/><span className="ph-t">ReGrid Pro 1000</span></div>
-            <div className="relay-wrap"><div className={`relay-shell${isTripped?" tripped":""}`}>
-              <div className="relay-strip"/>
-              <div className="relay-in">
-                <div className="relay-header">
-                  <div className="relay-id"><div className="rbn">ReGrid Pro 1000</div><div className="rbm">IED MULTIFUNÇÃO · BAY 1</div></div>
-                  <div className="relay-pwr"><div className="rpw-led"/><span className="rpw-lbl">PWR</span></div>
-                </div>
-              </div>
-              <div className={`relay-st ${isTripped?"rs-trip":"rs-ok"}`}>
-                <span>{isTripped?t("status.tripActuated"):t("status.systemOk")}</span>
-                {isTripped&&trippedStageIds.length>0&&<span style={{fontSize:7,opacity:.7,fontFamily:"var(--fm)"}}>{trippedStageIds[0]}</span>}
-              </div>
-              <RelayDisplay ci={ci} vi={vi} i0={i0} v0={v0} i2lcd={i2lcd} rtc={rtc} rtp={rtp} Inom={Inom} freqLcd={freqLcd} pTotal={pTotal} pA={pA} pB={pB} pC={pC} injecting={injecting} rp={rp} setRp={setRp} relayProt={relayProt} trippedStageIds={trippedStageIds} bkState={bkState} ledLabels={ledLabels} ledLitStates={ledLitStates} evts={evts} faultRecord={faultRecord} relayTab={relayTab} setRelayTab={setRelayTab} mensTab={mensTab} setMensTab={setMensTab} sys={sys}/>
-              <div className="relay-bot">
-                <button className="rbt rr" onClick={resetRelay}>RESET</button>
-                <button className="rbt r0" onClick={()=>setBkOpenCtr(c=>c+1)}>0</button>
-                <button className="rbt rii" onClick={()=>setBkCloseCtr(c=>c+1)}>I</button>
-              </div>
-              <div className="rfo"><div className="rfb">RELAYLAB 360 · INTEGRAL PROTECTION ENGINEERING PLATFORM</div></div>
-            </div></div>
-            <div className="relay-actions">
-              <button className={`ra-btn ${sendFlash?"flash-g":""}`} onClick={sendSettings}><div className="ra-ico send">↑</div><span className="ra-lbl">{t("controls.send").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-              <button className={`ra-btn ${getFlash?"flash-b":""}`} onClick={getSettings}><div className="ra-ico get">↓</div><span className="ra-lbl">{t("controls.get").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-              <button className="ra-btn" onClick={()=>setWfDisplayOpen(true)}><div className="ra-ico wave">📊</div><span className="ra-lbl">Live<br/>Waveform</span></button>
-              <button className="ra-btn" onClick={()=>setWfModalOpen(true)}><div className="ra-ico wave">∿</div><span className="ra-lbl">{t("controls.getWaveform").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-            </div>
-            <div className="relay-actions">
-              <button className="ra-btn" onClick={loadFile}><div className="ra-ico get" style={{background:'var(--warm-dim)',color:'var(--warm)',borderColor:'rgba(253,230,138,.2)'}}>📂</div><span className="ra-lbl">{t("controls.openFile").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-              <button className="ra-btn" onClick={saveFile}><div className="ra-ico send" style={{background:'var(--lav)',color:'#1a1a2e',borderColor:'rgba(196,181,253,.3)'}}>💾</div><span className="ra-lbl">{t("controls.saveFile").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-              <button className="ra-btn" onClick={takeSnapshot}><div className="ra-ico wave" style={{background:'var(--sky-dim)',color:'var(--sky)',borderColor:'rgba(125,211,252,.2)'}}>📷</div><span className="ra-lbl">{t("controls.snapshot")}</span></button>
-              <button className="ra-btn" onClick={dumpFullState}><div className="ra-ico wave" style={{background:'rgba(255,255,255,.08)',color:'var(--tx3)',borderColor:'rgba(255,255,255,.1)'}}>📋</div><span className="ra-lbl">{t("controls.dumpState").split("\n").map((l,i)=><span key={i}>{l}{i===0&&<br/>}</span>)}</span></button>
-            </div>
-          </div>
-        </div>
-      </div></div></div>
+      <div className="slide-pg"><RelePage
+        p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode}
+        pfEnabled={pfEnabled} setPfEnabled={setPfEnabled}
+        pfDuration={pfDuration} setPfDuration={setPfDuration}
+        balI={balI} balV={balV} seqI={seqI} seqV={seqV}
+        onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV}
+        onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}
+        uP={uP} uPf={uPf} sys={sys} setSys={setSys}
+        prot={prot} outMatrix={outMatrix} inMatrix={inMatrix}
+        tab={tab} setTab={setTab} si={si} setSi={setSi}
+        mainTab={mainTab} setMainTab={setMainTab}
+        uPr={uPr} uSt={uSt} uS={uS}
+        toggleMatrix={toggleMatrix} toggleInMatrix={toggleInMatrix}
+        applyTestPreset={applyTestPreset} rtp={rtp} rtc={rtc}
+        ss={ss} stime={stime} isTripped={isTripped} maletaTripped={maletaTripped}
+        runSim={runSim} stopSim={stopSim} resetFault={resetFault} setFcOpen={setFcOpen}
+        ci={ci} vi={vi} i0={i0} v0={v0} i2lcd={i2lcd}
+        pTotal={pTotal} pA={pA} pB={pB} pC={pC}
+        injecting={injecting} relayProt={relayProt} trippedStageIds={trippedStageIds}
+        bkState={bkState} ledLabels={ledLabels} ledLitStates={ledLitStates}
+        evts={evts} diag={diag} faultRecord={faultRecord}
+        sendFlash={sendFlash} getFlash={getFlash}
+        sendSettings={sendSettings} getSettings={getSettings}
+        loadFile={loadFile} saveFile={saveFile}
+        setWfDisplayOpen={setWfDisplayOpen} setWfModalOpen={setWfModalOpen}
+        takeSnapshot={takeSnapshot} dumpFullState={dumpFullState}
+        resetRelay={resetRelay}
+        setBkOpenCtr={setBkOpenCtr} setBkCloseCtr={setBkCloseCtr}
+      /></div>
 
       {/* PAINEL */}
       <div className="slide-pg"><PainelPage relayTrip={maletaTripped} onBreakerChange={onBreakerChange} resetSignal={bkResetCtr} closeSignal={bkCloseCtr} openSignal={bkOpenCtr} sys={sys} relayReadings={relayReadings} injecting={injecting} phasors={p} tripHistory={tripHistory}/></div>

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>RelayLab 360 — Testes (mock)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#0E1015; --card:#181B22; --card2:#1E2129; --card3:#252830; --card4:#2C2F38;
+  --bdr:rgba(255,255,255,.06); --bdr2:rgba(255,255,255,.10);
+  --orange:#F97316; --orange-d:#c2410c; --orange-dim:rgba(249,115,22,.12);
+  --cyan:#0EA5E9; --cyan-dim:rgba(14,165,233,.10);
+  --green:#4ADE80; --green-dim:rgba(74,222,128,.10);
+  --red:#F87171; --red-dim:rgba(248,113,113,.10);
+  --amber:#FBBF24; --violet:#A78BFA;
+  --tx:#F3F4F6; --tx2:#9CA3B0; --tx3:#5C6370; --tx4:#3F4651;
+  --fm:'JetBrains Mono',monospace; --fh:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--tx);font-family:var(--fh);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+.mock-bar{position:sticky;top:0;z-index:20;background:#06080c;border-bottom:1px solid var(--bdr);padding:10px 18px;display:flex;align-items:center;gap:14px}
+.mock-bar h1{font-size:13px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--tx2)}
+.mock-bar .sub{font-size:10px;font-family:var(--fm);color:var(--tx3);letter-spacing:.8px}
+.steps{margin-left:auto;display:flex;gap:2px;background:#0E1015;border-radius:8px;padding:3px;border:1px solid var(--bdr)}
+.stp{padding:5px 14px;border-radius:6px;font-size:10.5px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--tx3);font-family:var(--fh);display:flex;align-items:center;gap:6px}
+.stp .n{width:16px;height:16px;border-radius:50%;background:var(--card3);font-family:var(--fm);font-size:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--tx3)}
+.stp.on{background:var(--orange);color:#0E1015}
+.stp.on .n{background:#0E1015;color:var(--orange)}
+.stp.done .n{background:var(--green);color:#0E1015}
+
+.frame{display:none}
+.frame.on{display:block}
+
+/* topbar replica */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 18px;height:54px;background:var(--card);border-bottom:1px solid var(--bdr);position:relative}
+.topbar::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--orange) 0%,#c2410c 45%,transparent 100%)}
+.tb-l{display:flex;align-items:center;gap:14px}
+.logo{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#1E2129,#0a0c11);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--orange);font-weight:800;font-size:13px;font-family:var(--fm)}
+.tb-name{font-size:18px;font-weight:700;letter-spacing:.4px;line-height:1}
+.tb-name .num{color:var(--orange);font-weight:300;letter-spacing:2px}
+.tb-sub{font-size:8.5px;color:var(--tx3);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--fm);margin-top:2px}
+.nav-pills{display:flex;gap:2px;background:var(--card2);border-radius:10px;padding:3px;border:1px solid var(--bdr)}
+.np{padding:6px 18px;border-radius:7px;color:var(--tx3);font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.np.on{background:var(--orange);color:#0E1015}
+.tb-r{display:flex;align-items:center;gap:14px}
+.tb-dot-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);font-weight:600;font-family:var(--fm)}
+.tb-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.tb-lang{padding:4px 10px;border-radius:6px;background:var(--card2);border:1px solid var(--bdr);font-size:10px;color:var(--tx2);font-family:var(--fm);font-weight:600}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.ph{padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr)}
+.ph .bar{width:3px;height:14px;border-radius:2px;background:var(--orange)}
+.ph .bar.c{background:var(--cyan)} .ph .bar.g{background:var(--green)} .ph .bar.a{background:var(--amber)} .ph .bar.r{background:var(--red)} .ph .bar.v{background:var(--violet)}
+.ph .lbl{font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2)}
+.ph .meta{margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--tx3);letter-spacing:.5px}
+
+.btn{padding:6px 12px;border-radius:6px;font-family:var(--fh);font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;border:1px solid var(--bdr2);background:var(--card2);color:var(--tx2);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--orange-dim);border-color:rgba(249,115,22,.4);color:var(--orange)}
+.btn.danger{background:var(--red-dim);border-color:rgba(248,113,113,.3);color:var(--red)}
+.btn.good{background:var(--green-dim);border-color:rgba(74,222,128,.35);color:var(--green)}
+.btn.ghost{background:transparent}
+.btn.lg{padding:9px 16px;font-size:11px}
+
+/* page */
+.page{padding:8px;display:flex;flex-direction:column;gap:8px;height:calc(100vh - 54px - 50px);min-height:0}
+.row{display:flex;gap:8px;flex:1;min-height:0}
+.col-l{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.col-c{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.col-r{width:320px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+
+/* function list */
+.func-list{display:flex;flex-direction:column;gap:3px;padding:7px 9px}
+.f-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;background:var(--card2);border:1px solid var(--bdr);text-align:left}
+.f-item:hover{background:var(--card3)}
+.f-item.on{background:var(--orange-dim);border-color:var(--orange)}
+.f-item .id{font-family:var(--fm);font-size:11px;font-weight:700;color:var(--tx);min-width:36px}
+.f-item.on .id{color:var(--orange)}
+.f-item .nm{font-size:11px;color:var(--tx2);flex:1;font-weight:600}
+.f-item .ck{font-family:var(--fm);font-size:9.5px;color:var(--tx3);font-weight:700}
+.f-item.on .ck{color:var(--orange)}
+
+/* test-types segmented */
+.seg-block{padding:8px 10px;display:flex;flex-direction:column;gap:7px}
+.seg-row{display:flex;gap:1px;background:var(--card3);border-radius:6px;padding:2px}
+.seg-row .s{flex:1;padding:5px 6px;border-radius:4px;font-family:var(--fm);font-size:9.5px;color:var(--tx3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;text-align:center}
+.seg-row .s.on{background:var(--orange);color:#0E1015}
+
+/* form fields */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px 8px}
+.field{display:flex;flex-direction:column;gap:3px}
+.field.full{grid-column:1 / -1}
+.field .lb{font-family:var(--fm);font-size:8.5px;color:var(--tx3);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.field .ip{background:var(--card2);border:1px solid var(--bdr);border-radius:5px;padding:6px 9px;font-family:var(--fm);font-size:11.5px;color:var(--tx);display:flex;align-items:center}
+.field .ip .v{flex:1}
+.field .ip .u{color:var(--tx3);font-size:9.5px;margin-left:4px}
+.field .ip.cy{color:var(--cyan)}
+.field .ip.or{color:var(--orange)}
+.field .ip.am{color:var(--amber)}
+
+/* hint */
+.hint{margin:0 10px 8px;padding:7px 10px;background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.18);border-radius:6px;font-family:var(--fm);font-size:9.5px;color:var(--cyan);line-height:1.5;display:flex;gap:7px;align-items:flex-start}
+.hint .i{flex-shrink:0;font-weight:700}
+
+/* chart card */
+.chart-card{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.chart-h{display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid var(--bdr);gap:10px}
+.chart-tabs{margin-left:auto;display:flex;background:var(--card2);border-radius:6px;padding:2px;gap:1px}
+.chart-tabs .ct{padding:4px 11px;border-radius:4px;font-family:var(--fm);font-size:9.5px;color:var(--tx3);font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.chart-tabs .ct.on{background:var(--orange);color:#0E1015}
+.chart-svg{flex:1;padding:8px;min-height:0;min-width:0;display:flex}
+.chart-svg svg{width:100%;height:100%;display:block}
+
+/* legend strip */
+.lg-strip{padding:6px 14px;border-top:1px solid var(--bdr);display:flex;gap:14px;background:rgba(0,0,0,.10)}
+.lg-strip .lg{display:inline-flex;align-items:center;gap:7px;font-family:var(--fm);font-size:9.5px;color:var(--tx2);font-weight:600}
+.lg-strip .lg .sw{width:12px;height:12px;border-radius:2px}
+.lg-strip .lg.dot .sw{border-radius:50%}
+
+/* points table */
+.points-card{flex-shrink:0;background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;max-height:240px;display:flex;flex-direction:column}
+.points-h{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bdr)}
+.points-h .bar{width:3px;height:14px;border-radius:2px;background:var(--violet)}
+.points-h .lbl{font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2)}
+.points-h .ct{margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--tx3)}
+.points-table{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:10.5px}
+th{position:sticky;top:0;background:var(--card2);padding:6px 10px;text-align:left;color:var(--tx3);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--bdr)}
+td{padding:5px 10px;border-bottom:1px solid var(--bdr);color:var(--tx2)}
+tr:hover td{background:var(--card2)}
+td.num{text-align:right;color:var(--tx)}
+td .badge{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:99px;font-size:9px;font-weight:700;letter-spacing:.5px}
+.bd-pass{background:var(--green-dim);color:var(--green)}
+.bd-fail{background:var(--red-dim);color:var(--red)}
+.bd-wait{background:var(--card3);color:var(--tx3)}
+.bd-run{background:rgba(251,191,36,.10);color:var(--amber)}
+
+/* right panel widgets */
+.summary-card .body{padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.kv{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bdr);font-family:var(--fm);font-size:10.5px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--tx3);font-weight:600;letter-spacing:.5px}
+.kv .v{color:var(--tx);font-weight:700}
+.kv .v.cy{color:var(--cyan)} .kv .v.or{color:var(--orange)} .kv .v.gr{color:var(--green)} .kv .v.rd{color:var(--red)} .kv .v.am{color:var(--amber)}
+
+.prog-card .body{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.prog-big{display:flex;align-items:baseline;gap:6px;font-family:var(--fh)}
+.prog-big .big{font-size:38px;font-weight:300;color:var(--orange);letter-spacing:1px;line-height:1}
+.prog-big .tot{font-size:14px;color:var(--tx3);font-family:var(--fm)}
+.prog-big .pc{margin-left:auto;font-size:14px;color:var(--tx2);font-family:var(--fm);font-weight:700}
+.prog-bar{height:5px;background:var(--card3);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--orange),#fbbf24)}
+.prog-meta{display:flex;justify-content:space-between;font-family:var(--fm);font-size:9.5px;color:var(--tx3)}
+
+.actions-stack{display:flex;flex-direction:column;gap:5px;padding:10px}
+
+/* status bar */
+.status-bar{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;flex-shrink:0}
+.si{background:var(--card);padding:9px 13px;display:flex;flex-direction:column;gap:3px}
+.si .l{font-family:var(--fm);font-size:8.5px;color:var(--tx3);font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.si .v{font-family:var(--fh);font-size:15px;font-weight:700}
+.si .v.mono{font-family:var(--fm);font-size:12.5px}
+.si .v.or{color:var(--orange)} .si .v.gr{color:var(--green)} .si .v.am{color:var(--amber)} .si .v.cy{color:var(--cyan)} .si .v.rd{color:var(--red)}
+
+/* report-only */
+.kpi-card{flex-shrink:0;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.kpi{background:var(--card);padding:13px 16px;display:flex;flex-direction:column;gap:5px}
+.kpi .l{font-family:var(--fm);font-size:9px;color:var(--tx3);font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.kpi .v{font-family:var(--fh);font-size:26px;font-weight:300;letter-spacing:1px;line-height:1}
+.kpi .v.gr{color:var(--green)} .kpi .v.rd{color:var(--red)} .kpi .v.am{color:var(--amber)} .kpi .v.cy{color:var(--cyan)}
+.kpi .sub{font-family:var(--fm);font-size:8.5px;color:var(--tx3)}
+
+/* live execution view */
+.live-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:20px}
+.live-state{font-family:var(--fm);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--amber)}
+.live-state .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);margin-right:8px;animation:p .8s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+.live-tile{display:flex;flex-direction:column;align-items:center;gap:8px}
+.live-tile .lbl{font-family:var(--fm);font-size:9px;color:var(--tx3);letter-spacing:1.4px;text-transform:uppercase;font-weight:700}
+.live-tile .val{font-family:var(--fh);font-size:64px;font-weight:300;color:var(--orange);letter-spacing:2px;line-height:1}
+.live-tile .u{font-family:var(--fm);font-size:14px;color:var(--tx3);margin-left:6px}
+.live-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px}
+.live-mini{padding:10px 18px;background:var(--card2);border:1px solid var(--bdr);border-radius:8px;text-align:center}
+.live-mini .l{font-family:var(--fm);font-size:8.5px;color:var(--tx3);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.live-mini .v{font-family:var(--fh);font-size:22px;font-weight:600;margin-top:2px}
+.live-mini .v.cy{color:var(--cyan)}.live-mini .v.gr{color:var(--green)}.live-mini .v.am{color:var(--amber)}
+
+/* mode hidden by default */
+.mode{display:none}
+.mode.on{display:contents}
+</style>
+</head>
+<body>
+
+<div class="mock-bar">
+  <h1>Mock · RelayLab 360 · Ferramenta de Testes</h1>
+  <span class="sub">Plano automático · Execução · Relatório</span>
+  <div class="steps">
+    <button class="stp on" data-step="plan"><span class="n">1</span>Plano</button>
+    <button class="stp" data-step="run"><span class="n">2</span>Execução</button>
+    <button class="stp" data-step="rep"><span class="n">3</span>Relatório</button>
+  </div>
+</div>
+
+<!-- Topbar replica -->
+<div class="topbar">
+  <div class="tb-l">
+    <div class="logo">RL</div>
+    <div>
+      <div class="tb-name">RelayLab&nbsp;<span class="num">360</span></div>
+      <div class="tb-sub">Integral Protection Engineering Platform</div>
+    </div>
+  </div>
+  <div class="nav-pills">
+    <button class="np">Campo</button>
+    <button class="np">Relé</button>
+    <button class="np">Painel</button>
+    <button class="np on">Testes</button>
+  </div>
+  <div class="tb-r">
+    <div class="tb-dot-wrap"><div class="tb-dot"></div>Online</div>
+    <div class="tb-lang">BR PT ▾</div>
+    <button class="btn ghost">?</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="row">
+
+    <!-- ═══ LEFT: campaign + function + test-type ═══ -->
+    <div class="col-l">
+
+      <!-- Campaign -->
+      <div class="card">
+        <div class="ph"><div class="bar"></div><div class="lbl">Campanha</div><div class="meta">3 testes</div></div>
+        <div style="padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-size:13px;font-weight:600;color:var(--tx)">Comissionamento Bay-01</span>
+            <span style="font-family:var(--fm);font-size:9.5px;color:var(--tx3)">REGRID PRO 1000 · 24/04/26</span>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:3px">
+            <button class="btn" style="flex:1;padding:5px;font-size:9.5px">📂 Abrir</button>
+            <button class="btn" style="flex:1;padding:5px;font-size:9.5px">+ Novo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Function list -->
+      <div class="card">
+        <div class="ph"><div class="bar a"></div><div class="lbl">Função a testar</div></div>
+        <div class="func-list">
+          <button class="f-item on"><span class="id">51</span><span class="nm">Sobrec. Temp · Fase</span><span class="ck">✓</span></button>
+          <button class="f-item"><span class="id">50</span><span class="nm">Sobrec. Inst. · Fase</span><span class="ck">✓</span></button>
+          <button class="f-item"><span class="id">51N</span><span class="nm">Sobrec. Neutro T</span><span class="ck">✓</span></button>
+          <button class="f-item"><span class="id">50N</span><span class="nm">Sobrec. Neutro I</span></button>
+          <button class="f-item"><span class="id">67</span><span class="nm">Direcional</span></button>
+          <button class="f-item"><span class="id">27</span><span class="nm">Subtensão</span></button>
+          <button class="f-item"><span class="id">59</span><span class="nm">Sobretensão</span></button>
+          <button class="f-item"><span class="id">81</span><span class="nm">Frequência</span></button>
+          <button class="f-item"><span class="id">46</span><span class="nm">Seq. Negativa</span></button>
+          <button class="f-item"><span class="id">79</span><span class="nm">Religamento</span></button>
+        </div>
+      </div>
+
+      <!-- Test type -->
+      <div class="card">
+        <div class="ph"><div class="bar c"></div><div class="lbl">Tipo de ensaio</div></div>
+        <div class="seg-block">
+          <div class="seg-row"><span class="s on">Curva</span><span class="s">Pickup</span><span class="s">Dropout</span></div>
+          <div class="seg-row"><span class="s">Tempo Def.</span><span class="s on">Multi-ponto</span><span class="s">Busca</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ CENTER: chart + points table ═══ -->
+    <div class="col-c">
+
+      <!-- ═══ MODE: PLAN ═══ -->
+      <div class="mode on" id="mode-plan">
+
+      <div class="chart-card">
+        <div class="chart-h">
+          <div class="bar" style="width:3px;height:14px;border-radius:2px;background:var(--orange)"></div>
+          <div class="lbl" style="font-family:var(--fh);font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2)">Curva 51 · Very Inverse · Plano de teste</div>
+          <div class="chart-tabs">
+            <span class="ct on">t × I</span>
+            <span class="ct">t × M</span>
+            <span class="ct">Z-plane</span>
+            <span class="ct">f × t</span>
+          </div>
+        </div>
+
+        <div class="chart-svg">
+          <svg viewBox="0 0 760 420" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="gtol" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0EA5E9" stop-opacity=".22"/>
+                <stop offset="100%" stop-color="#0EA5E9" stop-opacity=".04"/>
+              </linearGradient>
+            </defs>
+            <!-- background -->
+            <rect x="50" y="20" width="690" height="360" fill="rgba(0,0,0,.20)" stroke="var(--bdr)"/>
+            <!-- log grid lines vertical (decades) -->
+            <g stroke="#252830" stroke-width=".6">
+              <line x1="50" y1="20" x2="50" y2="380"/>
+              <line x1="195" y1="20" x2="195" y2="380"/>
+              <line x1="340" y1="20" x2="340" y2="380"/>
+              <line x1="485" y1="20" x2="485" y2="380"/>
+              <line x1="630" y1="20" x2="630" y2="380"/>
+              <line x1="740" y1="20" x2="740" y2="380"/>
+            </g>
+            <g stroke="#1E2129" stroke-width=".4">
+              <line x1="80" y1="20" x2="80" y2="380"/>
+              <line x1="110" y1="20" x2="110" y2="380"/>
+              <line x1="140" y1="20" x2="140" y2="380"/>
+              <line x1="170" y1="20" x2="170" y2="380"/>
+              <line x1="225" y1="20" x2="225" y2="380"/>
+              <line x1="260" y1="20" x2="260" y2="380"/>
+              <line x1="295" y1="20" x2="295" y2="380"/>
+              <line x1="380" y1="20" x2="380" y2="380"/>
+              <line x1="425" y1="20" x2="425" y2="380"/>
+              <line x1="525" y1="20" x2="525" y2="380"/>
+              <line x1="575" y1="20" x2="575" y2="380"/>
+              <line x1="680" y1="20" x2="680" y2="380"/>
+            </g>
+            <!-- horizontal grid (log decades) -->
+            <g stroke="#252830" stroke-width=".6">
+              <line x1="50" y1="50" x2="740" y2="50"/>
+              <line x1="50" y1="120" x2="740" y2="120"/>
+              <line x1="50" y1="200" x2="740" y2="200"/>
+              <line x1="50" y1="290" x2="740" y2="290"/>
+              <line x1="50" y1="380" x2="740" y2="380"/>
+            </g>
+            <!-- axis labels -->
+            <g font-family="JetBrains Mono" font-size="9.5" fill="#5C6370">
+              <text x="50" y="395" text-anchor="middle">1×</text>
+              <text x="195" y="395" text-anchor="middle">2×</text>
+              <text x="340" y="395" text-anchor="middle">5×</text>
+              <text x="485" y="395" text-anchor="middle">10×</text>
+              <text x="630" y="395" text-anchor="middle">20×</text>
+              <text x="395" y="412" text-anchor="middle" fill="#9CA3B0" font-weight="700">I / Ipk</text>
+              <text x="42" y="383" text-anchor="end">0.05</text>
+              <text x="42" y="293" text-anchor="end">0.1</text>
+              <text x="42" y="203" text-anchor="end">0.5</text>
+              <text x="42" y="123" text-anchor="end">1</text>
+              <text x="42" y="53" text-anchor="end">10</text>
+              <text x="20" y="200" text-anchor="middle" fill="#9CA3B0" font-weight="700" transform="rotate(-90 20 200)">t (s)</text>
+            </g>
+            <!-- Pickup vertical line -->
+            <line x1="50" y1="20" x2="50" y2="380" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="56" y="32" fill="#FBBF24" font-family="JetBrains Mono" font-size="9" font-weight="700">Ipk = 5.00 A</text>
+            <!-- 50 instantaneous line -->
+            <line x1="630" y1="20" x2="630" y2="380" stroke="#F87171" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="624" y="32" fill="#F87171" font-family="JetBrains Mono" font-size="9" font-weight="700" text-anchor="end">50 = 20×Ipk</text>
+
+            <!-- tolerance band ±5% time -->
+            <path d="M 60 360 Q 100 320 195 240 Q 290 195 340 175 Q 420 155 485 142 Q 570 132 630 126
+                     L 630 132 Q 570 138 485 148 Q 420 161 340 181 Q 290 201 195 246 Q 100 326 60 366 Z"
+                  fill="url(#gtol)" stroke="rgba(14,165,233,.4)" stroke-width=".6"/>
+
+            <!-- theoretical curve -->
+            <path d="M 60 360 Q 100 320 195 240 Q 290 195 340 175 Q 420 155 485 142 Q 570 132 630 126"
+                  stroke="#0EA5E9" stroke-width="2.2" fill="none"/>
+
+            <!-- planned test points -->
+            <g font-family="JetBrains Mono" font-size="9" fill="#F97316">
+              <g transform="translate(112,300)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P1</text></g>
+              <g transform="translate(195,240)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P2</text></g>
+              <g transform="translate(290,200)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P3</text></g>
+              <g transform="translate(340,175)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P4</text></g>
+              <g transform="translate(420,158)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P5</text></g>
+              <g transform="translate(485,142)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P6</text></g>
+              <g transform="translate(570,132)"><circle r="5" fill="#F97316" stroke="#0E1015" stroke-width="1.5"/><text y="-9" text-anchor="middle" font-weight="700">P7</text></g>
+            </g>
+
+            <!-- pickup probe points -->
+            <g>
+              <g transform="translate(50,360)"><rect x="-5" y="-5" width="10" height="10" fill="#FBBF24" stroke="#0E1015" stroke-width="1.5" rx="1.5"/></g>
+              <g transform="translate(50,340)"><rect x="-5" y="-5" width="10" height="10" fill="#FBBF24" stroke="#0E1015" stroke-width="1.5" rx="1.5"/></g>
+              <text x="58" y="356" fill="#FBBF24" font-family="JetBrains Mono" font-size="8.5" font-weight="700">Pickup probes ↑</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="lg-strip">
+          <span class="lg"><span class="sw" style="background:#0EA5E9"></span>Curva teórica</span>
+          <span class="lg"><span class="sw" style="background:rgba(14,165,233,.30)"></span>Faixa de tolerância ±5%</span>
+          <span class="lg dot"><span class="sw" style="background:#F97316"></span>Pontos planejados (7)</span>
+          <span class="lg"><span class="sw" style="background:#FBBF24"></span>Pickup probe</span>
+          <span class="lg"><span class="sw" style="background:#F87171"></span>50 inst.</span>
+          <span style="flex:1"></span>
+          <span class="lg" style="font-family:var(--fm);color:var(--orange)">eixos log·log</span>
+        </div>
+      </div>
+
+      <!-- Points table -->
+      <div class="points-card">
+        <div class="points-h">
+          <div class="bar"></div>
+          <div class="lbl">Pontos de teste · gerados automaticamente</div>
+          <div class="ct">7 pontos · 2 pickup · ~14 s</div>
+          <button class="btn" style="margin-left:8px">+ Ponto manual</button>
+          <button class="btn ghost">Regenerar</button>
+        </div>
+        <div class="points-table">
+          <table>
+            <thead><tr>
+              <th>#</th><th>Tipo</th><th>I / Ipk</th><th>I (A)</th><th>t esperado</th><th>Tolerância</th><th>Pré-falta</th><th>Status</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>P1</td><td>Curva</td><td class="num">1.5×</td><td class="num">7.50</td><td class="num">2.10 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P2</td><td>Curva</td><td class="num">2.0×</td><td class="num">10.00</td><td class="num">1.12 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P3</td><td>Curva</td><td class="num">3.0×</td><td class="num">15.00</td><td class="num">0.560 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P4</td><td>Curva</td><td class="num">5.0×</td><td class="num">25.00</td><td class="num">0.291 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P5</td><td>Curva</td><td class="num">8.0×</td><td class="num">40.00</td><td class="num">0.184 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P6</td><td>Curva</td><td class="num">10×</td><td class="num">50.00</td><td class="num">0.148 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P7</td><td>Curva</td><td class="num">15×</td><td class="num">75.00</td><td class="num">0.099 s</td><td>±5% / ±25 ms</td><td>1.0× · 200 ms</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr style="background:rgba(251,191,36,.04)"><td>Pk1</td><td>Pickup ↑</td><td class="num">0.95→1.05</td><td class="num">4.75 → 5.25</td><td class="num">—</td><td>±3%</td><td>0.5×</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr style="background:rgba(251,191,36,.04)"><td>Pk2</td><td>Pickup ↓</td><td class="num">1.10→0.95</td><td class="num">5.50 → 4.75</td><td class="num">—</td><td>±3%</td><td>1.2×</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      </div><!-- /mode-plan -->
+
+      <!-- ═══ MODE: RUN ═══ -->
+      <div class="mode" id="mode-run">
+
+      <div class="chart-card">
+        <div class="chart-h">
+          <div class="bar" style="width:3px;height:14px;border-radius:2px;background:var(--amber)"></div>
+          <div class="lbl" style="font-family:var(--fh);font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2)">Execução em andamento · P4 · 5.0×Ipk</div>
+          <div class="chart-tabs">
+            <span class="ct on">Live</span>
+            <span class="ct">Curva</span>
+            <span class="ct">Oscilografia</span>
+          </div>
+        </div>
+
+        <div class="live-overlay">
+          <div class="live-state"><span class="dot"></span>INJETANDO FALTA · P4 · I = 25.00 A · t = 0.184 s</div>
+          <div class="live-tile">
+            <span class="lbl">Tempo decorrido</span>
+            <div><span class="val">0.156</span><span class="u">s</span></div>
+          </div>
+          <div style="width:80%;max-width:520px">
+            <div class="prog-bar" style="height:8px"><div class="prog-fill" style="width:55%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;font-family:var(--fm);font-size:10px;color:var(--tx3)"><span>0.000 s</span><span>0.291 s (esperado)</span></div>
+          </div>
+          <div class="live-grid">
+            <div class="live-mini"><div class="l">Iₐ</div><div class="v cy">25.02 A</div></div>
+            <div class="live-mini"><div class="l">Vₐ</div><div class="v am">12.0 V</div></div>
+            <div class="live-mini"><div class="l">Estado BO1</div><div class="v gr">FECHADO ↑</div></div>
+          </div>
+        </div>
+
+        <div class="lg-strip">
+          <span class="lg dot"><span class="sw" style="background:var(--green)"></span>P1–P3 concluídos</span>
+          <span class="lg dot"><span class="sw" style="background:var(--amber);animation:p 1s ease-in-out infinite"></span>P4 em execução</span>
+          <span class="lg dot"><span class="sw" style="background:var(--tx4)"></span>P5–P7 pendentes</span>
+          <span style="flex:1"></span>
+          <span class="lg" style="font-family:var(--fm);color:var(--tx3)">Auto-pausa entre pontos: 3 s</span>
+        </div>
+      </div>
+
+      <div class="points-card">
+        <div class="points-h">
+          <div class="bar g"></div>
+          <div class="lbl">Resultados parciais</div>
+          <div class="ct">3 / 9 concluídos · 1 em curso · 5 aguardando</div>
+        </div>
+        <div class="points-table">
+          <table>
+            <thead><tr><th>#</th><th>I (A)</th><th>t esperado</th><th>t medido</th><th>Δ</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>P1</td><td class="num">7.50</td><td class="num">2.10 s</td><td class="num" style="color:var(--green)">2.087 s</td><td class="num" style="color:var(--green)">−0.6%</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P2</td><td class="num">10.00</td><td class="num">1.12 s</td><td class="num" style="color:var(--green)">1.108 s</td><td class="num" style="color:var(--green)">−1.1%</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P3</td><td class="num">15.00</td><td class="num">0.560 s</td><td class="num" style="color:var(--green)">0.553 s</td><td class="num" style="color:var(--green)">−1.3%</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr style="background:rgba(251,191,36,.06)"><td>P4</td><td class="num">25.00</td><td class="num">0.291 s</td><td class="num" style="color:var(--amber)">0.156 s ↻</td><td class="num">—</td><td><span class="badge bd-run">Em curso</span></td></tr>
+              <tr><td>P5</td><td class="num">40.00</td><td class="num">0.184 s</td><td>—</td><td>—</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P6</td><td class="num">50.00</td><td class="num">0.148 s</td><td>—</td><td>—</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+              <tr><td>P7</td><td class="num">75.00</td><td class="num">0.099 s</td><td>—</td><td>—</td><td><span class="badge bd-wait">Aguardando</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      </div><!-- /mode-run -->
+
+      <!-- ═══ MODE: REPORT ═══ -->
+      <div class="mode" id="mode-rep">
+
+      <div class="kpi-card">
+        <div class="kpi"><span class="l">Aprovação</span><span class="v gr">9/9</span><span class="sub">100% · ANSI/IEC OK</span></div>
+        <div class="kpi"><span class="l">Desvio médio (t)</span><span class="v cy">−1.4%</span><span class="sub">limite: ±5%</span></div>
+        <div class="kpi"><span class="l">Pickup medido</span><span class="v am">5.012 A</span><span class="sub">esperado 5.000 A · +0.24%</span></div>
+        <div class="kpi"><span class="l">Duração</span><span class="v" style="color:var(--tx)">14.3 s</span><span class="sub">24/04/26 · 14:32:08</span></div>
+      </div>
+
+      <div class="chart-card" style="margin-top:0">
+        <div class="chart-h">
+          <div class="bar" style="width:3px;height:14px;border-radius:2px;background:var(--green)"></div>
+          <div class="lbl" style="font-family:var(--fh);font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--tx2)">Relatório · Resultados vs Curva Teórica</div>
+          <div class="chart-tabs">
+            <span class="ct on">t × I</span>
+            <span class="ct">Desvio %</span>
+            <span class="ct">Oscilografia</span>
+          </div>
+        </div>
+
+        <div class="chart-svg">
+          <svg viewBox="0 0 760 420" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="gtol2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4ADE80" stop-opacity=".18"/>
+                <stop offset="100%" stop-color="#4ADE80" stop-opacity=".04"/>
+              </linearGradient>
+            </defs>
+            <rect x="50" y="20" width="690" height="360" fill="rgba(0,0,0,.20)" stroke="var(--bdr)"/>
+            <g stroke="#252830" stroke-width=".6">
+              <line x1="50" y1="20" x2="50" y2="380"/><line x1="195" y1="20" x2="195" y2="380"/><line x1="340" y1="20" x2="340" y2="380"/><line x1="485" y1="20" x2="485" y2="380"/><line x1="630" y1="20" x2="630" y2="380"/><line x1="740" y1="20" x2="740" y2="380"/>
+              <line x1="50" y1="50" x2="740" y2="50"/><line x1="50" y1="120" x2="740" y2="120"/><line x1="50" y1="200" x2="740" y2="200"/><line x1="50" y1="290" x2="740" y2="290"/><line x1="50" y1="380" x2="740" y2="380"/>
+            </g>
+            <g font-family="JetBrains Mono" font-size="9.5" fill="#5C6370">
+              <text x="50" y="395" text-anchor="middle">1×</text><text x="195" y="395" text-anchor="middle">2×</text><text x="340" y="395" text-anchor="middle">5×</text><text x="485" y="395" text-anchor="middle">10×</text><text x="630" y="395" text-anchor="middle">20×</text>
+              <text x="395" y="412" text-anchor="middle" fill="#9CA3B0" font-weight="700">I / Ipk</text>
+              <text x="42" y="383" text-anchor="end">0.05</text><text x="42" y="293" text-anchor="end">0.1</text><text x="42" y="203" text-anchor="end">0.5</text><text x="42" y="123" text-anchor="end">1</text><text x="42" y="53" text-anchor="end">10</text>
+              <text x="20" y="200" text-anchor="middle" fill="#9CA3B0" font-weight="700" transform="rotate(-90 20 200)">t (s)</text>
+            </g>
+
+            <path d="M 60 360 Q 100 320 195 240 Q 290 195 340 175 Q 420 155 485 142 Q 570 132 630 126
+                     L 630 132 Q 570 138 485 148 Q 420 161 340 181 Q 290 201 195 246 Q 100 326 60 366 Z"
+                  fill="url(#gtol2)" stroke="rgba(74,222,128,.35)" stroke-width=".6"/>
+            <path d="M 60 360 Q 100 320 195 240 Q 290 195 340 175 Q 420 155 485 142 Q 570 132 630 126"
+                  stroke="#0EA5E9" stroke-width="2" fill="none" stroke-dasharray="4 3"/>
+
+            <!-- measured points -->
+            <g font-family="JetBrains Mono" font-size="9">
+              <g transform="translate(112,303)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P1 −0.6%</text></g>
+              <g transform="translate(195,243)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P2</text></g>
+              <g transform="translate(290,203)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P3</text></g>
+              <g transform="translate(340,178)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P4</text></g>
+              <g transform="translate(420,160)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P5</text></g>
+              <g transform="translate(485,144)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P6</text></g>
+              <g transform="translate(570,133)"><circle r="6" fill="#4ADE80" stroke="#0E1015" stroke-width="1.5"/><text y="-10" text-anchor="middle" fill="#4ADE80" font-weight="700">P7</text></g>
+            </g>
+            <!-- fitted curve through measured -->
+            <path d="M 60 362 Q 100 322 195 243 Q 290 203 340 178 Q 420 160 485 144 Q 570 133 630 128"
+                  stroke="#4ADE80" stroke-width="1.5" fill="none" opacity=".8"/>
+          </svg>
+        </div>
+
+        <div class="lg-strip">
+          <span class="lg"><span class="sw" style="background:#0EA5E9;border:1px dashed #0EA5E9"></span>Teórica IEC VI</span>
+          <span class="lg"><span class="sw" style="background:rgba(74,222,128,.30)"></span>Faixa ±5%</span>
+          <span class="lg dot"><span class="sw" style="background:#4ADE80"></span>Medido (7) · 100% dentro</span>
+          <span class="lg"><span class="sw" style="background:rgba(74,222,128,.8);height:2px;margin-top:5px"></span>Curva ajustada</span>
+          <span style="flex:1"></span>
+          <span class="lg" style="font-family:var(--fm);color:var(--green)">✓ APROVADO</span>
+        </div>
+      </div>
+
+      <div class="points-card" style="max-height:200px">
+        <div class="points-h">
+          <div class="bar g"></div>
+          <div class="lbl">Tabela final · pontos medidos</div>
+          <div class="ct">9 / 9 OK · σ(Δt) = 1.1%</div>
+        </div>
+        <div class="points-table">
+          <table>
+            <thead><tr><th>#</th><th>I (A)</th><th>t esperado</th><th>t medido</th><th>Δ</th><th>Pickup BO1</th><th>Reset</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>P1</td><td class="num">7.50</td><td class="num">2.10 s</td><td class="num">2.087 s</td><td class="num" style="color:var(--green)">−0.6%</td><td>BO1↑ @ 2.087</td><td>0.05 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P2</td><td class="num">10.00</td><td class="num">1.12 s</td><td class="num">1.108 s</td><td class="num" style="color:var(--green)">−1.1%</td><td>BO1↑ @ 1.108</td><td>0.05 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P3</td><td class="num">15.00</td><td class="num">0.560 s</td><td class="num">0.553 s</td><td class="num" style="color:var(--green)">−1.3%</td><td>BO1↑ @ 0.553</td><td>0.04 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P4</td><td class="num">25.00</td><td class="num">0.291 s</td><td class="num">0.288 s</td><td class="num" style="color:var(--green)">−1.0%</td><td>BO1↑ @ 0.288</td><td>0.04 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P5</td><td class="num">40.00</td><td class="num">0.184 s</td><td class="num">0.181 s</td><td class="num" style="color:var(--green)">−1.6%</td><td>BO1↑ @ 0.181</td><td>0.04 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P6</td><td class="num">50.00</td><td class="num">0.148 s</td><td class="num">0.146 s</td><td class="num" style="color:var(--green)">−1.4%</td><td>BO1↑ @ 0.146</td><td>0.04 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr><td>P7</td><td class="num">75.00</td><td class="num">0.099 s</td><td class="num">0.097 s</td><td class="num" style="color:var(--green)">−2.0%</td><td>BO1↑ @ 0.097</td><td>0.04 s</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr style="background:rgba(74,222,128,.04)"><td>Pk1</td><td class="num">→ 5.025</td><td>—</td><td class="num">5.012 A</td><td class="num" style="color:var(--green)">+0.24%</td><td>BO1↑ rampa ↑</td><td>—</td><td><span class="badge bd-pass">Pass</span></td></tr>
+              <tr style="background:rgba(74,222,128,.04)"><td>Pk2</td><td class="num">→ 4.880</td><td>—</td><td class="num">4.870 A</td><td class="num" style="color:var(--green)">−0.20%</td><td>BO1↓ rampa ↓</td><td>—</td><td><span class="badge bd-pass">Pass</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      </div><!-- /mode-rep -->
+
+    </div>
+
+    <!-- ═══ RIGHT: config / progress / export ═══ -->
+    <div class="col-r">
+
+      <!-- Function config -->
+      <div class="card">
+        <div class="ph"><div class="bar"></div><div class="lbl">Parâmetros · 51 · Estágio 1</div></div>
+        <div class="field-grid">
+          <div class="field full"><span class="lb">Curva</span><div class="ip cy"><span class="v">IEC · Very Inverse</span><span class="u">▾</span></div></div>
+          <div class="field"><span class="lb">Pickup</span><div class="ip or"><span class="v">5.000</span><span class="u">A</span></div></div>
+          <div class="field"><span class="lb">Time Dial</span><div class="ip or"><span class="v">0.10</span><span class="u">s</span></div></div>
+          <div class="field"><span class="lb">Reset</span><div class="ip"><span class="v">Inst.</span><span class="u">▾</span></div></div>
+          <div class="field"><span class="lb">Direction</span><div class="ip"><span class="v">Não-dir.</span><span class="u">▾</span></div></div>
+        </div>
+      </div>
+
+      <!-- Plan controls -->
+      <div class="card">
+        <div class="ph"><div class="bar a"></div><div class="lbl">Gerador de pontos</div></div>
+        <div class="field-grid">
+          <div class="field"><span class="lb">Min × Ipk</span><div class="ip"><span class="v">1.5</span></div></div>
+          <div class="field"><span class="lb">Max × Ipk</span><div class="ip"><span class="v">15</span></div></div>
+          <div class="field"><span class="lb">N° pontos</span><div class="ip"><span class="v">7</span></div></div>
+          <div class="field"><span class="lb">Espaçam.</span><div class="ip"><span class="v">Log</span><span class="u">▾</span></div></div>
+          <div class="field full"><span class="lb">Pickup probe</span><div class="ip"><span class="v">Rampa ↑↓ · 0.95–1.10 × Ipk</span></div></div>
+          <div class="field full"><span class="lb">Tolerância</span><div class="ip am"><span class="v">±5% (t) · ±3% (I) · ±25 ms</span></div></div>
+        </div>
+        <div style="padding:8px 10px;border-top:1px solid var(--bdr);display:flex;gap:5px">
+          <button class="btn primary lg" style="flex:1">Regenerar Pontos</button>
+        </div>
+      </div>
+
+      <!-- Progress / live (always visible) -->
+      <div class="card prog-card">
+        <div class="ph"><div class="bar c"></div><div class="lbl">Progresso</div><div class="meta">P4/9</div></div>
+        <div class="body">
+          <div class="prog-big">
+            <span class="big">3</span>
+            <span class="tot">/ 9</span>
+            <span class="pc">44%</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:44%"></div></div>
+          <div class="prog-meta"><span>P4 · 0.156 s</span><span>esperado 0.291 s</span></div>
+          <div class="kv"><span class="k">Tempo restante</span><span class="v">~ 8 s</span></div>
+          <div class="kv"><span class="k">Passa / Falha</span><span class="v gr">3 / 0</span></div>
+          <div class="kv"><span class="k">Modo</span><span class="v or">Auto · sem confirm</span></div>
+        </div>
+      </div>
+
+      <!-- Action stack -->
+      <div class="card">
+        <div class="ph"><div class="bar g"></div><div class="lbl">Ações</div></div>
+        <div class="actions-stack">
+          <button class="btn good lg">▶ Iniciar Campanha</button>
+          <div style="display:flex;gap:5px">
+            <button class="btn" style="flex:1">⏸ Pausar</button>
+            <button class="btn danger" style="flex:1">■ Parar</button>
+          </div>
+          <button class="btn" style="margin-top:4px">↺ Repetir ponto P4</button>
+          <div style="border-top:1px solid var(--bdr);margin:5px 0;padding-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:5px">
+            <button class="btn">📤 Exportar PDF</button>
+            <button class="btn">📊 Exportar CSV</button>
+            <button class="btn" style="grid-column:1/-1">📁 Salvar campanha</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- KPI status bar -->
+  <div class="status-bar">
+    <div class="si"><span class="l">Função</span><span class="v or">51 · Estágio 1</span></div>
+    <div class="si"><span class="l">Ensaio</span><span class="v" style="color:var(--tx)">Curva + Pickup</span></div>
+    <div class="si"><span class="l">Pontos</span><span class="v mono">7 + 2</span></div>
+    <div class="si"><span class="l">Concluídos</span><span class="v gr mono">3</span></div>
+    <div class="si"><span class="l">Em curso</span><span class="v am mono">P4</span></div>
+    <div class="si"><span class="l">Tempo</span><span class="v mono">14.3 s est.</span></div>
+    <div class="si"><span class="l">Bay</span><span class="v cy mono">BAY-01</span></div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.stp').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.stp').forEach(b=>b.classList.remove('on','done'));
+    btn.classList.add('on');
+    document.querySelectorAll('.mode').forEach(m=>m.classList.remove('on'));
+    document.getElementById('mode-'+btn.dataset.step).classList.add('on');
+    // mark earlier as done
+    const order=['plan','run','rep'];
+    const idx=order.indexOf(btn.dataset.step);
+    document.querySelectorAll('.stp').forEach((b,i)=>{
+      if(i<idx) b.classList.add('done');
+    });
+  });
+});
+</script>
+
+</body>
+</html>
