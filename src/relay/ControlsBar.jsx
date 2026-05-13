@@ -18,7 +18,7 @@ export default function ControlsBar({ ss, stime, isTripped, maletaTripped, runSi
       </button>
       <div className={`cb-status${running ? " running" : ""}`}>
         <span className="d" />
-        <span>
+        <span style={{ fontSize: 18, fontWeight: 600 }}>
           {tripped
             ? `TRIP · ${stime.toFixed(3)} s`
             : running

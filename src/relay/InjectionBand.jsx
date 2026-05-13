@@ -28,7 +28,7 @@ function InjCell({ label, value, unit, colorClass = "tx2" }) {
 export default function InjectionBand({
   p, pf, pfMode, balI, balV, seqI, seqV, sys,
   onBalChangeI, onBalChangeV, onSeqChangeI, onSeqChangeV,
-  uP, uPf, setSys
+  uP, uPf, setSys, setPfMode
 }) {
   const { t } = useTranslation();
   const cur = pfMode === "prefault" ? pf : p;
@@ -36,6 +36,23 @@ export default function InjectionBand({
 
   return (
     <div className="rele-injection">
+      {/* PRE/FAULT toggle at the top */}
+      <div className="inj-pf-toggle">
+        <button
+          className={`pf-btn${pfMode === "prefault" ? " on" : ""}`}
+          onClick={() => setPfMode("prefault")}
+        >
+          {t("tabs.preFault") || "Pré"}
+        </button>
+        <button
+          className={`pf-btn${pfMode === "fault" ? " on" : ""}`}
+          onClick={() => setPfMode("fault")}
+        >
+          {t("tabs.fault") || "Falta"}
+        </button>
+      </div>
+
+      <div className="rele-injection-inner">
       {/* CURRENT */}
       <div className="inj-block">
         <div className="inj-h">
@@ -56,34 +73,44 @@ export default function InjectionBand({
             </select>
           )}
         </div>
-        <div className="inj-grid">
+        <div className="inj-grid-vertical">
           {balI === "balanced" ? (
             <>
-              <div className="inj-cell">
-                <span className="l">Iₐ MAG</span>
-                <IB unit="A" value={cur.currents.Ia.mag} onChange={v => updCur("currents", "Ia", "mag", v)} />
+              <div className="inj-col">
+                <span className="col-label">Iₐ</span>
+                <div className="inj-cell">
+                  <span className="l">MAG</span>
+                  <IB unit="A" value={cur.currents.Ia.mag} onChange={v => updCur("currents", "Ia", "mag", v)} />
+                </div>
+                <div className="inj-cell">
+                  <span className="l">ÂNG</span>
+                  <IB unit="°" value={cur.currents.Ia.ang} onChange={v => updCur("currents", "Ia", "ang", v)} step="1" warm />
+                </div>
               </div>
-              <InjCell label="Iᵦ MAG" value={cur.currents.Ib.mag} unit="A" colorClass="cy" />
-              <InjCell label="I꜀ MAG" value={cur.currents.Ic.mag} unit="A" colorClass="cy" />
-              <div className="inj-cell">
-                <span className="l">Iₐ ÂNG</span>
-                <IB unit="°" value={cur.currents.Ia.ang} onChange={v => updCur("currents", "Ia", "ang", v)} step="1" warm />
+              <div className="inj-col">
+                <span className="col-label">Iᵦ</span>
+                <InjCell label="MAG" value={cur.currents.Ib.mag} unit="A" colorClass="cy" />
+                <InjCell label="ÂNG" value={cur.currents.Ib.ang} unit="°" colorClass="tx2" />
               </div>
-              <InjCell label="Iᵦ ÂNG" value={cur.currents.Ib.ang} unit="°" colorClass="tx2" />
-              <InjCell label="I꜀ ÂNG" value={cur.currents.Ic.ang} unit="°" colorClass="tx2" />
+              <div className="inj-col">
+                <span className="col-label">I꜀</span>
+                <InjCell label="MAG" value={cur.currents.Ic.mag} unit="A" colorClass="cy" />
+                <InjCell label="ÂNG" value={cur.currents.Ic.ang} unit="°" colorClass="tx2" />
+              </div>
             </>
           ) : (
             ["Ia", "Ib", "Ic"].map((ph, idx) => (
-              <>
-                <div key={ph + "m"} className="inj-cell">
-                  <span className="l">{["Iₐ", "Iᵦ", "I꜀"][idx]} MAG</span>
+              <div key={ph} className="inj-col">
+                <span className="col-label">{["Iₐ", "Iᵦ", "I꜀"][idx]}</span>
+                <div className="inj-cell">
+                  <span className="l">MAG</span>
                   <IB unit="A" value={cur.currents[ph].mag} onChange={v => updCur("currents", ph, "mag", v)} />
                 </div>
-                <div key={ph + "a"} className="inj-cell">
-                  <span className="l">{["Iₐ", "Iᵦ", "I꜀"][idx]} ÂNG</span>
+                <div className="inj-cell">
+                  <span className="l">ÂNG</span>
                   <IB unit="°" value={cur.currents[ph].ang} onChange={v => updCur("currents", ph, "ang", v)} step="1" warm />
                 </div>
-              </>
+              </div>
             ))
           )}
         </div>
@@ -109,34 +136,44 @@ export default function InjectionBand({
             </select>
           )}
         </div>
-        <div className="inj-grid">
+        <div className="inj-grid-vertical">
           {balV === "balanced" ? (
             <>
-              <div className="inj-cell">
-                <span className="l">Vₐ MAG</span>
-                <IB unit="V" value={cur.voltages.Va.mag} onChange={v => updCur("voltages", "Va", "mag", v)} />
+              <div className="inj-col">
+                <span className="col-label">Vₐ</span>
+                <div className="inj-cell">
+                  <span className="l">MAG</span>
+                  <IB unit="V" value={cur.voltages.Va.mag} onChange={v => updCur("voltages", "Va", "mag", v)} />
+                </div>
+                <div className="inj-cell">
+                  <span className="l">ÂNG</span>
+                  <IB unit="°" value={cur.voltages.Va.ang} onChange={v => updCur("voltages", "Va", "ang", v)} step="1" warm />
+                </div>
               </div>
-              <InjCell label="Vᵦ MAG" value={cur.voltages.Vb.mag} unit="V" colorClass="am" />
-              <InjCell label="V꜀ MAG" value={cur.voltages.Vc.mag} unit="V" colorClass="am" />
-              <div className="inj-cell">
-                <span className="l">Vₐ ÂNG</span>
-                <IB unit="°" value={cur.voltages.Va.ang} onChange={v => updCur("voltages", "Va", "ang", v)} step="1" warm />
+              <div className="inj-col">
+                <span className="col-label">Vᵦ</span>
+                <InjCell label="MAG" value={cur.voltages.Vb.mag} unit="V" colorClass="am" />
+                <InjCell label="ÂNG" value={cur.voltages.Vb.ang} unit="°" colorClass="tx2" />
               </div>
-              <InjCell label="Vᵦ ÂNG" value={cur.voltages.Vb.ang} unit="°" colorClass="tx2" />
-              <InjCell label="V꜀ ÂNG" value={cur.voltages.Vc.ang} unit="°" colorClass="tx2" />
+              <div className="inj-col">
+                <span className="col-label">V꜀</span>
+                <InjCell label="MAG" value={cur.voltages.Vc.mag} unit="V" colorClass="am" />
+                <InjCell label="ÂNG" value={cur.voltages.Vc.ang} unit="°" colorClass="tx2" />
+              </div>
             </>
           ) : (
             ["Va", "Vb", "Vc"].map((ph, idx) => (
-              <>
-                <div key={ph + "m"} className="inj-cell">
-                  <span className="l">{["Vₐ", "Vᵦ", "V꜀"][idx]} MAG</span>
+              <div key={ph} className="inj-col">
+                <span className="col-label">{["Vₐ", "Vᵦ", "V꜀"][idx]}</span>
+                <div className="inj-cell">
+                  <span className="l">MAG</span>
                   <IB unit="V" value={cur.voltages[ph].mag} onChange={v => updCur("voltages", ph, "mag", v)} />
                 </div>
-                <div key={ph + "a"} className="inj-cell">
-                  <span className="l">{["Vₐ", "Vᵦ", "V꜀"][idx]} ÂNG</span>
+                <div className="inj-cell">
+                  <span className="l">ÂNG</span>
                   <IB unit="°" value={cur.voltages[ph].ang} onChange={v => updCur("voltages", ph, "ang", v)} step="1" warm />
                 </div>
-              </>
+              </div>
             ))
           )}
         </div>
@@ -145,33 +182,20 @@ export default function InjectionBand({
       {/* FREQUENCY */}
       <div className="inj-block">
         <div className="inj-h">
-          <span className="ttl">Frequência &amp; Fase</span>
+          <span className="ttl">Frequência</span>
           <SegCtrl
             options={[{ value: 60, label: "60 Hz" }, { value: 50, label: "50 Hz" }]}
             value={sys.freq ?? 60}
             onChange={v => setSys(o => ({ ...o, freq: Number(v) }))}
           />
         </div>
-        <div className="inj-grid">
+        <div className="inj-grid-vertical">
           <div className="inj-cell">
-            <span className="l">Freq</span>
+            <span className="l">Freq (Hz)</span>
             <IB unit="Hz" value={sys.freq ?? 60} onChange={v => setSys(o => ({ ...o, freq: v }))} step="0.1" />
           </div>
-          <InjCell label="df/dt" value="0.00" unit="Hz/s" colorClass="tx2" />
-          <InjCell label="Rampa" value="—" colorClass="tx2" />
-          <div className="inj-cell">
-            <span className="l">Pré-falta</span>
-            <div className="v tx2"><span>—</span></div>
-          </div>
-          <div className="inj-cell">
-            <span className="l">Falta</span>
-            <div className="v tx2"><span>—</span></div>
-          </div>
-          <div className="inj-cell">
-            <span className="l">Pós</span>
-            <div className="v tx2"><span>—</span></div>
-          </div>
         </div>
+      </div>
       </div>
     </div>
   );

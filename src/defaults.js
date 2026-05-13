@@ -35,7 +35,7 @@ export const allCols=[...boCols,...ledCols];
 export const buildDefaultMatrix=()=>{const m={};allRows.forEach(r=>{m[r]={};allCols.forEach(c=>{m[r][c]=false})});return m};
 export const inMatrixRows=["CB_Opened","CB_Closed"];
 export const buildDefaultInMatrix=()=>{const m={};inMatrixRows.forEach(r=>{m[r]={};biRows.forEach(c=>{m[r][c]=false})});return m};
-export const mainTabs=[{id:"sys",label:"System Parameters"},{id:"relay",label:"Relay Settings"},{id:"output",label:"Output Matrix"},{id:"input",label:"Input Matrix"}];
+export const mainTabs=[{id:"sys",label:"System Parameters"},{id:"relay",label:"Relay Settings"},{id:"output",label:"Output Matrix"},{id:"input",label:"Input Matrix"},{id:"scenarios",label:"Scenarios"}];
 
 export const TEST_PRESETS=[
   {id:'oc_ph',   label:'51/50 Fase',

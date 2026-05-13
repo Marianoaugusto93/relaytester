@@ -14,7 +14,7 @@ export default function MeasuresPanel({
 }) {
   const { t } = useTranslation();
   const [measTab, setMeasTab] = useState("med");
-  const [showPrimary, setShowPrimary] = useState(false);
+  const [showPrimary, setShowPrimary] = useState(true);
 
   const fmt = (v, d = 3) => (v ?? 0).toFixed(d);
   const fmtPow = (v) => {
@@ -33,15 +33,15 @@ export default function MeasuresPanel({
       </div>
 
       {/* relay status strip */}
-      <div style={{ padding: "5px 10px", borderBottom: "1px solid var(--bdr)", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-        <span style={{ fontFamily: "var(--fm)", fontSize: 9.5, color: isTripped ? "var(--red)" : "var(--green)", fontWeight: 700 }}>
-          {isTripped ? "● TRIP" : "● SISTEMA OK"}
+      <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--bdr)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <span style={{ fontFamily: "var(--fm)", fontSize: 11, color: isTripped ? "var(--red)" : "var(--green)", fontWeight: 700 }}>
+          {isTripped ? "● TRIP" : "● OK"}
         </span>
-        {isTripped && trippedStageIds.length > 0 && (
-          <span style={{ fontFamily: "var(--fm)", fontSize: 9, color: "var(--red)", opacity: 0.8 }}>{trippedStageIds[0]}</span>
+        {isTripped && trippedStageIds?.length > 0 && (
+          <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--red)", opacity: 0.8 }}>{trippedStageIds[0]}</span>
         )}
-        <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 9, color: "var(--tx3)" }}>
-          {injecting ? "live · 50 ms" : "idle"}
+        <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 14, color: "var(--green)", fontWeight: 700 }}>
+          {injecting ? "● Injeção" : "● Parado"}
         </span>
       </div>
 
@@ -158,28 +158,18 @@ export default function MeasuresPanel({
         </div>
       )}
 
-      <div style={{ flex: 1 }} />
-
-      {/* Action buttons 2×4 */}
-      <div className="actions-grid">
-        <div className="act-group">
-          <div className="act-h">{t("controls.send") ? "Ajustes" : "Ajustes"}</div>
-          <div className="act-btns">
-            <button className={`act-btn${sendFlash ? " flash-g" : ""}`} onClick={onSend}><span className="ico">↑</span>Send</button>
-            <button className={`act-btn${getFlash ? " flash-b" : ""}`} onClick={onGet}><span className="ico">↓</span>Get</button>
-            <button className="act-btn" onClick={onOpenFile}><span className="ico">⇧</span>Open</button>
-            <button className="act-btn" onClick={onSaveFile}><span className="ico">⇩</span>Save</button>
-          </div>
-        </div>
-        <div className="act-group">
-          <div className="act-h">Operação</div>
-          <div className="act-btns">
-            <button className="act-btn" onClick={onLiveWaveform}><span className="ico">∿</span>Live</button>
-            <button className="act-btn" onClick={onCaptureWaveform}><span className="ico">≈</span>Capture</button>
-            <button className="act-btn" onClick={onSnapshot}><span className="ico">⊙</span>Snap</button>
-            <button className="act-btn" onClick={onDump}><span className="ico">⏚</span>Dump</button>
-          </div>
-        </div>
+      {/* Action buttons inline with labels */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 8px", borderTop: "1px solid var(--bdr)", flexShrink: 0 }}>
+        <span style={{ fontSize: 8, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", minWidth: 50 }}>Ajustes</span>
+        <button className={`act-btn${sendFlash ? " flash-g" : ""}`} onClick={onSend}><span className="ico">↑</span>Send</button>
+        <button className={`act-btn${getFlash ? " flash-b" : ""}`} onClick={onGet}><span className="ico">↓</span>Get</button>
+        <button className="act-btn" onClick={onOpenFile}><span className="ico">⇧</span>Open</button>
+        <button className="act-btn" onClick={onSaveFile}><span className="ico">⇩</span>Save</button>
+        <span style={{ fontSize: 8, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", marginLeft: 6, minWidth: 60 }}>Operação</span>
+        <button className="act-btn" onClick={onLiveWaveform}><span className="ico">∿</span>Live</button>
+        <button className="act-btn" onClick={onCaptureWaveform}><span className="ico">≈</span>Capture</button>
+        <button className="act-btn" onClick={onSnapshot}><span className="ico">⊙</span>Snap</button>
+        <button className="act-btn" onClick={onDump}><span className="ico">⏚</span>Dump</button>
       </div>
 
       {/* relay hardware buttons */}

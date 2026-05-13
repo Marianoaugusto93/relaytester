@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "./i18n/useTranslation.js";
 import { mainTabs } from "./defaults.js";
 import InjectionBand from "./relay/InjectionBand.jsx";
-import ScenariosSidebar from "./relay/ScenariosSidebar.jsx";
 import MeasuresPanel from "./relay/MeasuresPanel.jsx";
 import ControlsBar from "./relay/ControlsBar.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
@@ -47,28 +46,15 @@ export default function RelePage({
 
       {/* TOP: injection band */}
       <InjectionBand
-        p={p} pf={pf} pfMode={pfMode}
+        p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode}
         balI={balI} balV={balV} seqI={seqI} seqV={seqV}
         onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV}
         onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}
         uP={uP} uPf={uPf} sys={sys} setSys={setSys}
       />
 
-      {/* MIDDLE: 3-column layout */}
+      {/* MIDDLE: 2-column layout (wider center) */}
       <div className="rele-main">
-
-        {/* LEFT: scenarios sidebar */}
-        <div className="rele-left">
-          <ScenariosSidebar
-            pfMode={pfMode}
-            setPfMode={setPfMode}
-            prot={prot}
-            outMatrix={outMatrix}
-            inMatrix={inMatrix}
-            phasors={p}
-            applyTestPreset={applyTestPreset}
-          />
-        </div>
 
         {/* MID: tabs + settings content */}
         <div className="rele-mid">

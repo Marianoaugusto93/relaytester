@@ -2,6 +2,7 @@ import{useState}from"react";
 import{Tgl,IB}from"./widgets.jsx";
 import{protOrder,curveTypes,TEST_PRESETS,biRows,cbStatusRows,cbCmdRows,protStageRows,allRows,boCols,ledCols,allCols,inMatrixRows}from"./defaults.js";
 import{useTranslation}from"./i18n/useTranslation.js";
+import ScenariosSidebar from"./relay/ScenariosSidebar.jsx";
 
 // ── Main SettingsPanel export ─────────────────────────────────────────────────
 export default function SettingsPanel({prot,outMatrix,inMatrix,sys,tab,si,mainTab,uPr,uSt,uS,setSi,setTab,toggleMatrix,toggleInMatrix,applyTestPreset,rtp,rtc,phasors}){
@@ -50,6 +51,8 @@ export default function SettingsPanel({prot,outMatrix,inMatrix,sys,tab,si,mainTa
     <tr className="mx-section"><td colSpan={allCols.length+1}>{t("matrix.protectionStages")}</td></tr>
     {protStageRows.map(r=><tr key={r}><td className="row-label is-prot">{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
   </tbody></table></div></div>);
+
+  if(mainTab==="scenarios")return(<ScenariosSidebar pfMode={phasors.pfMode} setPfMode={phasors.setPfMode} prot={prot} outMatrix={outMatrix} inMatrix={inMatrix} phasors={phasors} applyTestPreset={applyTestPreset}/>);
 
   return(<div className="card-scroll"><div className="mx-wrap">
     <table className="mx"><thead><tr>
