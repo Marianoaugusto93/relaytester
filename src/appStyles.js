@@ -291,6 +291,70 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .scen-footer{border-top:1px solid var(--bdr);padding:8px 10px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
 .measures-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .measures-scroll{flex:1;overflow-y:auto;min-height:0}
+
+/* ── Campo New Layout (PR 1/3) ─────────────────────────────────────────────────── */
+.topbar-toggle{padding:6px 12px;border:1px solid var(--bdr);border-radius:var(--rs);background:var(--card);color:var(--tx);cursor:pointer;font-size:11px;font-weight:500;transition:all .2s ease;white-space:nowrap}.topbar-toggle:hover{background:var(--orange);color:var(--card)}.topbar-toggle.new{background:var(--green);color:var(--card);font-weight:600}
+
+.campo-page-new{display:flex;gap:8px;padding:8px;height:100%;background:transparent}
+.campo-sidebar-new{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:transparent;overflow-y:auto;overflow-x:hidden}
+.campo-canvas-new{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
+.cam-svg-container{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+.cam-svg-wrapper{width:100%;height:100%;position:relative}
+
+.cam-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:10px;flex-shrink:0}
+.cam-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.cam-presets{display:flex;flex-direction:column;gap:4px}
+.cam-preset-item{padding:6px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--card2);cursor:pointer;font-size:11px;color:var(--tx2);transition:all .15s}.cam-preset-item:hover{border-color:var(--orange);color:var(--tx)}.cam-preset-item.selected{background:var(--orange-dim);border-color:var(--orange);color:var(--orange);font-weight:600}
+
+.cam-status{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cam-status-pill{padding:6px;border-radius:6px;background:var(--card2);border:1px solid var(--bdr);text-align:center;font-size:10px;font-weight:600}
+.cam-status-pill.on{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.cam-status-pill.off{color:var(--tx3)}
+
+.cam-circuits{display:flex;flex-direction:column;gap:4px;font-size:11px}
+.cam-circuit-line{display:flex;align-items:center;gap:6px;padding:4px 0}
+.cam-circuit-icon{width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cam-circuit-icon.ok{color:var(--green)}
+.cam-circuit-icon.warn{color:var(--amber)}
+.cam-circuit-label{flex:1;color:var(--tx2);font-size:10px}
+.cam-circuit-path{color:var(--tx3);font-size:9px;font-family:var(--fm)}
+
+.cam-cable-list{border-top:1px solid var(--bdr);padding-top:8px;margin-top:8px}
+.cam-cable-accordion-header{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px;user-select:none;font-size:11px;font-weight:600;color:var(--tx2)}.cam-cable-accordion-header:hover{color:var(--tx)}
+.cam-cable-item{display:flex;align-items:center;gap:8px;padding:6px;border-radius:4px;background:var(--card2);font-size:10px;font-family:var(--fm);margin-bottom:3px}
+.cam-cable-item-label{flex:1;color:var(--tx2)}
+.cam-cable-remove{width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--red);border:1px solid transparent;border-radius:3px;transition:all .15s}.cam-cable-remove:hover{background:var(--red-dim);border-color:var(--red)}
+
+.cam-footer-row{display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--bdr);font-size:10px;color:var(--tx2)}
+
+/* Lane colors for Manhattan routing */
+.cam-lane-a{background:rgba(255,224,51,.15)}
+.cam-lane-b{background:rgba(229,57,53,.15)}
+.cam-lane-c{background:rgba(158,158,158,.15)}
+.cam-lane-gnd{background:rgba(67,160,71,.15)}
+.cam-lane-cmd{background:rgba(249,115,22,.15)}
+
+/* Cable styling */
+.cable-normal{stroke:rgba(249,115,22,.6);stroke-width:3px;fill:none}
+.cable-hover{stroke:var(--orange);stroke-width:5px;fill:none}
+.cable-suggested{stroke:rgba(74,222,128,.6);stroke-width:3px;stroke-dasharray:5,5;fill:none;animation:dashflow 1s linear infinite}
+
+@keyframes dashflow{to{stroke-dashoffset:-10px}}
+
+/* Terminal styling */
+.terminal-valid{opacity:1;stroke:var(--orange);stroke-width:2px;filter:drop-shadow(0 0 6px rgba(249,115,22,.4))}
+.terminal-invalid{opacity:.3;pointer-events:none}
+.terminal-origin{stroke:var(--green);stroke-width:2.5px;filter:drop-shadow(0 0 8px rgba(74,222,128,.6))}
+
+.cam-banner{position:absolute;bottom:8px;left:8px;right:8px;padding:8px 12px;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);border-radius:6px;font-size:11px;color:var(--tx2);text-align:center;font-family:var(--fm)}
+.cam-banner.active{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.2);color:var(--green)}
+
+.borne-label{font-size:12px;font-weight:700;text-align:center}
+.borne-sublabel{font-size:9px;font-family:var(--fm);color:var(--tx3);text-align:center}
+.group-label{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--tx);padding:3px 6px;border-radius:4px;text-align:center;flex:1}
+.group-label.saidas{background:rgba(255,224,51,.2);color:#ffd700}
+.group-label.status{background:rgba(14,165,233,.2);color:var(--cyan)}
+.group-label.bobinas{background:rgba(248,113,113,.2);color:var(--red)}
 `;
 
 
