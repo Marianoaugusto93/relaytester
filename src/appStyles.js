@@ -317,6 +317,31 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .cam-circuit-icon.ok{color:var(--green)}
 .cam-circuit-icon.warn{color:var(--amber)}
 .cam-circuit-label{flex:1;color:var(--tx2);font-size:10px}
+
+/* ── Switch Panel (Chave de Aferição) — schematic-style toggle cards ── */
+.switch-panel{background:var(--card);border:1px solid var(--bdr);border-radius:10px;margin-bottom:8px;flex-shrink:0;overflow:hidden}
+.switch-panel-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--bdr);background:rgba(0,0,0,.2)}
+.switch-panel-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx);font-family:var(--fh)}
+.switch-panel-count{font-size:10px;color:var(--tx3);font-family:var(--fm);font-weight:600}
+.switch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:8px;padding:10px 12px}
+.switch-card{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 4px;border:1px solid var(--bdr);border-radius:7px;background:var(--card2);cursor:pointer;transition:border-color .15s,background .15s,transform .1s;user-select:none;outline:none}
+.switch-card:hover{border-color:var(--pole-color,var(--orange));background:var(--card3)}
+.switch-card:focus-visible{box-shadow:0 0 0 2px var(--pole-color,var(--orange))}
+.switch-card:active{transform:scale(.97)}
+.switch-card.up{border-color:var(--pole-color,var(--green));background:color-mix(in srgb,var(--pole-color,#1565C0) 12%,var(--card2))}
+.switch-card.down{opacity:.78}
+.switch-label{font-size:10px;font-weight:800;color:var(--tx);letter-spacing:1px;font-family:var(--fm)}
+.switch-track{position:relative;width:18px;height:42px;border-radius:9px;background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,.25));border:1px solid var(--bdr2);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.switch-track-rail{position:absolute;left:50%;top:5px;bottom:5px;width:3px;border-radius:2px;background:rgba(255,255,255,.07);transform:translateX(-50%)}
+.switch-handle{position:absolute;left:50%;width:14px;height:14px;border-radius:50%;background:var(--pole-color,#888);border:2px solid rgba(255,255,255,.18);box-shadow:0 1px 4px rgba(0,0,0,.55),inset 0 1px 2px rgba(255,255,255,.25);transform:translateX(-50%);transition:top .22s cubic-bezier(.34,1.4,.64,1)}
+.switch-handle.up{top:3px}
+.switch-handle.down{top:25px}
+.switch-marker{position:absolute;left:calc(100% + 4px);font-size:8px;font-weight:700;color:var(--tx3);font-family:var(--fm);letter-spacing:.4px;white-space:nowrap;line-height:1}
+.switch-marker.top{top:3px}
+.switch-marker.bot{bottom:3px}
+.switch-state{font-size:9px;font-weight:700;font-family:var(--fm);letter-spacing:.5px;padding:2px 4px;border-radius:4px}
+.switch-state.on{color:var(--green);background:var(--green-dim)}
+.switch-state.off{color:var(--tx3);background:rgba(255,255,255,.04)}
 .cam-circuit-path{color:var(--tx3);font-size:9px;font-family:var(--fm)}
 
 .cam-cable-list{border-top:1px solid var(--bdr);padding-top:8px;margin-top:8px}

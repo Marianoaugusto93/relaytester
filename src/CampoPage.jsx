@@ -348,7 +348,9 @@ export function checkMaletaTripDetection(stageIds,relayMatrix,fieldState){
     boConns.push([`${pair[0]}_top`,`${pair[1]}_top`]);
   });
 
-  // Reconstruir grafo com as conexões BO ativas
+  // Reconstruir grafo com as conexões BO ativas.
+  // BO contacts são transitórios — precisamos sempre reconstruir o grafo a partir
+  // de connections + internalConns + boConns (não dá pra usar electricalGraph cacheado).
   const conns=fieldState.connections||[];
   const internal=fieldState.internalConns||[];
   const graph=buildElectricalGraph(conns,[...internal,...boConns]);

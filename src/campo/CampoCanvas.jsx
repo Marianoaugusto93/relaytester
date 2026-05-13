@@ -1,8 +1,9 @@
-import { computeTerminalPosition, buildManhattanPath, laneY } from "./routing.js";
+import { TERMINALS, computeTerminalPosition, buildManhattanPath, validateConnection } from "./routing.js";
 
 export default function CampoCanvas({
   cables, fieldState, selectedOrigin, suggestedDests,
-  onSelectOrigin, onSelectDest, onCancelSelection
+  onSelectOrigin, onSelectDest, onCancelSelection,
+  cableColorFor, electricalGraph,
 }) {
   const lanes = [
     { phase: 'A', y: 60, color: '#FFE033', label: 'Fase A' },
@@ -10,21 +11,6 @@ export default function CampoCanvas({
     { phase: 'C', y: 120, color: '#9E9E9E', label: 'Fase C' },
     { phase: 'gnd', y: 150, color: '#43A047', label: 'Terra' },
     { phase: 'cmd', y: 180, color: '#F97316', label: 'Comando' }
-  ];
-
-  const terminals = [
-    { id: 'i1_pos', x: 50, y: 30, label: 'I1+', group: 'A' },
-    { id: 'i1_neg', x: 70, y: 30, label: 'I1-', group: 'A' },
-    { id: 'i2_pos', x: 100, y: 30, label: 'I2+', group: 'B' },
-    { id: 'i2_neg', x: 120, y: 30, label: 'I2-', group: 'B' },
-    { id: 'i3_pos', x: 150, y: 30, label: 'I3+', group: 'C' },
-    { id: 'i3_neg', x: 170, y: 30, label: 'I3-', group: 'C' },
-    { id: 'ia1_top', x: 50, y: 450, label: 'IA-S1', group: 'A' },
-    { id: 'ia1_bot', x: 70, y: 470, label: 'IA-S2', group: 'A' },
-    { id: 'ib1_top', x: 100, y: 450, label: 'IB-S1', group: 'B' },
-    { id: 'ib1_bot', x: 120, y: 470, label: 'IB-S2', group: 'B' },
-    { id: 'ic1_top', x: 150, y: 450, label: 'IC-S1', group: 'C' },
-    { id: 'ic1_bot', x: 170, y: 470, label: 'IC-S2', group: 'C' },
   ];
 
   return (
@@ -54,14 +40,16 @@ export default function CampoCanvas({
           {cables.map((cable, i) => {
             const p1 = computeTerminalPosition(cable.from);
             const p2 = computeTerminalPosition(cable.to);
-            const phase = cable.from?.includes('i1') ? 'A' : cable.from?.includes('i2') ? 'B' : 'C';
+            const fromTerm = TERMINALS.find(t => t.id === cable.from);
+            const phase = fromTerm?.group || 'cmd';
             const pathStr = buildManhattanPath(p1, p2, phase);
+            const color = cableColorFor ? cableColorFor(cable.from, cable.to) : '#444444';
             return (
               <path
                 key={i}
                 d={pathStr}
                 className="cable-normal"
-                style={{ opacity: 0.7 }}
+                style={{ opacity: 0.7, stroke: color }}
               />
             );
           })}
@@ -69,40 +57,74 @@ export default function CampoCanvas({
           {/* Terminals */}
           {terminals.map(term => {
             const isOrigin = selectedOrigin === term.id;
-            const isValid = selectedOrigin && suggestedDests.has(term.id);
-            const isInvalid = selectedOrigin && !suggestedDests.has(term.id) && selectedOrigin !== term.id;
+
+            // When an origin is selected: validate this terminal as destination
+            let connValid = false;
+            let connBlocked = false;
+            if (selectedOrigin && !isOrigin) {
+              const { valid } = validateConnection(selectedOrigin, term.id, cables);
+              connValid = valid;
+              connBlocked = !valid;
+            }
+
+            // Highlight terminals in same electrical node as the selected origin
+            const sameNode = selectedOrigin && electricalGraph
+              ? electricalGraph.areConnected(term.id, selectedOrigin) && !isOrigin
+              : false;
+
+            // Color logic
+            let stroke = '#666';
+            let strokeWidth = 1;
+            let opacity = 1;
+            let glowFilter = 'none';
+            let cursor = 'pointer';
+
+            if (isOrigin) {
+              stroke = '#4ade80'; strokeWidth = 2;
+            } else if (selectedOrigin) {
+              if (connValid) {
+                stroke = '#f97316'; strokeWidth = 2;
+                glowFilter = 'drop-shadow(0 0 6px rgba(249,115,22,.6))';
+              } else if (sameNode) {
+                // Already in same electrical node — show in yellow as warning
+                stroke = '#facc15'; strokeWidth = 1.5;
+                opacity = 0.6;
+                cursor = 'not-allowed';
+              } else {
+                opacity = 0.3;
+                cursor = 'not-allowed';
+              }
+            }
 
             return (
               <g
                 key={term.id}
                 onClick={() => {
-                  if (isValid) {
-                    onSelectDest(term.id);
-                  } else if (!selectedOrigin) {
+                  if (isOrigin) return;
+                  if (selectedOrigin) {
+                    if (connValid) onSelectDest(term.id);
+                  } else {
                     onSelectOrigin(term.id);
                   }
                 }}
-                style={{ cursor: isInvalid ? 'not-allowed' : 'pointer' }}
+                style={{ cursor }}
               >
                 <circle
                   cx={term.x}
                   cy={term.y}
                   r="6"
-                  fill="#1e88e5"
-                  stroke={isOrigin ? '#4ade80' : isValid ? '#f97316' : '#666'}
-                  strokeWidth={isOrigin || isValid ? 2 : 1}
-                  style={{
-                    opacity: isInvalid ? 0.3 : 1,
-                    filter: isValid ? 'drop-shadow(0 0 6px rgba(249,115,22,.6))' : 'none'
-                  }}
+                  fill={term.fill || '#1e88e5'}
+                  stroke={stroke}
+                  strokeWidth={strokeWidth}
+                  style={{ opacity, filter: glowFilter }}
                 />
                 <text
                   x={term.x}
                   y={term.y + 12}
                   fontSize="9"
                   textAnchor="middle"
-                  fill={isInvalid ? '#666' : '#aaa'}
-                  style={{ opacity: isInvalid ? 0.3 : 1 }}
+                  fill={opacity < 1 ? '#666' : '#aaa'}
+                  style={{ opacity }}
                 >
                   {term.label}
                 </text>

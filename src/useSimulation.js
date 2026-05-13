@@ -28,7 +28,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     const pfActive=pfEnabled&&pfDuration>0;
     const rp2=relayProt;
 
-    const graph=buildElectricalGraph(fieldStateRef.current.connections,fieldStateRef.current.internalConns);
+    const graph=fieldStateRef.current.electricalGraph||buildElectricalGraph(fieldStateRef.current.connections,fieldStateRef.current.internalConns);
     const faultRR=computeRelayReadings(p,graph);
     const pfRR=pfActive?computeRelayReadings(pf,graph):null;
 

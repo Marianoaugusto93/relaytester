@@ -43,6 +43,8 @@ function AppInner(){
   const[ss,setSs]=useState("idle");const[stime,setStime]=useState(0);const[rp,setRp]=useState(0);
   const[trippedStageIds,setTrippedStageIds]=useState([]);const[diag,setDiag]=useState([]);const[evts,setEvts]=useState([]);
   const[isTripped,setIsTripped]=useState(false);const[maletaTripped,setMaletaTripped]=useState(false);const[faultRecord,setFaultRecord]=useState(null);
+  const[boStatus,setBoStatus]=useState({bo1:false,bo2:false,bo3:false,bo4:false});
+  const[biStatus,setBiStatus]=useState({bi1:false,bi2:false,bi3:false,bi4:false});
   const[sendFlash,setSendFlash]=useState(false);const[getFlash,setGetFlash]=useState(false);
   const[tripHistory,setTripHistory]=useState([]);
   const[bkResetCtr,setBkResetCtr]=useState(0);const[bkCloseCtr,setBkCloseCtr]=useState(0);const[bkOpenCtr,setBkOpenCtr]=useState(0);
@@ -90,7 +92,9 @@ function AppInner(){
   });
 
   // ── Relay electrical readings ──────────────────────────────────────────────
-  const relayGraph=useMemo(()=>buildElectricalGraph(fieldState.connections,fieldState.internalConns),[fieldState]);
+  // Prefer pre-built electricalGraph if provided by field layout (CampoPageNew);
+  // fall back to rebuilding from connections+internalConns (CampoPage legacy).
+  const relayGraph=useMemo(()=>fieldState.electricalGraph||buildElectricalGraph(fieldState.connections,fieldState.internalConns),[fieldState]);
   const activePhasors=simPhase==="prefault"?pf:p;
   const relayReadings=useMemo(()=>computeRelayReadings(activePhasors,relayGraph),[activePhasors,relayGraph]);
   const injecting=ss==="running";
@@ -167,6 +171,36 @@ function AppInner(){
     });
     setBkSpring(spring);setBkTripLatch(latch);
   },[tr,ar79Ref]);
+
+  // ── BO / BI status (derived from trip + breaker + field wiring) ───────────
+  // BO ativo = relay tripou (isTripped) E o terminal BO pos está conectado à TC (tb_13/tb_14)
+  // BI ativo (52a) = breaker fechado E BI pos conectado a tb_9_top (contato 52a)
+  useEffect(()=>{
+    const g=relayGraph;
+    const tripped=isTripped||maletaTripped;
+    const nextBo={bo1:false,bo2:false,bo3:false,bo4:false};
+    if(tripped&&g){
+      for(let i=1;i<=4;i++){
+        const term=`bo${i}_pos`;
+        if(g.areConnected(term,'tb_13_top')||g.areConnected(term,'tb_14_top')){
+          nextBo[`bo${i}`]=true;
+        }
+      }
+    }
+    setBoStatus(nextBo);
+    // BI feedback: 52a (tb_9_top). Quando disjuntor fecha, contato 52a fecha; lê quem está cabeado.
+    const cbClosed=bkState==='closed';
+    const nextBi={bi1:false,bi2:false,bi3:false,bi4:false};
+    if(cbClosed&&g){
+      for(let i=1;i<=4;i++){
+        const term=`bi${i}_pos`;
+        if(g.areConnected(term,'tb_9_top')){
+          nextBi[`bi${i}`]=true;
+        }
+      }
+    }
+    setBiStatus(nextBi);
+  },[isTripped,maletaTripped,bkState,relayGraph]);
 
   // ── Phasor helpers ─────────────────────────────────────────────────────────
   /**
@@ -372,7 +406,7 @@ function AppInner(){
     </div>
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
       {/* CAMPO */}
-      <div className="slide-pg">{campoLayoutMode==="legacy"?<CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring}/>:<CampoPageNew onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring}/>}</div>
+      <div className="slide-pg">{campoLayoutMode==="legacy"?<CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring}/>:<CampoPageNew onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} boStatus={boStatus} biStatus={biStatus}/>}</div>
 
       {/* RELÉ */}
       <div className="slide-pg"><RelePage

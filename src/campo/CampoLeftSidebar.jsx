@@ -4,14 +4,14 @@ import CampoCircuits from "./CampoCircuits.jsx";
 import CableList from "./CableList.jsx";
 
 export default function CampoLeftSidebar({
-  cables, fieldState, presets, onLoadPreset, onClearCables, 
-  cableListExpanded, onToggleCableList, onRemoveCable, bkStatus
+  cables, fieldState, electricalGraph, presets, onLoadPreset, onClearCables,
+  cableListExpanded, onToggleCableList, onRemoveCable, bkStatus, boStatus, biStatus
 }) {
   return (
     <div className="campo-sidebar-new">
       <CampoPresets presets={presets} onLoadPreset={onLoadPreset} />
       <CampoStatus bkStatus={bkStatus} />
-      <CampoCircuits cables={cables} fieldState={fieldState} />
+      <CampoCircuits cables={cables} fieldState={fieldState} electricalGraph={electricalGraph} boStatus={boStatus} biStatus={biStatus} />
       <CableList 
         cables={cables} 
         expanded={cableListExpanded} 
