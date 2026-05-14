@@ -55,7 +55,7 @@ export default function CampoCanvas({
           })}
 
           {/* Terminals */}
-          {terminals.map(term => {
+          {TERMINALS.map(term => {
             const isOrigin = selectedOrigin === term.id;
 
             // When an origin is selected: validate this terminal as destination
