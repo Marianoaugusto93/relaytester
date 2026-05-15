@@ -21,7 +21,8 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     setEvts(ev=>[{time:nowShort(),icon:"⏹",text:"Stopped.",dt:`T+${stimeRef.current.toFixed(3)}s`},...ev.slice(0,20)]);
   },[stop79,setSs,setSimPhase,setEvts,stimeRef]);
 
-  const runSim=useCallback(()=>{
+  const runSim=useCallback((injectPhasors)=>{
+    const phasorsToUse=injectPhasors||p;
     setSs("running");setStime(0);stimeRef.current=0;setDiag([]);setMaletaTripped(false);
     setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Simulation started.",dt:"T+0.000s"},...ev.slice(0,20)]);
     let el=0;const iv=10;
@@ -29,12 +30,14 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     const rp2=relayProt;
 
     const graph=fieldStateRef.current.electricalGraph||buildElectricalGraph(fieldStateRef.current.connections,fieldStateRef.current.internalConns);
-    const faultRR=computeRelayReadings(p,graph);
+    const faultRR=computeRelayReadings(phasorsToUse,graph);
     const pfRR=pfActive?computeRelayReadings(pf,graph):null;
 
     const buildFaultBase=(rr)=>({
       currents:{Ia:{mag:rr.currents.Ia.mag*rtc,ang:rr.currents.Ia.ang},Ib:{mag:rr.currents.Ib.mag*rtc,ang:rr.currents.Ib.ang},Ic:{mag:rr.currents.Ic.mag*rtc,ang:rr.currents.Ic.ang}},
       voltages:{Va:{mag:rr.voltages.Va.mag*rtp,ang:rr.voltages.Va.ang},Vb:{mag:rr.voltages.Vb.mag*rtp,ang:rr.voltages.Vb.ang},Vc:{mag:rr.voltages.Vc.mag*rtp,ang:rr.voltages.Vc.ang}}});
+
+    const primaryFault={currents:{...phasorsToUse.currents},voltages:{...phasorsToUse.voltages}};
 
     let firstTripRecorded=false;
 
@@ -59,8 +62,8 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
             relayVoltages:pfRR?{Va:{...pfRR.voltages.Va},Vb:{...pfRR.voltages.Vb},Vc:{...pfRR.voltages.Vc}}:null,
           },
           fault:{
-            currents:{Ia:{...p.currents.Ia},Ib:{...p.currents.Ib},Ic:{...p.currents.Ic}},
-            voltages:{Va:{...p.voltages.Va},Vb:{...p.voltages.Vb},Vc:{...p.voltages.Vc}},
+            currents:{Ia:{...phasorsToUse.currents.Ia},Ib:{...phasorsToUse.currents.Ib},Ic:{...phasorsToUse.currents.Ic}},
+            voltages:{Va:{...phasorsToUse.voltages.Va},Vb:{...phasorsToUse.voltages.Vb},Vc:{...phasorsToUse.voltages.Vc}},
             relayCurrents:{Ia:{...faultRR.currents.Ia},Ib:{...faultRR.currents.Ib},Ic:{...faultRR.currents.Ic}},
             relayVoltages:{Va:{...faultRR.voltages.Va},Vb:{...faultRR.voltages.Vb},Vc:{...faultRR.voltages.Vc}},
           },

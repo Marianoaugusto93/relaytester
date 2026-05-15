@@ -7,10 +7,10 @@ export default function ControlsBar({ ss, stime, isTripped, maletaTripped, runSi
 
   return (
     <div className="controls-bar">
-      <button className="cb-btn inj" onClick={runSim} disabled={isTripped} title={isTripped ? "Reset relay before injecting" : ""}>
+      <button className="cb-btn inj" onClick={() => runSim()} disabled={isTripped} title={isTripped ? "Reset relay before injecting" : ""}>
         ▶&nbsp; {t("controls.inject")}
       </button>
-      <button className="cb-btn stop" onClick={stopSim}>
+      <button className="cb-btn stop" onClick={() => stopSim()}>
         ■&nbsp; {t("controls.stop")}
       </button>
       <button className="cb-btn reset" onClick={resetFault}>

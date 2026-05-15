@@ -369,21 +369,36 @@ export function buildElectricalGraph(manualConnections, internalConns) {
 
 // ── Manhattan routing ─────────────────────────────────────────────────────────
 
+// Routing lanes — horizontal Y bands where cables flow between maleta and chave.
+// Used for Manhattan path between zones; values chosen below current/voltage terminals.
 const LANE_Y_MAP = {
-  'A': 60,
-  'B': 90,
-  'C': 120,
-  'gnd': 150,
-  'cmd': 180
+  'A': 360,
+  'B': 370,
+  'C': 380,
+  'gnd': 540,
+  'cmd': 590
 };
 
 export function laneY(phase) {
-  return LANE_Y_MAP[phase] || 180;
+  return LANE_Y_MAP[phase] || 360;
 }
 
-export function buildManhattanPath(p1, p2, phase) {
-  const ly = laneY(phase);
-  return `M ${p1.x} ${p1.y} L ${p1.x} ${ly} L ${p2.x} ${ly} L ${p2.x} ${p2.y}`;
+export function buildManhattanPath(p1, p2, phase, cableIndex = 0) {
+  // Spaghetti routing using cubic Bezier curves (like CampoPage.jsx classic version)
+  // This naturally avoids cable overlap by creating smooth, rounded paths
+  const dx = Math.abs(p2.x - p1.x);
+  const dy = Math.abs(p2.y - p1.y);
+
+  // Curve bend intensity: proportional to distance between points
+  // Longer distances = more curve = better separation
+  const baseBend = Math.max(50, dy * 0.4 + dx * 0.15);
+  // Add offset per cable index to vary bend further and separate parallel cables
+  const cableOffset = (cableIndex % 10) * 5;
+  const bend = baseBend + cableOffset;
+
+  // Cubic Bezier curve: smoother paths that naturally separate from each other
+  // Control points create an arc that keeps cables apart
+  return `M ${p1.x},${p1.y} C ${p1.x},${p1.y + bend} ${p2.x},${p2.y - bend} ${p2.x},${p2.y}`;
 }
 
 export function suggestDestinations(srcTerminal, fieldState) {
@@ -563,45 +578,109 @@ export function validateCircuit(cables, electricalGraph) {
   return status;
 }
 
-/** All suitcase/switch terminals with their SVG coordinates, groups, labels, and fill colors. */
+/** All suitcase/switch terminals with their SVG coordinates, groups, labels, and fill colors.
+ *  3 zones horizontally: Maleta (x:30-160) | Chave (x:200-620) | Relé (x:700-900)
+ *
+ *  Layout V2 (Phase 7.2):
+ *  - Maleta: vertical stack of analog/binary jack pairs
+ *  - Chave: each phase row has top (A/T from maleta side) on left + bot (S1/S2 to relay) on right
+ *           Big slider between them shows position visually
+ *  - Relé: S1/S2 jacks for each phase, labeled IA-S1, IA-S2, IB-S1, IB-S2, IC-S1, IC-S2
+ *          (these are the same _bot terminals; placed in Relé zone since they ARE the relay inputs)
+ */
 export const TERMINALS = [
-  // Current outputs (left)
-  { id: 'i1_pos', x: 50,  y: 30,  label: 'I1+',   group: 'A',   fill: '#1e88e5' },
-  { id: 'i1_neg', x: 70,  y: 30,  label: 'I1-',   group: 'A',   fill: '#1e88e5' },
-  { id: 'i2_pos', x: 100, y: 30,  label: 'I2+',   group: 'B',   fill: '#e53935' },
-  { id: 'i2_neg', x: 120, y: 30,  label: 'I2-',   group: 'B',   fill: '#e53935' },
-  { id: 'i3_pos', x: 150, y: 30,  label: 'I3+',   group: 'C',   fill: '#9e9e9e' },
-  { id: 'i3_neg', x: 170, y: 30,  label: 'I3-',   group: 'C',   fill: '#9e9e9e' },
-  // Voltage outputs (middle-top)
-  { id: 'v1_pos', x: 220, y: 30,  label: 'V1+',   group: 'A',   fill: '#1e88e5' },
-  { id: 'v1_neg', x: 240, y: 30,  label: 'V1-',   group: 'A',   fill: '#1e88e5' },
-  { id: 'v2_pos', x: 270, y: 30,  label: 'V2+',   group: 'B',   fill: '#e53935' },
-  { id: 'v2_neg', x: 290, y: 30,  label: 'V2-',   group: 'B',   fill: '#e53935' },
-  { id: 'v3_pos', x: 320, y: 30,  label: 'V3+',   group: 'C',   fill: '#9e9e9e' },
-  { id: 'v3_neg', x: 340, y: 30,  label: 'V3-',   group: 'C',   fill: '#9e9e9e' },
-  // Binary outputs — BO1..BO4 (purple)
-  { id: 'bo1_pos', x: 400, y: 30, label: 'BO1+',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo1_neg', x: 420, y: 30, label: 'BO1-',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo2_pos', x: 450, y: 30, label: 'BO2+',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo2_neg', x: 470, y: 30, label: 'BO2-',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo3_pos', x: 500, y: 30, label: 'BO3+',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo3_neg', x: 520, y: 30, label: 'BO3-',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo4_pos', x: 550, y: 30, label: 'BO4+',  group: 'cmd', fill: '#7C3AED' },
-  { id: 'bo4_neg', x: 570, y: 30, label: 'BO4-',  group: 'cmd', fill: '#7C3AED' },
-  // Binary inputs — BI1..BI4 (cyan)
-  { id: 'bi1_pos', x: 620, y: 30, label: 'BI1+',  group: 'cmd', fill: '#06B6D4' },
-  { id: 'bi1_neg', x: 640, y: 30, label: 'BI1-',  group: 'cmd', fill: '#06B6D4' },
-  { id: 'bi2_pos', x: 670, y: 30, label: 'BI2+',  group: 'cmd', fill: '#06B6D4' },
-  { id: 'bi2_neg', x: 690, y: 30, label: 'BI2-',  group: 'cmd', fill: '#06B6D4' },
-  { id: 'bi3_pos', x: 720, y: 30, label: 'BI3+',  group: 'cmd', fill: '#06B6D4' },
-  { id: 'bi3_neg', x: 740, y: 30, label: 'BI3-',  group: 'cmd', fill: '#06B6D4' },
-  // Switch top (relay current sensors)
-  { id: 'ia1_top', x: 50,  y: 450, label: 'IA-S1', group: 'A',  fill: '#1e88e5' },
-  { id: 'ia1_bot', x: 70,  y: 470, label: 'IA-S2', group: 'A',  fill: '#1e88e5' },
-  { id: 'ib1_top', x: 100, y: 450, label: 'IB-S1', group: 'B',  fill: '#e53935' },
-  { id: 'ib1_bot', x: 120, y: 470, label: 'IB-S2', group: 'B',  fill: '#e53935' },
-  { id: 'ic1_top', x: 150, y: 450, label: 'IC-S1', group: 'C',  fill: '#9e9e9e' },
-  { id: 'ic1_bot', x: 170, y: 470, label: 'IC-S2', group: 'C',  fill: '#9e9e9e' },
+  // ── MALETA (left zone, x:30-190) ─────────────────────────────────────────
+  // TWO COLUMNS: Left=BO/BI (x:80), Right=Corrente/Tensão (x:160)
+
+  // LEFT COLUMN: COMANDO SAÍDA (BO) — x:80
+  { id: 'bo1_pos', x: 80, y: 80,  label: 'BO1+', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo1_neg', x: 80, y: 100, label: 'BO1-', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo2_pos', x: 80, y: 120, label: 'BO2+', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo2_neg', x: 80, y: 140, label: 'BO2-', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo3_pos', x: 80, y: 160, label: 'BO3+', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo3_neg', x: 80, y: 180, label: 'BO3-', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo4_pos', x: 80, y: 200, label: 'BO4+', group: 'cmd', fill: '#7C3AED' },
+  { id: 'bo4_neg', x: 80, y: 220, label: 'BO4-', group: 'cmd', fill: '#7C3AED' },
+
+  // LEFT COLUMN: COMANDO ENTRADA (BI) — x:80
+  { id: 'bi1_pos', x: 80, y: 280, label: 'BI1+', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi1_neg', x: 80, y: 300, label: 'BI1-', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi2_pos', x: 80, y: 320, label: 'BI2+', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi2_neg', x: 80, y: 340, label: 'BI2-', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi3_pos', x: 80, y: 360, label: 'BI3+', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi3_neg', x: 80, y: 380, label: 'BI3-', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi4_pos', x: 80, y: 400, label: 'BI4+', group: 'cmd', fill: '#06B6D4' },
+  { id: 'bi4_neg', x: 80, y: 420, label: 'BI4-', group: 'cmd', fill: '#06B6D4' },
+
+  // RIGHT COLUMN: CORRENTE — x:160, aligned with CHAVE phases
+  // I1+/I1- align with Fase A (ia1_top y=80, ia2_top y=130)
+  { id: 'i1_pos', x: 160, y: 80,  label: 'I1+', group: 'A', fill: '#1e88e5' },
+  { id: 'i1_neg', x: 160, y: 130, label: 'I1-', group: 'A', fill: '#222' },
+  // I2+/I2- align with Fase B (ib1_top y=180, ib2_top y=230)
+  { id: 'i2_pos', x: 160, y: 180, label: 'I2+', group: 'B', fill: '#e53935' },
+  { id: 'i2_neg', x: 160, y: 230, label: 'I2-', group: 'B', fill: '#222' },
+  // I3+/I3- align with Fase C (ic1_top y=280, ic2_top y=330)
+  { id: 'i3_pos', x: 160, y: 280, label: 'I3+', group: 'C', fill: '#9e9e9e' },
+  { id: 'i3_neg', x: 160, y: 330, label: 'I3-', group: 'C', fill: '#222' },
+
+  // RIGHT COLUMN: TENSÃO — x:160, aligned with CHAVE voltage rows
+  // V1+/V1- align with Va (va_top y=400)
+  { id: 'v1_pos', x: 160, y: 400, label: 'V1+', group: 'A', fill: '#1e88e5' },
+  { id: 'v1_neg', x: 160, y: 530, label: 'V1-', group: 'A', fill: '#222' },
+  // V2+/V2- align with Vb (vb_top y=440)
+  { id: 'v2_pos', x: 160, y: 440, label: 'V2+', group: 'B', fill: '#e53935' },
+  { id: 'v2_neg', x: 160, y: 530, label: 'V2-', group: 'B', fill: '#222' },
+  // V3+/V3- align with Vc (vc_top y=480)
+  { id: 'v3_pos', x: 160, y: 480, label: 'V3+', group: 'C', fill: '#9e9e9e' },
+  { id: 'v3_neg', x: 160, y: 530, label: 'V3-', group: 'C', fill: '#222' },
+
+  // ── CHAVE (center zone, x:200-620) ───────────────────────────────────────
+  // 6 horizontal phase rows (currents A/B/C and voltages Va/Vb/Vc).
+  // Per row: top terminals on LEFT (maleta side), bot terminals on RIGHT (relé side).
+  // The slider/lever sits between them.
+  //
+  // Phase A current row (y=80, 130): ia1(A/S1) + ia2(T/S2)
+  { id: 'ia1_top', x: 230, y: 80,  label: 'A',    group: 'A',   fill: '#FFE033' },
+  { id: 'ia2_top', x: 230, y: 130, label: 'T',    group: 'A',   fill: '#FFE033' },
+  // Phase B current row (y=180, 230)
+  { id: 'ib1_top', x: 230, y: 180, label: 'B',    group: 'B',   fill: '#E53935' },
+  { id: 'ib2_top', x: 230, y: 230, label: 'T',    group: 'B',   fill: '#E53935' },
+  // Phase C current row (y=280, 330)
+  { id: 'ic1_top', x: 230, y: 280, label: 'C',    group: 'C',   fill: '#9E9E9E' },
+  { id: 'ic2_top', x: 230, y: 330, label: 'T',    group: 'C',   fill: '#9E9E9E' },
+  // Voltage rows Va/Vb/Vc (y=400, 440, 480)
+  { id: 'va_top',  x: 230, y: 400, label: 'VA',   group: 'A',   fill: '#1e88e5' },
+  { id: 'vb_top',  x: 230, y: 440, label: 'VB',   group: 'B',   fill: '#e53935' },
+  { id: 'vc_top',  x: 230, y: 480, label: 'VC',   group: 'C',   fill: '#9e9e9e' },
+  // Terra
+  { id: 'terra_top', x: 230, y: 530, label: 'T',  group: 'gnd', fill: '#43A047' },
+
+  // ── TERMINAL BLOCK (bottom zone, x:300-500, y:500+) ───────────────────────────
+  // TB: command/feedback circuit intermediary — positioned below RELÉ zone
+  // TB 1-2: BO3, TB 9-10: 52a, TB 11-12: 52b, TB 13-14: TC, TB 15-16: FC
+  { id: 'tb_1_top',  x: 340, y: 520,  label: 'TB1',  group: 'cmd', fill: '#666' },
+  { id: 'tb_2_top',  x: 380, y: 520,  label: 'TB2',  group: 'cmd', fill: '#666' },
+  { id: 'tb_9_top',  x: 340, y: 545,  label: 'TB9',  group: 'cmd', fill: '#666' },
+  { id: 'tb_10_top', x: 380, y: 545,  label: 'TB10', group: 'cmd', fill: '#666' },
+  { id: 'tb_11_top', x: 340, y: 570,  label: 'TB11', group: 'cmd', fill: '#666' },
+  { id: 'tb_12_top', x: 380, y: 570,  label: 'TB12', group: 'cmd', fill: '#666' },
+  { id: 'tb_13_top', x: 340, y: 595,  label: 'TB13', group: 'cmd', fill: '#666' },
+  { id: 'tb_14_top', x: 380, y: 595,  label: 'TB14', group: 'cmd', fill: '#666' },
+  { id: 'tb_15_top', x: 340, y: 620,  label: 'TB15', group: 'cmd', fill: '#666' },
+  { id: 'tb_16_top', x: 380, y: 620,  label: 'TB16', group: 'cmd', fill: '#666' },
+
+  // ── RELÉ (right zone, x:700-900) ─────────────────────────────────────────
+  // These are the _bot terminals (S1/S2/X1/X2) — they ARE the relay inputs in hardware.
+  // Placed at right to make the "switch bridges maleta and relé" topology obvious.
+  { id: 'ia1_bot', x: 760, y: 80,  label: 'IA-S1', group: 'A',  fill: '#FFE033' },
+  { id: 'ia2_bot', x: 760, y: 130, label: 'IA-S2', group: 'A',  fill: '#FFE033' },
+  { id: 'ib1_bot', x: 760, y: 180, label: 'IB-S1', group: 'B',  fill: '#E53935' },
+  { id: 'ib2_bot', x: 760, y: 230, label: 'IB-S2', group: 'B',  fill: '#E53935' },
+  { id: 'ic1_bot', x: 760, y: 280, label: 'IC-S1', group: 'C',  fill: '#9E9E9E' },
+  { id: 'ic2_bot', x: 760, y: 330, label: 'IC-S2', group: 'C',  fill: '#9E9E9E' },
+  { id: 'va_bot',  x: 760, y: 400, label: 'VA-X1', group: 'A',  fill: '#1e88e5' },
+  { id: 'vb_bot',  x: 760, y: 440, label: 'VB-X2', group: 'B',  fill: '#e53935' },
+  { id: 'vc_bot',  x: 760, y: 480, label: 'VC-X1', group: 'C',  fill: '#9e9e9e' },
 ];
 
 /** Lookup map from terminal id to {x, y} built from TERMINALS for O(1) access. */

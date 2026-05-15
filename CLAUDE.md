@@ -494,3 +494,44 @@ Before deploying to production:
 - ✅ Injection status displays correctly
 - ✅ TRIP timer font size increased for readability
 - ✅ Dev server running on http://localhost:5173
+
+---
+
+### Phase 8: Trip Detection & Injection Stability Fixes
+**Status**: ✅ COMPLETE | **Date**: 2026-05-14 | **Build**: 429.02 kB (112.11 kB gzip)
+
+**Critical Issues Fixed:**
+
+1. **Undefined Current Values in Test Generation**
+   - **File**: `src/tests/testUtils.js`
+   - **Root Cause**: `buildFaultPhasors()` referenced non-existent `system.ip1` property
+   - **Impact**: All test point generation returned NaN currents (50, 51, 50N, 51N, 67, 67N, 27/59, 46, 81)
+   - **Fix**: Changed `Iamps || (mult * system.ip1)` → `defaultI = Iamps || 1.0`
+   - **Result**: ✅ Testes tab now generates valid phasors for all functions
+
+2. **React Event Object Passed as Phasors**
+   - **File**: `src/relay/ControlsBar.jsx` (lines 10, 14)
+   - **Root Cause**: `onClick={runSim}` causes React to pass click event as argument
+   - **Symptom**: Counter frozen at 0.000s, trip not detected
+   - **Error**: `"Cannot read properties of undefined (reading 'Ia')"`
+   - **Fix**: Wrapped handlers: `onClick={() => runSim()}` and `onClick={() => stopSim()}`
+   - **Result**: ✅ RELAY tab injection works, counter increments, trips detected
+
+**Files Modified:**
+- `src/tests/testUtils.js`: Lines 21-102 (remove system.ip1, use defaultI)
+- `src/relay/ControlsBar.jsx`: Lines 10, 14 (wrap onClick handlers)
+
+**Test Results:**
+- ✅ RELAY tab: All injection, trip, reset functions work
+- ✅ Testes tab: All 7 educational scenarios pass
+- ✅ Test generation: All protection functions (50-81) generate valid points
+- ✅ Time tolerance: PASS/FAIL correctly uses OR logic (tolPct OR tolAbs)
+- ✅ Console: 0 errors, 0 warnings
+- ✅ Performance: 60s injections run smoothly
+
+**Documentation:**
+- Created `.omc/FIXES_PHASE_8.md` — detailed technical documentation
+- Created `ROTEIRO_TESTE.md` — comprehensive pre-deployment test plan (2-3 hours)
+- Updated `CLAUDE.md` — this section
+
+**Ready for Production**: Yes, after running ROTEIRO_TESTE.md checklist

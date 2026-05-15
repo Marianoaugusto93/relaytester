@@ -6,7 +6,7 @@ import {
   buildElectricalGraph,
   validateConnection,
   cableColorFor,
-  CHAVE_POLES,
+  CURRENT_GROUPS,
   WIRING_PRESETS,
   applyWiringPreset,
   computeCloseCoilWired,
@@ -75,7 +75,20 @@ export default function CampoPageNew({
   }, [loadWiring]);
 
   const handleSwitchToggle = useCallback((poleId) => {
-    setSwitchSt(prev => ({ ...prev, [poleId]: prev[poleId] === 'up' ? 'down' : 'up' }));
+    setSwitchSt(prev => {
+      // Guard: terra is not in CURRENT_GROUPS; treat as individual toggle
+      if (poleId === 'terra') {
+        return { ...prev, [poleId]: prev[poleId] === 'up' ? 'down' : 'up' };
+      }
+      // Current groups: ia1+ia2, ib1+ib2, ic1+ic2 move together (physically coupled)
+      const group = CURRENT_GROUPS.find(g => g.id1 === poleId || g.id2 === poleId);
+      if (group) {
+        const newState = prev[group.id1] === 'up' ? 'down' : 'up';
+        return { ...prev, [group.id1]: newState, [group.id2]: newState };
+      }
+      // Voltage poles (va/vb/vc): toggle individually
+      return { ...prev, [poleId]: prev[poleId] === 'up' ? 'down' : 'up' };
+    });
   }, []);
 
   const loadPreset = useCallback((presetId) => {
@@ -114,10 +127,6 @@ export default function CampoPageNew({
     setSuggestedDests(new Set());
   }, []);
 
-  // Normal poles only (terra has no toggle — always connected)
-  const normalPoles = CHAVE_POLES.filter(p => p.kind === 'normal');
-  const closedCount = normalPoles.filter(p => switchSt[p.id] === 'up').length;
-
   return (
     <div className="campo-page-new">
       <CampoLeftSidebar
@@ -133,48 +142,15 @@ export default function CampoPageNew({
         bkStatus={bkStatus}
         boStatus={boStatus}
         biStatus={biStatus}
+        switchSt={switchSt}
       />
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-        {/* Switch panel — schematic-style cards with vertical toggle slider */}
-        <div className="switch-panel">
-          <div className="switch-panel-header">
-            <span className="switch-panel-title">Chave de Aferição</span>
-            <span className="switch-panel-count">{closedCount}/{normalPoles.length} fechados</span>
-          </div>
-          <div className="switch-grid">
-            {normalPoles.map(pole => {
-              const isUp = switchSt[pole.id] === 'up';
-              return (
-                <div
-                  key={pole.id}
-                  className={`switch-card ${isUp ? 'up' : 'down'}`}
-                  style={{ '--pole-color': pole.body }}
-                  onClick={() => handleSwitchToggle(pole.id)}
-                  title={isUp ? `${pole.id.toUpperCase()} fechado — ${pole.topAnilha}↔${pole.botAnilha}` : `${pole.id.toUpperCase()} aberto — S1↔S2 (curto)`}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSwitchToggle(pole.id); } }}
-                >
-                  <div className="switch-label">{pole.id.toUpperCase()}</div>
-                  <div className="switch-track">
-                    <div className="switch-track-rail" />
-                    <div className={`switch-handle ${isUp ? 'up' : 'down'}`} />
-                    <div className="switch-marker top">{pole.topAnilha}</div>
-                    <div className="switch-marker bot">{pole.botAnilha}</div>
-                  </div>
-                  <div className={`switch-state ${isUp ? 'on' : 'off'}`}>
-                    {isUp ? '✓ ON' : '⊲ OFF'}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         <CampoCanvas
           cables={cables}
           fieldState={fieldState}
           electricalGraph={electricalGraph}
+          switchSt={switchSt}
+          onSwitchToggle={handleSwitchToggle}
           selectedOrigin={selectedOrigin}
           suggestedDests={suggestedDests}
           onSelectOrigin={handleSelectOrigin}
