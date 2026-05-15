@@ -40,6 +40,7 @@ export function computeTimeForCurve(curve, M, TD) {
 
 export function mapCurveName(settingCurve) {
   const m = {
+    // Abbreviated names
     'IEC VI': 'IEC-Very-Inverse',
     'IEC EI': 'IEC-Extremely-Inverse',
     'IEC LTI': 'IEC-Long-Time-Inverse',
@@ -47,6 +48,14 @@ export function mapCurveName(settingCurve) {
     'ANSI-MI': 'ANSI-Moderate',
     'ANSI-VI': 'ANSI-Very-Inverse',
     'ANSI-EI': 'ANSI-Extremely-Inverse',
+    // Full names (from protection.js CURVE_MAP)
+    'IEC - Standard Inverse': 'IEC-Standard',
+    'IEC - Very Inverse': 'IEC-Very-Inverse',
+    'IEC - Extremely Inverse': 'IEC-Extremely-Inverse',
+    'IEC - Long Time Inverse': 'IEC-Long-Time-Inverse',
+    'ANSI - Moderate Inverse': 'ANSI-Moderate',
+    'ANSI - Very Inverse': 'ANSI-Very-Inverse',
+    'ANSI - Extremely Inverse': 'ANSI-Extremely-Inverse',
   };
   return m[settingCurve] || 'IEC-Very-Inverse';
 }

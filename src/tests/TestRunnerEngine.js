@@ -24,7 +24,7 @@ const POINT_TIMEOUT_MS = 60000;
 export async function runCampaign(test, ctx) {
   const {
     cancelled, paused,
-    onStart, onResult, onComplete,
+    onStart, onBeforeInjection, onResult, onComplete,
     runSim, stopSim,
     setPhasors, setPf, setPfEnabled, setPfDuration,
     subscribe, setEvts, sys,
@@ -59,6 +59,7 @@ export async function runCampaign(test, ctx) {
     const prefaultPhasors = buildPrefaultPhasors(point, sys || {});
 
     console.log(`[Test ${i+1}] Point:`, point.id, 'fn:', test.fn, 'IxIpk:', point.IxIpk, 'tExpected:', point.tExpected, 'Iamps:', point.Iamps);
+    console.log(`  Phasors:`, faultPhasors.currents.Ia, faultPhasors.voltages.Va);
 
     // Apply pre-fault settings
     const hasPrefault = point.prefaultDur > 0;
@@ -71,6 +72,9 @@ export async function runCampaign(test, ctx) {
       setPfEnabled(false);
       setPfDuration(0.2);
     }
+
+    // Update global phasors state so medidores (meters) display correct values
+    setPhasors(faultPhasors);
 
     // Run simulation and wait for trip or timeout
     let tripResult = null;
@@ -88,6 +92,9 @@ export async function runCampaign(test, ctx) {
       // Also set timeout
       setTimeout(() => { unsub?.(); resolve(null); }, POINT_TIMEOUT_MS);
     });
+
+    // Reset elapsed timer right before injection starts
+    onBeforeInjection?.();
 
     // Pass fault phasors directly to runSim (avoid async setState timing issue)
     runSim(faultPhasors);

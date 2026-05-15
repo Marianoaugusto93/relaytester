@@ -52,6 +52,7 @@ export default function TestsPage({
   const [elapsed, setElapsed] = useState(0);
   const [ss, setSs] = useState('idle');
   const [isPaused, setIsPaused] = useState(false);
+  const [currentTestPhasors, setCurrentTestPhasors] = useState({ currents: {}, voltages: {} });
 
   // Final report results
   const [reportResults, setReportResults] = useState([]);
@@ -62,6 +63,7 @@ export default function TestsPage({
   const tripSubscribersRef = useRef([]);
   const elapsedTimerRef = useRef(null);
   const lastDispatchedIdRef = useRef(null);
+  const injectionStartTimeRef = useRef(null);
 
   // Subscribe to trip events from App simulation
   // (In production this would hook into App's trip event bus;
@@ -100,15 +102,16 @@ export default function TestsPage({
     saveCampaigns(updated);
   }, [campaign]);
 
-  const startElapsedTimer = useCallback(() => {
-    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
-    const start = Date.now();
+  const startContinuousTimer = useCallback(() => {
+    if (elapsedTimerRef.current) return;
     elapsedTimerRef.current = setInterval(() => {
-      setElapsed((Date.now() - start) / 1000);
+      if (injectionStartTimeRef.current) {
+        setElapsed((Date.now() - injectionStartTimeRef.current) / 1000);
+      }
     }, 50);
   }, []);
 
-  const stopElapsedTimer = useCallback(() => {
+  const stopContinuousTimer = useCallback(() => {
     if (elapsedTimerRef.current) {
       clearInterval(elapsedTimerRef.current);
       elapsedTimerRef.current = null;
@@ -121,12 +124,14 @@ export default function TestsPage({
     cancelledRef.current = false;
     pausedRef.current = false;
     lastDispatchedIdRef.current = null;
+    injectionStartTimeRef.current = null;
     setRunResults([]);
     setCurrentIdx(-1);
     setElapsed(0);
     setIsPaused(false);
     setSs('running');
     setMode('run');
+    startContinuousTimer();
 
     const ctx = {
       cancelled: cancelledRef,
@@ -135,22 +140,26 @@ export default function TestsPage({
       subscribe,
       runSim,
       stopSim,
-      setPhasors: (phasors) => setP(phasors),
+      setPhasors: (phasors) => {
+        setP(phasors);
+        setCurrentTestPhasors(phasors);
+      },
       setPf: (phasors) => setPf(phasors),
       setPfEnabled: (v) => setPfEnabled?.(v),
       setPfDuration: (v) => setPfDuration?.(v),
       setEvts,
       onStart: (idx) => {
         setCurrentIdx(idx);
-        setElapsed(0);
-        startElapsedTimer();
+      },
+      onBeforeInjection: () => {
+        injectionStartTimeRef.current = Date.now();
       },
       onResult: (idx, point, result) => {
-        stopElapsedTimer();
+        injectionStartTimeRef.current = null;
         setRunResults(prev => [...prev, result]);
       },
       onComplete: (results) => {
-        stopElapsedTimer();
+        stopContinuousTimer();
         setSs('idle');
         setCurrentIdx(-1);
         setReportResults(results);
@@ -159,20 +168,20 @@ export default function TestsPage({
     };
 
     await runCampaign(test, ctx);
-  }, [test, sys, subscribe, runSim, stopSim, setP, setPf, setPfEnabled, setPfDuration, setEvts, startElapsedTimer, stopElapsedTimer]);
+  }, [test, sys, subscribe, runSim, stopSim, setP, setPf, setPfEnabled, setPfDuration, setEvts, startContinuousTimer, stopContinuousTimer]);
 
   const handlePause = useCallback(() => {
     const next = !isPaused;
     pausedRef.current = next;
     setIsPaused(next);
-    if (next) stopElapsedTimer();
-    else startElapsedTimer();
-  }, [isPaused, stopElapsedTimer, startElapsedTimer]);
+    if (next) stopContinuousTimer();
+    else if (injectionStartTimeRef.current) startContinuousTimer();
+  }, [isPaused, stopContinuousTimer, startContinuousTimer]);
 
   const handleStop = useCallback(() => {
     cancelledRef.current = true;
     stopSim();
-    stopElapsedTimer();
+    stopContinuousTimer();
     setSs('idle');
     setIsPaused(false);
     setCurrentIdx(-1);
@@ -182,7 +191,7 @@ export default function TestsPage({
     } else {
       setMode('plan');
     }
-  }, [stopSim, stopElapsedTimer, runResults]);
+  }, [stopSim, stopContinuousTimer, runResults]);
 
   const handleRepeat = useCallback(() => {
     setMode('plan');
@@ -263,9 +272,9 @@ export default function TestsPage({
             elapsed={elapsed}
             ss={ss}
             isPaused={isPaused}
-            boStatus={{}}
-            ci={{}}
-            vi={{}}
+            boStatus={relayProt}
+            ci={currentTestPhasors.currents}
+            vi={currentTestPhasors.voltages}
             onPause={handlePause}
             onStop={handleStop}
             onRepeat={handleRepeat}
