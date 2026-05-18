@@ -150,7 +150,7 @@ export const EDUCATIONAL_SCENARIOS = [
     fns: ['51'],
     stages: { '51': [0] },
     patch: {
-      '51': { stages: [{ pickup: 2.0, timeDial: 0.5, curve: 'IEC - Very Inverse' }] },
+      '51': { stages: [{ pickup: 2.0, timeDial: 0.089, curve: 'IEC - Very Inverse' }] },
     },
     out: {
       '51-1': { BO3: true, L4: true },
