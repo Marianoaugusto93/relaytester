@@ -538,7 +538,9 @@ const WIRING_PRESETS=[
 
 // ── CSS ───────────────────────────────────────────────────────────────────────
 const campoCSS=`
-.campo-root{background:#09090C;padding:12px 16px;font-family:monospace;display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;height:100%;}
+.campo-root{background:var(--bg);padding:12px;font-family:monospace;display:grid;grid-template-columns:1fr 240px;gap:10px;overflow:hidden;height:100%;}
+.campo-main{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;}
+.campo-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;}
 .poles-row{display:flex;align-items:flex-start;justify-content:center;gap:6px;padding:8px 6px;background:#0E0E14;border:1px solid #1E1E28;border-radius:8px;}
 .switch-body{position:relative;width:42px;height:120px;border-radius:7px;background:linear-gradient(90deg,#1A1A1C 0%,#232328 40%,#1A1A1C 100%);border:1.5px solid #111;box-shadow:inset 0 2px 8px rgba(0,0,0,0.7);}
 .c-rail{position:absolute;left:50%;transform:translateX(-50%);width:10px;top:5px;bottom:5px;border-radius:3px;background:#0A0A0C;border:1px solid #000;}
@@ -593,7 +595,7 @@ const campoCSS=`
 .borne-number{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border:1px solid #9a9a9a;background:#f0f0ec;font-size:12px;font-weight:600;color:#151515;font-family:Arial,sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);}
 .c-info-bar{font-size:14px;color:#ccd;letter-spacing:0.5px;padding:10px 14px;background:#12121a;border:1px solid #2a2a3a;border-radius:6px;text-align:center;line-height:1.5;}
 .c-info-bar.active{color:#FFE033;}
-.c-section-label{font-size:11px;color:#eee;letter-spacing:4px;text-align:center;margin-bottom:4px;font-weight:600;}
+.c-section-label{font-size:10px;color:#999;letter-spacing:3px;text-align:center;margin-bottom:4px;font-weight:600;text-transform:uppercase;}
 .borne-module.t-52a{background:#1a2e1a;border-color:#2d6b2d;}
 .borne-module.t-52a .borne-chassis,.borne-module.t-52a>.borne-zone{background:#1a2e1a;}
 .borne-module.t-52b{background:#2e1a1a;border-color:#6b2d2d;}
@@ -607,19 +609,23 @@ const campoCSS=`
 .borne-module.t-fc{background:#2e2a1a;border-color:#6b5a2d;}
 .borne-module.t-fc .borne-label{background:#3a2f1a;}
 .borne-module.t-fc .borne-number{background:#ece0c0;color:#3a2a0a;}
-.bk-cmd-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 16px;background:#0e0e14;border:1px solid #1e1e28;border-radius:8px;flex-wrap:wrap;}
-.bk-status-pill{display:flex;align-items:center;gap:6px;font-size:10px;font-family:monospace;font-weight:700;letter-spacing:1.5px;padding:4px 10px;border-radius:12px;border:1px solid;}
+.bk-cmd-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 16px;background:var(--card2);border:1px solid #1e1e28;border-radius:8px;flex-wrap:wrap;}
+.campo-sidebar .bk-cmd-bar{flex-direction:column;gap:8px;padding:8px 12px;align-items:stretch;}
+.bk-status-pill{display:flex;align-items:center;justify-content:center;gap:6px;font-size:9px;font-family:monospace;font-weight:700;letter-spacing:1.5px;padding:6px 8px;border-radius:6px;border:1px solid;width:100%;}
 .bk-status-pill.on{border-color:#22c55e44;background:#0d2a14;color:#22c55e;}
 .bk-status-pill.off{border-color:#ef444444;background:#2a0d0d;color:#ef4444;}
-.bk-close-campo{padding:6px 18px;border-radius:6px;font-size:11px;font-weight:800;font-family:monospace;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.1);color:#22c55e;transition:all .2s;}
+.bk-close-campo{padding:6px 18px;border-radius:6px;font-size:10px;font-weight:800;font-family:monospace;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.1);color:#22c55e;transition:all .2s;}
 .bk-close-campo:hover{background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.6);}
 .bk-close-campo:disabled{opacity:.3;cursor:not-allowed;}
-.preset-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#0e0e14;border:1px solid #1e1e28;border-radius:8px;flex-wrap:wrap;}
+.campo-sidebar .bk-close-campo{padding:8px 12px;width:100%;text-align:center;}
+.preset-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--card2);border:1px solid #1e1e28;border-radius:8px;flex-wrap:wrap;}
+.campo-sidebar .preset-bar{flex-direction:column;gap:6px;padding:8px 12px;align-items:stretch;}
 .preset-lbl{font-size:9px;color:#444;letter-spacing:2px;font-family:monospace;}
-.preset-btn{padding:4px 11px;border-radius:5px;font-size:10px;font-weight:700;font-family:monospace;letter-spacing:.8px;cursor:pointer;border:1px solid #2a2a36;background:#12121a;color:#888;transition:all .15s;}
+.preset-btn{padding:4px 11px;border-radius:5px;font-size:9px;font-weight:700;font-family:monospace;letter-spacing:.8px;cursor:pointer;border:1px solid #2a2a36;background:#12121a;color:#888;transition:all .15s;}
 .preset-btn:hover{background:#1e1e2a;color:#ccc;border-color:#3a3a50;}
 .preset-btn.clear{border-color:rgba(248,113,113,.35);color:#f87171;background:rgba(248,113,113,.07);}
 .preset-btn.clear:hover{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.55);}
+.campo-sidebar .preset-btn{width:100%;padding:6px 8px;text-align:center;font-size:9px;}
 .bi-led{width:8px;height:8px;border-radius:50%;background:#141418;border:1px solid #2a2a36;transition:background .2s,box-shadow .2s;flex-shrink:0;}
 .bi-led.on{background:#22c55e;border-color:#16a34a;box-shadow:0 0 5px #22c55e99;}
 `;
@@ -811,6 +817,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   },[loadWiring]);
   const svgRef=useRef(null);
   const rootRef=useRef(null);
+  const mainRef=useRef(null);
 
   const tempInfo=useCallback((msg,ms=2500)=>{
     setInfoMsg(msg);setInfoActive(true);
@@ -867,15 +874,15 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   useEffect(()=>{
     const svg=svgRef.current;if(!svg)return;
     svg.innerHTML='';
-    const root=rootRef.current;
+    const main=mainRef.current;
     connections.forEach(conn=>{
-      const e1=root?.querySelector(`[data-tid="${conn.from}"]`);
-      const e2=root?.querySelector(`[data-tid="${conn.to}"]`);
+      const e1=main?.querySelector(`[data-tid="${conn.from}"]`);
+      const e2=main?.querySelector(`[data-tid="${conn.to}"]`);
       if(!e1||!e2)return;
-      const rootRect=root.getBoundingClientRect();
+      const mainRect=main.getBoundingClientRect();
       const r1=e1.getBoundingClientRect(),r2=e2.getBoundingClientRect();
-      const p1={x:r1.left+r1.width/2-rootRect.left,y:r1.top+r1.height/2-rootRect.top};
-      const p2={x:r2.left+r2.width/2-rootRect.left,y:r2.top+r2.height/2-rootRect.top};
+      const p1={x:r1.left+r1.width/2-mainRect.left,y:r1.top+r1.height/2-mainRect.top};
+      const p2={x:r2.left+r2.width/2-mainRect.left,y:r2.top+r2.height/2-mainRect.top};
       const bend=Math.max(30,Math.abs(p2.y-p1.y)*0.38+Math.abs(p2.x-p1.x)*0.12);
       const d=`M${p1.x},${p1.y} C${p1.x},${p1.y+bend} ${p2.x},${p2.y-bend} ${p2.x},${p2.y}`;
       const col=conn.color;
@@ -915,117 +922,123 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
   return(<>
     <style>{campoCSS}</style>
-    <div className="campo-root" data-tutorial-target="campo-wiring" ref={rootRef} style={{position:'relative'}}>
-      <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
+    <div className="campo-root" data-tutorial-target="campo-wiring" ref={rootRef}>
+      {/* MAIN AREA — Régua, Maleta, Chave */}
+      <div className="campo-main" ref={mainRef} style={{position:'relative'}}>
+        <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
 
-      {/* RÉGUA DE BORNES */}
-      <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
-        <div className="c-section-label">RÉGUA DE BORNES</div>
-        <div style={{display:'flex',alignItems:'flex-end',marginLeft:12}}>
-          {Array.from({length:16},(_,i)=><BorneCable key={i+1} n={i+1} anilha={BORNE_ANILHAS[i]} side="top"/>)}
-        </div>
-        <div className="borne-wrap" data-tutorial-target="terminal-block">
-          <div className="borne-arrow-l"/>
-          <div className="borne-chassis">
-            {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+        {/* RÉGUA DE BORNES */}
+        <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
+          <div className="c-section-label">RÉGUA DE BORNES</div>
+          <div style={{display:'flex',alignItems:'flex-end',marginLeft:12}}>
+            {Array.from({length:16},(_,i)=><BorneCable key={i+1} n={i+1} anilha={BORNE_ANILHAS[i]} side="top"/>)}
           </div>
-          <div className="borne-arrow-r"/>
-        </div>
-      </div>
-
-      {/* DISJUNTOR — estado + comando de fechamento via bobina FC */}
-      <div style={{width:'100%',maxWidth:900}}>
-        <div className="bk-cmd-bar">
-          <div className={`bk-status-pill ${bkStatus?.state==='closed'?'on':'off'}`}>52a {bkStatus?.state==='closed'?'ON':'OFF'}</div>
-          <div className={`bk-status-pill ${bkStatus?.state!=='closed'?'on':'off'}`}>52b {bkStatus?.state!=='closed'?'ON':'OFF'}</div>
-          <div style={{fontSize:10,fontFamily:'monospace',color:'#555',letterSpacing:1}}>
-            {closeCoilWired?'⚡ FC LIGADA':'FC desligada'}
+          <div className="borne-wrap" data-tutorial-target="terminal-block">
+            <div className="borne-arrow-l"/>
+            <div className="borne-chassis">
+              {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+            </div>
+            <div className="borne-arrow-r"/>
           </div>
-          <button className="bk-close-campo"
-            disabled={!closeCoilWired||bkStatus?.state==='closed'||!bkStatus?.spring}
-            title={!closeCoilWired?'Ligue a bobina FC (TB15-TB16)':!bkStatus?.spring?'Mola não carregada':bkStatus?.state==='closed'?'Disjuntor já fechado':'Fechar disjuntor'}
-            onClick={()=>onBkCommand?.('close')}>
-            I FECHAR CB
-          </button>
         </div>
-      </div>
 
-      {/* PREDEFINIÇÕES + LIMPAR CABOS */}
-      <div style={{width:'100%',maxWidth:900}}>
-        <div className="preset-bar">
-          <span className="preset-lbl">PREDEFINIÇÕES</span>
-          {WIRING_PRESETS.map(p=><button key={p.id} className="preset-btn" onClick={()=>applyPreset(p)}>{p.label}</button>)}
-          <div style={{flex:1}}/>
-          <button className="preset-btn clear" onClick={()=>setConnections([])}>Limpar Cabos</button>
-        </div>
-      </div>
-
-      {/* MALETA DE TESTE + INFO BAR */}
-      <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}>
-        <div className="c-section-label">MALETA DE TESTE</div>
-        <div className="maleta" style={{width:'100%'}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
-          <div className="section-row" style={{marginBottom:8}}>
-            <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
-              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                <div className="section-title" style={{marginBottom:8}}>SAÍDA BINÁRIA</div>
-                <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                  {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+        {/* MALETA DE TESTE */}
+        <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}>
+          <div className="c-section-label">MALETA DE TESTE</div>
+          <div className="maleta" style={{width:'100%'}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
+            <div className="section-row" style={{marginBottom:8}}>
+              <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
+                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                  <div className="section-title" style={{marginBottom:8}}>SAÍDA BINÁRIA</div>
+                  <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
+                    {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                  </div>
                 </div>
-              </div>
-              <div className="v-divider"/>
-              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                <div className="section-title" style={{marginBottom:8}}>ENTRADA BINÁRIA</div>
-                <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                  {BI_PAIRS.map((p,i)=>(
-                    <div key={p.label} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-                      <div className={`bi-led${biMonitor[i]?.active?' on':''}`} title={`${p.label}: ${biMonitor[i]?.active?'ATIVO':'inativo'}`}/>
-                      <PairGroup pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>
-                    </div>
-                  ))}
+                <div className="v-divider"/>
+                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                  <div className="section-title" style={{marginBottom:8}}>ENTRADA BINÁRIA</div>
+                  <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
+                    {BI_PAIRS.map((p,i)=>(
+                      <div key={p.label} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                        <div className={`bi-led${biMonitor[i]?.active?' on':''}`} title={`${p.label}: ${biMonitor[i]?.active?'ATIVO':'inativo'}`}/>
+                        <PairGroup pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="section-row">
-            <div className="section-title">SAÍDAS ANALÓGICAS</div>
-            <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
-              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                <div className="subsection-label">CORRENTE</div>
-                <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                  {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+            <div className="section-row">
+              <div className="section-title">SAÍDAS ANALÓGICAS</div>
+              <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
+                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                  <div className="subsection-label">CORRENTE</div>
+                  <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
+                    {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                  </div>
                 </div>
-              </div>
-              <div className="v-divider"/>
-              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                <div className="subsection-label">TENSÃO</div>
-                <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                  {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                <div className="v-divider"/>
+                <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
+                  <div className="subsection-label">TENSÃO</div>
+                  <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
+                    {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                  </div>
                 </div>
               </div>
             </div>
+            <div style={{display:'flex',justifyContent:'space-between',marginTop:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
           </div>
-          <div style={{display:'flex',justifyContent:'space-between',marginTop:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
+          <div style={{position:'absolute',right:-185,top:'50%',transform:'translateY(-50%)',width:170}}>
+            <div className={`c-info-bar${infoActive?' active':''}`}>{infoMsg}</div>
+          </div>
         </div>
-        <div style={{position:'absolute',right:-185,top:'50%',transform:'translateY(-50%)',width:170}}>
-          <div className={`c-info-bar${infoActive?' active':''}`}>{infoMsg}</div>
+
+        {/* CHAVE DE AFERIÇÃO */}
+        <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
+          <div className="c-section-label">CHAVE DE AFERIÇÃO</div>
+          <div style={{display:'flex',alignItems:'flex-end',justifyContent:'center',gap:6,padding:'0 4px'}}>
+            {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
+              <div key={e.key} style={{width:42,display:'flex',justifyContent:'center'}}><CableSVG pole={e.pole} side="top"/></div>)}
+          </div>
+          <div className="poles-row">
+            {poleElements.map(e=>e.type==='sep'?<div key={e.key} className="c-sep"/>:
+              <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+          </div>
+          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'center',gap:6,padding:'0 4px'}}>
+            {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
+              <div key={e.key} style={{width:42,display:'flex',justifyContent:'center'}}><CableSVG pole={e.pole} side="bot"/></div>)}
+          </div>
         </div>
       </div>
 
-      {/* CHAVE DE AFERIÇÃO */}
-      <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
-        <div className="c-section-label">CHAVE DE AFERIÇÃO</div>
-        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'center',gap:6,padding:'0 4px'}}>
-          {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
-            <div key={e.key} style={{width:42,display:'flex',justifyContent:'center'}}><CableSVG pole={e.pole} side="top"/></div>)}
+      {/* SIDE PANEL — Disjuntor + Predefinições */}
+      <div className="campo-sidebar">
+        {/* DISJUNTOR — estado + comando de fechamento via bobina FC */}
+        <div style={{width:'100%'}}>
+          <div className="c-section-label" style={{marginBottom:8}}>DISJUNTOR</div>
+          <div className="bk-cmd-bar" style={{flexDirection:'column',gap:8}}>
+            <div className={`bk-status-pill ${bkStatus?.state==='closed'?'on':'off'}`}>52a {bkStatus?.state==='closed'?'ON':'OFF'}</div>
+            <div className={`bk-status-pill ${bkStatus?.state!=='closed'?'on':'off'}`}>52b {bkStatus?.state!=='closed'?'ON':'OFF'}</div>
+            <div style={{fontSize:10,fontFamily:'monospace',color:'#555',letterSpacing:1,textAlign:'center'}}>
+              {closeCoilWired?'⚡ FC LIGADA':'FC desligada'}
+            </div>
+            <button className="bk-close-campo"
+              disabled={!closeCoilWired||bkStatus?.state==='closed'||!bkStatus?.spring}
+              title={!closeCoilWired?'Ligue a bobina FC (TB15-TB16)':!bkStatus?.spring?'Mola não carregada':bkStatus?.state==='closed'?'Disjuntor já fechado':'Fechar disjuntor'}
+              onClick={()=>onBkCommand?.('close')}>
+              I FECHAR CB
+            </button>
+          </div>
         </div>
-        <div className="poles-row">
-          {poleElements.map(e=>e.type==='sep'?<div key={e.key} className="c-sep"/>:
-            <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
-        </div>
-        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'center',gap:6,padding:'0 4px'}}>
-          {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
-            <div key={e.key} style={{width:42,display:'flex',justifyContent:'center'}}><CableSVG pole={e.pole} side="bot"/></div>)}
+
+        {/* PREDEFINIÇÕES */}
+        <div style={{width:'100%'}}>
+          <div className="c-section-label" style={{marginBottom:8}}>PREDEFINIÇÕES</div>
+          <div className="preset-bar" style={{flexDirection:'column'}}>
+            {WIRING_PRESETS.map(p=><button key={p.id} className="preset-btn" onClick={()=>applyPreset(p)} style={{width:'100%'}}>{p.label}</button>)}
+            <button className="preset-btn clear" onClick={()=>setConnections([])} style={{width:'100%'}}>Limpar Cabos</button>
+          </div>
         </div>
       </div>
     </div>
