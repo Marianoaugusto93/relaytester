@@ -4,18 +4,13 @@ import LeverRack from './LeverRack.jsx';
 import MaletaPanel from './MaletaPanel.jsx';
 import CablesSVG from './CablesSVG.jsx';
 
-export default function FieldStage({ mode: parentMode, onModeChange }) {
+export default function FieldStage({ mode, onModeChange }) {
   const stageRef = useRef(null);
   const [levers, setLevers] = useState(null);
-  const [localMode, setLocalMode] = useState(parentMode || 'op');
   const [focusedCircuit, setFocusedCircuit] = useState(null);
 
   const handleLeverChange = (updatedLevers, updatedMode) => {
     setLevers(updatedLevers);
-    if (updatedMode !== null) {
-      setLocalMode(updatedMode);
-      if (onModeChange) onModeChange(updatedMode);
-    }
   };
 
   return (
@@ -27,7 +22,7 @@ export default function FieldStage({ mode: parentMode, onModeChange }) {
       {/* SVG Cable layer (overlay) */}
       <CablesSVG
         levers={levers}
-        mode={localMode}
+        mode={mode}
         focusedCircuit={focusedCircuit}
         onFocusedCircuitChange={setFocusedCircuit}
         stageRef={stageRef}
@@ -35,7 +30,7 @@ export default function FieldStage({ mode: parentMode, onModeChange }) {
 
       {/* Equipment rows (relative positioning for cable anchoring) */}
       <BorneStrip />
-      <LeverRack onLeverChange={handleLeverChange} />
+      <LeverRack mode={mode} onLeverChange={handleLeverChange} />
       <MaletaPanel />
     </div>
   );

@@ -378,7 +378,7 @@ export const fieldV4CSS = `
   }
 
   @media (max-width: 900px) {
-    .field-page-v4 {
+    .field-main {
       grid-template-columns: 1fr;
     }
     .field-side-panel {
