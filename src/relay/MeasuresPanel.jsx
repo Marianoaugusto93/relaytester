@@ -11,6 +11,7 @@ export default function MeasuresPanel({
   onSend, onGet, onOpenFile, onSaveFile,
   onLiveWaveform, onCaptureWaveform, onSnapshot, onDump,
   resetRelay, onOpenBk, onCloseBk,
+  onOpenAnalytics,
 }) {
   const { t } = useTranslation();
   const [measTab, setMeasTab] = useState("med");
@@ -170,6 +171,7 @@ export default function MeasuresPanel({
         <button className="act-btn" onClick={onCaptureWaveform}><span className="ico">≈</span>Capture</button>
         <button className="act-btn" onClick={onSnapshot}><span className="ico">⊙</span>Snap</button>
         <button className="act-btn" onClick={onDump}><span className="ico">⏚</span>Dump</button>
+        <button className="act-btn" onClick={onOpenAnalytics} title="Usage Statistics" style={{ marginLeft: 4 }}><span className="ico">📊</span>Stats</button>
       </div>
 
       {/* relay hardware buttons */}

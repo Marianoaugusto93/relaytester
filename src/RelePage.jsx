@@ -34,6 +34,7 @@ export default function RelePage({
   takeSnapshot, dumpFullState,
   resetRelay,
   setBkOpenCtr, setBkCloseCtr,
+  onOpenAnalytics,
 }) {
   const { t } = useTranslation();
   const [activeReleTab, setActiveReleTab] = useState("relay");
@@ -132,6 +133,7 @@ export default function RelePage({
             resetRelay={resetRelay}
             onOpenBk={() => setBkOpenCtr(c => c + 1)}
             onCloseBk={() => setBkCloseCtr(c => c + 1)}
+            onOpenAnalytics={onOpenAnalytics}
           />
         </div>
       </div>

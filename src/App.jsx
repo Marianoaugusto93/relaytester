@@ -25,6 +25,8 @@ import TestsPage from "./TestsPage.jsx";
 import WaveformDisplay from "./WaveformDisplay.jsx";
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
+import { analytics } from "./analytics.js";
+import AnalyticsDashboard from "./AnalyticsDashboard.jsx";
 
 function AppInner(){
   const{t}=useTranslation();
@@ -53,6 +55,7 @@ function AppInner(){
   const[campoLoadWiring,setCampoLoadWiring]=useState(null);
   const[wfModalOpen,setWfModalOpen]=useState(false);const[wfSelected,setWfSelected]=useState(null);
   const[wfDisplayOpen,setWfDisplayOpen]=useState(false);
+  const[analyticsOpen,setAnalyticsOpen]=useState(false);
   const[phasorDiagOpen,setPhasorDiagOpen]=useState(false);
   const[fcOpen,setFcOpen]=useState(false);
   const[phasorVis,setPhasorVis]=useState({Ia:true,Ib:true,Ic:true,Va:true,Vb:true,Vc:true,Vab:false,Vbc:false,Vca:false,I0:false,I1:false,I2:false,V0:false,V1:false,V2:false});
@@ -296,8 +299,13 @@ function AppInner(){
     const firstFid=preset.fns[0];if(protOrder.includes(firstFid)){setTab(firstFid);setSi(0);}
     if(preset.phasors){setP(deepClone(preset.phasors));}
     setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);
+    if(preset.label){analytics.recordScenarioLoad(preset.label);}
     setEvts(ev=>[{time:nowShort(),icon:'⚡',text:`Preset "${preset.label}" aplicado — configurações enviadas ao relé.`,dt:''},...ev.slice(0,20)]);
   },[]);
+
+  // ── Analytics-wrapped simulation controls ──────────────────────────────────
+  const runSimWithAnalytics=useCallback(()=>{analytics.recordInjectionStart();runSim();},[runSim]);
+  const stopSimWithAnalytics=useCallback(()=>{analytics.recordInjectionEnd(stime,trippedStageIds[0]??null);stopSim();},[stopSim,stime,trippedStageIds]);
 
   const sendSettings=()=>{setRelayProt(deepClone(prot));setRelayMatrix(deepClone(outMatrix));setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↑",text:"Settings uploaded to relay.",dt:""},...ev.slice(0,20)])};
   const getSettings=()=>{setProt(deepClone(relayProt));setOutMatrix(deepClone(relayMatrix));setGetFlash(true);setTimeout(()=>setGetFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↓",text:"Settings downloaded from relay.",dt:""},...ev.slice(0,20)])};
@@ -425,7 +433,8 @@ function AppInner(){
         toggleMatrix={toggleMatrix} toggleInMatrix={toggleInMatrix}
         applyTestPreset={applyTestPreset} rtp={rtp} rtc={rtc}
         ss={ss} stime={stime} isTripped={isTripped} maletaTripped={maletaTripped}
-        runSim={runSim} stopSim={stopSim} resetFault={resetFault} setFcOpen={setFcOpen}
+        runSim={runSimWithAnalytics} stopSim={stopSimWithAnalytics} resetFault={resetFault} setFcOpen={setFcOpen}
+        onOpenAnalytics={()=>setAnalyticsOpen(true)}
         ci={ci} vi={vi} i0={i0} v0={v0} i2lcd={i2lcd}
         pTotal={pTotal} pA={pA} pB={pB} pC={pC}
         injecting={injecting} relayProt={relayProt} trippedStageIds={trippedStageIds}
@@ -476,6 +485,7 @@ function AppInner(){
   {phasorDiagOpen&&<PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/>}
   {fcOpen&&<FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/>}
   {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></div></div></div>}
+  <AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/>
   <HelpModal/>
   <Tutorial show={tutorialOpen} onDismiss={closeTutorial}/>
   </>);
