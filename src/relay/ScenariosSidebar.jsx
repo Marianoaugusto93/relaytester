@@ -2,11 +2,13 @@ import { useState } from "react";
 import { EDUCATIONAL_SCENARIOS } from "../scenarios/educational-scenarios.js";
 import { useTranslation } from "../i18n/useTranslation.js";
 import CustomScenarioBuilder from "./CustomScenarioBuilder.jsx";
+import ScenarioVisualEditor from "../ScenarioVisualEditor.jsx";
 
-export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, inMatrix, phasors, applyTestPreset }) {
+export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, inMatrix, phasors, applyTestPreset, sys }) {
   const { t } = useTranslation();
   const [activeId, setActiveId] = useState(null);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [showVisualEditor, setShowVisualEditor] = useState(false);
 
   const handleLoad = (s) => {
     setActiveId(s.id);
@@ -85,6 +87,13 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
           + Novo cenário
         </button>
         <button
+          className="btn"
+          style={{ justifyContent: "center", fontSize: 10, background: "var(--orange-dim)", borderColor: "rgba(249,115,22,.25)", color: "var(--orange)" }}
+          onClick={() => setShowVisualEditor(true)}
+        >
+          + Visual Editor
+        </button>
+        <button
           className="btn ghost"
           style={{ justifyContent: "center", fontSize: 9.5 }}
           onClick={handleImport}
@@ -92,6 +101,33 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
           Carregar .json
         </button>
       </div>
+
+      {/* Visual Editor modal */}
+      {showVisualEditor && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,.65)", zIndex: 600,
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }} onClick={() => setShowVisualEditor(false)}>
+          <div style={{
+            background: "var(--card)", border: "1px solid var(--bdr)", borderRadius: 12,
+            width: 460, maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden",
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", padding: "10px 14px 10px", borderBottom: "1px solid var(--bdr)", flexShrink: 0 }}>
+              <span style={{ fontWeight: 700, fontSize: 13, flex: 1, color: "var(--orange)", fontFamily: "var(--fh)", textTransform: "uppercase", letterSpacing: "1px" }}>Visual Editor</span>
+              <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => setShowVisualEditor(false)}>✕</button>
+            </div>
+            <ScenarioVisualEditor
+              sys={sys}
+              onClose={() => setShowVisualEditor(false)}
+              onSave={(s) => {
+                applyTestPreset(s);
+                setActiveId(s.id);
+                setShowVisualEditor(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Custom scenario builder modal/inline */}
       {showBuilder && (

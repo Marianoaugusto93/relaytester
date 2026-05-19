@@ -52,7 +52,7 @@ export default function SettingsPanel({prot,outMatrix,inMatrix,sys,tab,si,mainTa
     {protStageRows.map(r=><tr key={r}><td className="row-label is-prot">{r}</td>{allCols.map(c=><td key={c}><div className="mx-cell"><div className={`mx-chk ${outMatrix[r]?.[c]?"on":""}`} onClick={()=>toggleMatrix(r,c)}/></div></td>)}</tr>)}
   </tbody></table></div></div>);
 
-  if(mainTab==="scenarios")return(<ScenariosSidebar pfMode={phasors.pfMode} setPfMode={phasors.setPfMode} prot={prot} outMatrix={outMatrix} inMatrix={inMatrix} phasors={phasors} applyTestPreset={applyTestPreset}/>);
+  if(mainTab==="scenarios")return(<ScenariosSidebar pfMode={phasors.pfMode} setPfMode={phasors.setPfMode} prot={prot} outMatrix={outMatrix} inMatrix={inMatrix} phasors={phasors} applyTestPreset={applyTestPreset} sys={sys}/>);
 
   return(<div className="card-scroll"><div className="mx-wrap">
     <table className="mx"><thead><tr>

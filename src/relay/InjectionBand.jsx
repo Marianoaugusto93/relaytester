@@ -1,11 +1,18 @@
 import { IB } from "../widgets.jsx";
 import { useTranslation } from "../i18n/useTranslation.js";
 
-function SegCtrl({ options, value, onChange }) {
+function SegCtrl({ options, value, onChange, ariaLabel }) {
   return (
-    <div className="seg">
+    <div className="seg" role="group" aria-label={ariaLabel}>
       {options.map(o => (
-        <button key={o.value} className={`s${value === o.value ? " on" : ""}`} onClick={() => onChange(o.value)}>
+        <button
+          key={o.value}
+          type="button"
+          className={`s${value === o.value ? " on" : ""}`}
+          onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
+          aria-label={`${ariaLabel}: ${o.label}`}
+        >
           {o.label}
         </button>
       ))}
@@ -35,16 +42,22 @@ export default function InjectionBand({
   const updCur = pfMode === "prefault" ? uPf : uP;
 
   return (
-    <div className="rele-injection">
+    <section className="rele-injection" aria-label="Injection settings panel">
       {/* PRE/FAULT toggle at the top */}
-      <div className="inj-pf-toggle">
+      <div className="inj-pf-toggle" role="tablist" aria-label="Pre-fault or fault mode">
         <button
+          type="button"
+          role="tab"
+          aria-selected={pfMode === "prefault"}
           className={`pf-btn${pfMode === "prefault" ? " on" : ""}`}
           onClick={() => setPfMode("prefault")}
         >
           {t("tabs.preFault") || "Pré"}
         </button>
         <button
+          type="button"
+          role="tab"
+          aria-selected={pfMode === "fault"}
           className={`pf-btn${pfMode === "fault" ? " on" : ""}`}
           onClick={() => setPfMode("fault")}
         >
@@ -61,9 +74,11 @@ export default function InjectionBand({
             options={[{ value: "manual", label: t("labels.manual") }, { value: "balanced", label: "3φ Eq." }]}
             value={balI}
             onChange={onBalChangeI}
+            ariaLabel="Current injection mode"
           />
           {balI === "balanced" && (
             <select
+              aria-label="Current phase sequence"
               style={{ marginLeft: 4, background: "var(--card3)", border: "1px solid var(--bdr)", color: "var(--tx2)", borderRadius: 4, fontSize: 9, padding: "2px 4px", fontFamily: "var(--fm)" }}
               value={seqI}
               onChange={e => onSeqChangeI(e.target.value)}
@@ -124,9 +139,11 @@ export default function InjectionBand({
             options={[{ value: "manual", label: t("labels.manual") }, { value: "balanced", label: "3φ Eq." }]}
             value={balV}
             onChange={onBalChangeV}
+            ariaLabel="Voltage injection mode"
           />
           {balV === "balanced" && (
             <select
+              aria-label="Voltage phase sequence"
               style={{ marginLeft: 4, background: "var(--card3)", border: "1px solid var(--bdr)", color: "var(--tx2)", borderRadius: 4, fontSize: 9, padding: "2px 4px", fontFamily: "var(--fm)" }}
               value={seqV}
               onChange={e => onSeqChangeV(e.target.value)}
@@ -187,6 +204,7 @@ export default function InjectionBand({
             options={[{ value: 60, label: "60 Hz" }, { value: 50, label: "50 Hz" }]}
             value={sys.freq ?? 60}
             onChange={v => setSys(o => ({ ...o, freq: Number(v) }))}
+            ariaLabel="System frequency"
           />
         </div>
         <div className="inj-grid-vertical">
@@ -197,6 +215,6 @@ export default function InjectionBand({
         </div>
       </div>
       </div>
-    </div>
+    </section>
   );
 }
