@@ -1,10 +1,59 @@
 export const fieldV4CSS = `
   .field-page-v4 {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg);
+  }
+
+  .field-header-v4 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--line-2);
+    gap: 20px;
+  }
+
+  .field-header-v4 h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .mode-control {
+    display: flex;
+    gap: 4px;
+    background: var(--panel-2);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--line-2);
+  }
+
+  .mode-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--ink-2);
+    transition: all 0.2s;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .field-main {
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 0;
-    height: 100%;
-    background: var(--bg);
+    flex: 1;
+    overflow: hidden;
   }
 
   .field-stage {
