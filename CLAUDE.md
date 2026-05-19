@@ -536,3 +536,61 @@ Before deploying to production:
 - Updated `CLAUDE.md` — this section
 
 **Ready for Production**: Yes, after running ROTEIRO_TESTE.md checklist
+
+---
+
+### Phase 9: Classic CAMPO Layout Reorganization & Cable Positioning Fix
+**Status**: ✅ COMPLETE | **Date**: 2026-05-19 | **Commit**: 6c7689a | **Build**: 431.20 kB (111.02 kB gzip)
+
+**Layout Restructuring:**
+
+Changed from vertical single-column layout to **2-column grid layout**:
+- **Left column (`.campo-main`, flex: 1)**: 
+  - RÉGUA DE BORNES (terminal block module 1-16)
+  - MALETA DE TESTE (suitcase with analog outputs and binary I/O)
+  - CHAVE DE AFERIÇÃO (calibration switch with 10 poles)
+  
+- **Right column (`.campo-sidebar`, 240px width, stacked)**:
+  - DISJUNTOR section (52a/52b status pills, FC close coil button)
+  - PREDEFINIÇÕES section (wiring preset buttons + clear cables)
+
+**Background Color Uniformization:**
+- Changed `.campo-root` background from `#09090C` to `var(--bg)` (project standard: `#0e1015`)
+- Updated `.bk-cmd-bar` and `.preset-bar` from `#0e0e14` to `var(--card2)` for consistency
+- Sidebar styling aligned with project design tokens
+
+**Cable Positioning Fix:**
+- **Issue**: SVG cables rendered with offset due to new sidebar panel
+- **Root Cause**: SVG coordinate calculation used `.campo-root` (full grid) instead of `.campo-main` (content area only)
+- **Solution**: 
+  - Added `mainRef` to track `.campo-main` container
+  - Changed SVG reference from `rootRef.current` → `mainRef.current`
+  - Cable coordinates now calculated relative to main area only
+  - Preserves all wiring functionality without offset
+
+**Styling Refinements:**
+- Section labels: `text-transform: uppercase` for visual consistency
+- Status pills: centered alignment, width adjusted for sidebar
+- Buttons: resized for narrow sidebar (9px → 10px font, full width)
+- Responsive behavior: layout maintains integrity at all viewport sizes
+
+**Files Modified:**
+- `src/CampoPage.jsx` — 2-column layout, mainRef, SVG positioning fix
+
+**Build Verification:**
+- Production build: ✅ 431.20 kB (111.02 kB gzip)
+- Module count: 104 modules
+- Build time: 3.84s
+- Exit code: 0
+- No console errors or warnings
+
+**Layout Verification:**
+- ✅ 2-column grid layout renders correctly
+- ✅ Main area contains RÉGUA → MALETA → CHAVE
+- ✅ Sidebar contains stacked DISJUNTOR + PREDEFINIÇÕES
+- ✅ SVG cables align correctly with new layout
+- ✅ All wiring functionality preserved
+- ✅ Button interactions working (presets, close CB, clear cables)
+- ✅ Background colors uniformized with project theme
+
+**Next Steps:** None — classic layout reorganization complete. Layout V4 remains hidden but preserved in codebase.
