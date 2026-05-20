@@ -37,7 +37,7 @@ export default function CommandLegend({ bkState, springLoaded, tripLatch }) {
           if (items.length === 0) return null;
           return (
             <div key={cat} style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tx3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: 'var(--fh)' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx3)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.8px', fontFamily: 'var(--fh)' }}>
                 {label}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -47,10 +47,10 @@ export default function CommandLegend({ bkState, springLoaded, tripLatch }) {
                     <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '5px 6px', borderRadius: '4px', background: active ? 'rgba(249,115,22,.08)' : 'transparent', transition: 'all .15s' }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? 'var(--orange)' : 'var(--tx4)', flexShrink: 0, marginTop: 3 }} />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 9, fontWeight: active ? 700 : 600, color: active ? 'var(--orange)' : 'var(--tx)', fontFamily: 'var(--fm)', letterSpacing: '0.3px' }}>
+                        <div style={{ fontSize: 13, fontWeight: active ? 700 : 600, color: active ? 'var(--orange)' : 'var(--tx)', fontFamily: 'var(--fm)', letterSpacing: '0.3px' }}>
                           {key}
                         </div>
-                        <div style={{ fontSize: 8, color: 'var(--tx3)', lineHeight: 1.3, marginTop: 1 }}>
+                        <div style={{ fontSize: 12, color: 'var(--tx3)', lineHeight: 1.3, marginTop: 1 }}>
                           {desc}
                         </div>
                       </div>

@@ -502,7 +502,7 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .painel-right-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .painel-tab-row{display:flex;align-items:center;padding:4px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:rgba(0,0,0,.1)}
 .painel-tab-content{flex:1;min-height:0;padding:0;display:flex;align-items:stretch;overflow:hidden}
-.painel-main-v3{display:grid;grid-template-columns:3fr 12fr 5fr;gap:8px;flex:1;min-height:0}
+.painel-main-v3{display:grid;grid-template-columns:3fr 14fr 3fr;gap:8px;flex:1;min-height:0}
 .painel-bk-v3{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .painel-cmd-v3{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
 .painel-cmd-body{flex:1;min-height:0;overflow:hidden}
