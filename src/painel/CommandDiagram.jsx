@@ -381,66 +381,13 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
   );
 }
 
-// ─── CommandDiagram — SVG + legenda lateral ──────────────────────────────────
-export default function CommandDiagram({ bkState, springLoaded, tripLatch }) {
-  const closed   = bkState === 'closed';
-
-  // Chaves ativas na legenda (laranja)
-  const activeKeys = [
-    'BCS',                           // sempre ativo
-    ...(springLoaded ? ['LM'] : []),
-    ...(tripLatch    ? ['GL', 'AP'] : []),
-    ...(closed       ? ['BD1'] : ['GT2']),
-    'K',                             // sempre ativo
-  ];
-
-  const categories = {
-    entrada: 'Entradas de Comando',
-    feedback: 'Feedback de Posição',
-    protecao: 'Proteção',
-    comando: 'Comando',
-    saida: 'Saídas'
-  };
-
+// ─── CommandDiagram — SVG apenas ──────────────────────────────────────────────
+export default function CommandDiagram({ bkState, springLoaded, tripLatch, showLegend = true }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       {/* SVG principal */}
       <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', minHeight: 0 }}>
         <CommandDiagramSVG bkState={bkState} springLoaded={springLoaded} tripLatch={tripLatch}/>
-      </div>
-
-      {/* Legenda em grid abaixo */}
-      <div style={{ borderTop: '1px solid var(--bdr)', padding: '10px 12px', flexShrink: 0, maxHeight: '35%', overflowY: 'auto', fontSize: 11 }}>
-        <div style={{ fontWeight: 700, color: 'var(--tx2)', marginBottom: 8, fontSize: 10, letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: 'var(--fh)' }}>
-          Estado dos Componentes
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {Object.entries(categories).map(([cat, label]) => {
-            const items = LEGEND_ITEMS.filter(i => i.cat === cat);
-            if (items.length === 0) return null;
-            return (
-              <div key={cat}>
-                <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--tx3)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  {label}
-                </div>
-                {items.map(({ key, desc }) => {
-                  const active = activeKeys.includes(key);
-                  return (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, padding: '3px 6px', borderRadius: '4px', background: active ? 'rgba(249,115,22,.08)' : 'transparent' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? 'var(--orange)' : 'var(--tx4)', flexShrink: 0 }} />
-                      <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? 'var(--orange)' : 'var(--tx3)', fontFamily: 'var(--fm)' }}>
-                        {key}
-                      </span>
-                      <span style={{ fontSize: 8, color: 'var(--tx3)', flex: 1, minWidth: 0 }}>
-                        {desc}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
       </div>
     </div>
   );

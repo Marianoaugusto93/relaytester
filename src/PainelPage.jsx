@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import WaveformDisplay from "./WaveformDisplay.jsx";
 import BreakerCard from "./painel/BreakerCard.jsx";
 import CommandDiagram from "./painel/CommandDiagram.jsx";
+import CommandLegend from "./painel/CommandLegend.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -186,10 +187,10 @@ export default function PainelPage({
   return (
     <div className="painel-pg">
 
-      <div className="painel-main">
+      <div className="painel-main-v3">
 
-        {/* ── ESQUERDA: BreakerCard ── */}
-        <div className="painel-bk">
+        {/* ── ESQUERDA 25%: BreakerCard ── */}
+        <div className="painel-bk-v3">
           <div className="ph">
             <div className="bar bar-sky"/>
             <span className="ph-t">Disjuntor</span>
@@ -206,21 +207,34 @@ export default function PainelPage({
           />
         </div>
 
-        {/* ── DIREITA: Diagrama de Comando ── */}
-        <div className="painel-right">
-          {/* Header com título */}
+        {/* ── MEIO 50%: Diagrama de Comando ── */}
+        <div className="painel-cmd-v3">
           <div className="ph">
             <div className="bar bar-lav"/>
             <span className="ph-t">Diagrama de Comando</span>
           </div>
 
-          <div className="painel-right-body">
+          <div className="painel-cmd-body">
             <CommandDiagram
               bkState={bkState}
               springLoaded={springLoaded}
               tripLatch={tripLatch}
+              showLegend={false}
             />
           </div>
+        </div>
+
+        {/* ── DIREITA 25%: Legenda ── */}
+        <div className="painel-legend-v3">
+          <div className="ph">
+            <div className="bar bar-warm"/>
+            <span className="ph-t">Legenda</span>
+          </div>
+          <CommandLegend
+            bkState={bkState}
+            springLoaded={springLoaded}
+            tripLatch={tripLatch}
+          />
         </div>
       </div>
 

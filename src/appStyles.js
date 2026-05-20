@@ -502,6 +502,11 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .painel-right-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .painel-tab-row{display:flex;align-items:center;padding:4px 8px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:rgba(0,0,0,.1)}
 .painel-tab-content{flex:1;min-height:0;padding:0;display:flex;align-items:stretch;overflow:hidden}
+.painel-main-v3{display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;flex:1;min-height:0}
+.painel-bk-v3{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
+.painel-cmd-v3{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.painel-cmd-body{flex:1;min-height:0;overflow:hidden}
+.painel-legend-v3{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column}
 .bk-close-btn,.bk-open-btn,.bk-reset-btn{width:100%;padding:10px;border-radius:var(--rs);font-size:12px;font-weight:800;font-family:var(--fh);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
 .bk-close-btn{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.1);color:#22c55e}
 .bk-close-btn:hover:not(:disabled){background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.55)}
