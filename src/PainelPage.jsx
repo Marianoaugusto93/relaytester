@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import WaveformDisplay from "./WaveformDisplay.jsx";
 import BreakerCard from "./painel/BreakerCard.jsx";
 import CommandDiagram from "./painel/CommandDiagram.jsx";
-import UnifilarDiagram from "./painel/UnifilarDiagram.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -27,7 +26,6 @@ export default function PainelPage({
   const [springPct,    setSpringPct]    = useState(100);
   const [opCount,      setOpCount]      = useState(0);
   const [tripLatch,    setTripLatch]    = useState(false);
-  const [rightTab,     setRightTab]     = useState('cmd');
 
   const timerRef = useRef(null);
   const bkRef    = useRef(bkState);
@@ -208,49 +206,20 @@ export default function PainelPage({
           />
         </div>
 
-        {/* ── DIREITA: Diagramas com abas ── */}
+        {/* ── DIREITA: Diagrama de Comando ── */}
         <div className="painel-right">
-          {/* Header com título + tabs como segmented control à direita */}
-          <div className="ph painel-tab-row">
+          {/* Header com título */}
+          <div className="ph">
             <div className="bar bar-lav"/>
-            <span className="ph-t">DIAGRAMAS</span>
-            <div className="cmd-tabs-right">
-              <button
-                className={`cmd-tab-btn${rightTab === 'cmd'  ? ' active' : ''}`}
-                onClick={() => setRightTab('cmd')}
-              >
-                Comando
-              </button>
-              <button
-                className={`cmd-tab-btn${rightTab === 'uni'  ? ' active' : ''}`}
-                onClick={() => setRightTab('uni')}
-              >
-                Unifilar
-              </button>
-            </div>
+            <span className="ph-t">Diagrama de Comando</span>
           </div>
 
           <div className="painel-right-body">
-            <div className="painel-tab-content"
-                 style={rightTab === 'onda' ? { padding: 0, overflow: 'hidden' } : {}}>
-              {rightTab === 'cmd' && (
-                <CommandDiagram
-                  bkState={bkState}
-                  springLoaded={springLoaded}
-                  tripLatch={tripLatch}
-                />
-              )}
-              {rightTab === 'uni' && (
-                <UnifilarDiagram
-                  bkState={bkState}
-                  tripLatch={tripLatch}
-                  springLoaded={springLoaded}
-                  sys={sys}
-                  relayReadings={relayReadings}
-                  injecting={injecting}
-                />
-              )}
-            </div>
+            <CommandDiagram
+              bkState={bkState}
+              springLoaded={springLoaded}
+              tripLatch={tripLatch}
+            />
           </div>
         </div>
       </div>

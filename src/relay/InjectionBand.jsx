@@ -35,7 +35,9 @@ function InjCell({ label, value, unit, colorClass = "tx2" }) {
 export default function InjectionBand({
   p, pf, pfMode, balI, balV, seqI, seqV, sys,
   onBalChangeI, onBalChangeV, onSeqChangeI, onSeqChangeV,
-  uP, uPf, setSys, setPfMode
+  uP, uPf, setSys, setPfMode,
+  ss, stime, isTripped, injecting, runSim, stopSim, resetFault,
+  setFcOpen
 }) {
   const { t } = useTranslation();
   const cur = pfMode === "prefault" ? pf : p;
@@ -212,6 +214,56 @@ export default function InjectionBand({
             <span className="l">Freq (Hz)</span>
             <IB unit="Hz" value={sys.freq ?? 60} onChange={v => setSys(o => ({ ...o, freq: v }))} step="0.1" />
           </div>
+        </div>
+      </div>
+
+      {/* CONTROLS */}
+      <div className="inj-block">
+        <div className="inj-controls">
+          <div className="inj-btn-row">
+            <button
+              className="inj-btn inj-btn-inject"
+              onClick={() => runSim()}
+              title="Iniciar injeção"
+            >
+              ▶ Injetar
+            </button>
+            <button
+              className="inj-btn inj-btn-stop"
+              onClick={() => stopSim()}
+              title="Parar injeção"
+            >
+              ■ Parar
+            </button>
+          </div>
+          <button
+            className="inj-btn inj-btn-reset"
+            onClick={() => resetFault()}
+            title="Resetar falta"
+            style={{ width: "100%", marginTop: 4 }}
+          >
+            ↺ Reset Fault
+          </button>
+
+          <div className="inj-status">
+            <span className={`inj-status-dot${injecting ? " running" : ""}`}>●</span>
+            <span className="inj-status-txt">{injecting ? "Injeção" : "Parado"}</span>
+          </div>
+
+          <div className="inj-timer">
+            <span className="inj-timer-label">TRIP timer</span>
+            <span className={`inj-timer-value${isTripped ? " tripped" : ""}`}>
+              {(stime ?? 0).toFixed(3)}s
+            </span>
+          </div>
+
+          <button
+            className="inj-btn inj-btn-calc"
+            onClick={() => setFcOpen(true)}
+            title="Calculadora de Faltas"
+          >
+            ⚡ Calculadora
+          </button>
         </div>
       </div>
       </div>

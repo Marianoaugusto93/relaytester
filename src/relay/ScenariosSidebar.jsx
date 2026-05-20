@@ -80,22 +80,55 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
       {/* Footer */}
       <div className="scen-footer">
         <button
-          className="btn"
-          style={{ justifyContent: "center", fontSize: 11 }}
+          style={{
+            padding: "10px 12px",
+            borderRadius: "var(--rs)",
+            border: "1px solid var(--bdr)",
+            background: "var(--card2)",
+            color: "var(--tx2)",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all .2s"
+          }}
+          onMouseEnter={e => { e.target.style.background = "var(--card3)"; e.target.style.color = "var(--tx)"; }}
+          onMouseLeave={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
           onClick={() => setShowBuilder(v => !v)}
         >
           + Novo cenário
         </button>
         <button
-          className="btn"
-          style={{ justifyContent: "center", fontSize: 10, background: "var(--orange-dim)", borderColor: "rgba(249,115,22,.25)", color: "var(--orange)" }}
+          style={{
+            padding: "10px 12px",
+            borderRadius: "var(--rs)",
+            border: "1px solid rgba(249,115,22,.4)",
+            background: "var(--orange-dim)",
+            color: "var(--orange)",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all .2s"
+          }}
+          onMouseEnter={e => { e.target.style.background = "rgba(249,115,22,.18)"; }}
+          onMouseLeave={e => { e.target.style.background = "var(--orange-dim)"; }}
           onClick={() => setShowVisualEditor(true)}
         >
           + Visual Editor
         </button>
         <button
-          className="btn ghost"
-          style={{ justifyContent: "center", fontSize: 9.5 }}
+          style={{
+            padding: "10px 12px",
+            borderRadius: "var(--rs)",
+            border: "1px solid var(--bdr)",
+            background: "transparent",
+            color: "var(--tx3)",
+            fontSize: 10,
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all .2s"
+          }}
+          onMouseEnter={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
+          onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "var(--tx3)"; }}
           onClick={handleImport}
         >
           Carregar .json

@@ -3,7 +3,6 @@ import { useTranslation } from "./i18n/useTranslation.js";
 import { mainTabs } from "./defaults.js";
 import InjectionBand from "./relay/InjectionBand.jsx";
 import MeasuresPanel from "./relay/MeasuresPanel.jsx";
-import ControlsBar from "./relay/ControlsBar.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
 
 export default function RelePage({
@@ -43,22 +42,69 @@ export default function RelePage({
   const releTabs = mainTabs;
 
   return (
-    <div className="rele-page">
+    <div className="rele-page-v2">
 
-      {/* TOP: injection band */}
-      <InjectionBand
-        p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode}
-        balI={balI} balV={balV} seqI={seqI} seqV={seqV}
-        onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV}
-        onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}
-        uP={uP} uPf={uPf} sys={sys} setSys={setSys}
-      />
+      {/* MAIN: 3-column layout */}
+      <div className="rele-main-v2">
 
-      {/* MIDDLE: 2-column layout (wider center) */}
-      <div className="rele-main">
+        {/* LEFT: Injection controls sidebar */}
+        <div className="rele-left-v2">
+          <InjectionBand
+            p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode}
+            balI={balI} balV={balV} seqI={seqI} seqV={seqV}
+            onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV}
+            onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}
+            uP={uP} uPf={uPf} sys={sys} setSys={setSys}
+            ss={ss}
+            stime={stime}
+            isTripped={isTripped}
+            injecting={injecting}
+            runSim={runSim}
+            stopSim={stopSim}
+            resetFault={resetFault}
+            setFcOpen={setFcOpen}
+          />
+        </div>
 
-        {/* MID: tabs + settings content */}
-        <div className="rele-mid">
+        {/* CENTER: REGRID Pro 1000 with classic styling */}
+        <div className="rele-center-v2">
+          <MeasuresPanel
+            ci={ci} vi={vi} i0={i0} v0={v0}
+            i2lcd={i2lcd}
+            pTotal={pTotal} pA={pA} pB={pB} pC={pC}
+            rtc={rtc} rtp={rtp}
+            injecting={injecting}
+            isTripped={isTripped}
+            trippedStageIds={trippedStageIds}
+            prot={prot}
+            relayProt={relayProt}
+            outMatrix={outMatrix}
+            inMatrix={inMatrix}
+            evts={evts}
+            diag={diag}
+            faultRecord={faultRecord}
+            bkState={bkState}
+            ledLabels={ledLabels}
+            ledLitStates={ledLitStates}
+            sendFlash={sendFlash}
+            getFlash={getFlash}
+            onSend={sendSettings}
+            onGet={getSettings}
+            onOpenFile={loadFile}
+            onSaveFile={saveFile}
+            onLiveWaveform={() => setWfDisplayOpen(true)}
+            onCaptureWaveform={() => setWfModalOpen(true)}
+            onSnapshot={takeSnapshot}
+            onDump={dumpFullState}
+            resetRelay={resetRelay}
+            onOpenBk={() => setBkOpenCtr(c => c + 1)}
+            onCloseBk={() => setBkCloseCtr(c => c + 1)}
+            onOpenAnalytics={onOpenAnalytics}
+          />
+        </div>
+
+        {/* RIGHT: Settings panel */}
+        <div className="rele-right-v2">
           <div className="tabs-row">
             {releTabs.map(tb => (
               <button
@@ -100,55 +146,7 @@ export default function RelePage({
           </div>
         </div>
 
-        {/* RIGHT: measures panel */}
-        <div className="rele-right">
-          <MeasuresPanel
-            ci={ci} vi={vi} i0={i0} v0={v0}
-            i2lcd={i2lcd}
-            pTotal={pTotal} pA={pA} pB={pB} pC={pC}
-            rtc={rtc} rtp={rtp}
-            injecting={injecting}
-            isTripped={isTripped}
-            trippedStageIds={trippedStageIds}
-            prot={prot}
-            relayProt={relayProt}
-            outMatrix={outMatrix}
-            inMatrix={inMatrix}
-            evts={evts}
-            diag={diag}
-            faultRecord={faultRecord}
-            bkState={bkState}
-            ledLabels={ledLabels}
-            ledLitStates={ledLitStates}
-            sendFlash={sendFlash}
-            getFlash={getFlash}
-            onSend={sendSettings}
-            onGet={getSettings}
-            onOpenFile={loadFile}
-            onSaveFile={saveFile}
-            onLiveWaveform={() => setWfDisplayOpen(true)}
-            onCaptureWaveform={() => setWfModalOpen(true)}
-            onSnapshot={takeSnapshot}
-            onDump={dumpFullState}
-            resetRelay={resetRelay}
-            onOpenBk={() => setBkOpenCtr(c => c + 1)}
-            onCloseBk={() => setBkCloseCtr(c => c + 1)}
-            onOpenAnalytics={onOpenAnalytics}
-          />
-        </div>
       </div>
-
-      {/* BOTTOM: controls bar */}
-      <ControlsBar
-        ss={ss}
-        stime={stime}
-        isTripped={isTripped}
-        maletaTripped={maletaTripped}
-        runSim={runSim}
-        stopSim={stopSim}
-        resetFault={resetFault}
-        setFcOpen={setFcOpen}
-      />
     </div>
   );
 }
@@ -171,22 +169,18 @@ const FUNC_LABELS = {
 
 function FuncRail({ tab, setTab, setSi, prot }) {
   return (
-    <div className="func-rail">
+    <div className="func-rail-v2">
       {Object.keys(FUNC_LABELS).map(id => {
         const info = FUNC_LABELS[id];
         const enabled = prot?.[id]?.enabled;
         return (
           <button
             key={id}
-            className={`func${tab === id ? " on" : ""}`}
+            className={`func-v2${tab === id ? " on" : ""}${enabled ? " enabled" : ""}`}
             onClick={() => { setTab(id); setSi(0); }}
-            title={prot?.[id]?.name}
+            title={`${prot?.[id]?.name} ${enabled ? "(Ativo)" : "(Inativo)"}`}
           >
             {info.display || id}
-            <span className="sub">{info.sub}</span>
-            {enabled && tab !== id && (
-              <span style={{ display: "block", width: 4, height: 4, borderRadius: "50%", background: "var(--green)", marginTop: 2 }} />
-            )}
           </button>
         );
       })}

@@ -11,19 +11,16 @@ const C = {
 };
 const col = (on, name) => on ? C[name] : C.off;
 
-// ─── Legenda lateral — 11 entradas ─────────────────────────────────────────
+// ─── Legenda — Elementos principais ──────────────────────────────────────────
 const LEGEND_ITEMS = [
-  { key: 'BCS', desc: 'Bloqueio cmd. supervisório' },
-  { key: 'LM',  desc: 'Lâmpada mola' },
-  { key: 'BL',  desc: 'Bobina liga' },
-  { key: 'BAD', desc: 'Bot. abrir disj.' },
-  { key: 'BA1', desc: 'Bot. abrir 1' },
-  { key: 'BB',  desc: 'Bloqueio' },
-  { key: 'GL',  desc: 'Sinalização luminosa' },
-  { key: 'AP',  desc: 'Anti-pumping' },
-  { key: 'BD1', desc: 'Bot. desliga 1' },
-  { key: 'GT2', desc: 'Disparo térmico' },
-  { key: 'K',   desc: 'Contator auxiliar' },
+  { key: 'BCS', desc: 'Comando supervisório', cat: 'entrada' },
+  { key: 'LM',  desc: 'Mola carregada', cat: 'feedback' },
+  { key: 'GL',  desc: 'Bobina de disparo', cat: 'saida' },
+  { key: 'AP',  desc: 'Anti-recuo trip', cat: 'protecao' },
+  { key: 'BD1', desc: 'Contato 52a (fechado)', cat: 'feedback' },
+  { key: 'GT2', desc: 'Contato 52b (aberto)', cat: 'feedback' },
+  { key: 'K',   desc: 'Relé auxiliar', cat: 'comando' },
+  { key: 'BM',  desc: 'Motor da mola', cat: 'saida' },
 ];
 
 // ─── Tooltips ───────────────────────────────────────────────────────────────
@@ -397,31 +394,49 @@ export default function CommandDiagram({ bkState, springLoaded, tripLatch }) {
     'K',                             // sempre ativo
   ];
 
+  const categories = {
+    entrada: 'Entradas de Comando',
+    feedback: 'Feedback de Posição',
+    protecao: 'Proteção',
+    comando: 'Comando',
+    saida: 'Saídas'
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {/* Caption */}
-      <p className="cmd-caption">
-        Diagrama de Comando · Disjuntor BAY-01 · IEC 60617
-      </p>
+      {/* SVG principal */}
+      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', minHeight: 0 }}>
+        <CommandDiagramSVG bkState={bkState} springLoaded={springLoaded} tripLatch={tripLatch}/>
+      </div>
 
-      {/* SVG + legenda lado a lado */}
-      <div style={{ display: 'flex', gap: 8, flex: 1, minHeight: 0, height: '100%' }}>
-        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', height: '100%' }}>
-          <CommandDiagramSVG bkState={bkState} springLoaded={springLoaded} tripLatch={tripLatch}/>
+      {/* Legenda em grid abaixo */}
+      <div style={{ borderTop: '1px solid var(--bdr)', padding: '10px 12px', flexShrink: 0, maxHeight: '35%', overflowY: 'auto', fontSize: 11 }}>
+        <div style={{ fontWeight: 700, color: 'var(--tx2)', marginBottom: 8, fontSize: 10, letterSpacing: '0.8px', textTransform: 'uppercase', fontFamily: 'var(--fh)' }}>
+          Estado dos Componentes
         </div>
-
-        <div className="cmd-legend" style={{ height: '100%' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--tx3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 6, fontFamily: 'var(--fh)' }}>
-            Legenda
-          </div>
-          {LEGEND_ITEMS.map(({ key, desc }) => {
-            const active = activeKeys.includes(key);
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {Object.entries(categories).map(([cat, label]) => {
+            const items = LEGEND_ITEMS.filter(i => i.cat === cat);
+            if (items.length === 0) return null;
             return (
-              <div key={key} className="cmd-leg-row">
-                <span className="cmd-leg-key" style={active ? { color: 'var(--orange)' } : {}}>
-                  {key}
-                </span>
-                <span className="cmd-leg-desc">{desc}</span>
+              <div key={cat}>
+                <div style={{ fontSize: 8, fontWeight: 700, color: 'var(--tx3)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {label}
+                </div>
+                {items.map(({ key, desc }) => {
+                  const active = activeKeys.includes(key);
+                  return (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, padding: '3px 6px', borderRadius: '4px', background: active ? 'rgba(249,115,22,.08)' : 'transparent' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: active ? 'var(--orange)' : 'var(--tx4)', flexShrink: 0 }} />
+                      <span style={{ fontSize: 9, fontWeight: active ? 700 : 500, color: active ? 'var(--orange)' : 'var(--tx3)', fontFamily: 'var(--fm)' }}>
+                        {key}
+                      </span>
+                      <span style={{ fontSize: 8, color: 'var(--tx3)', flex: 1, minWidth: 0 }}>
+                        {desc}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
