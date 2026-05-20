@@ -48,7 +48,7 @@ export default function MeasuresPanel({
 
       {/* internal tabs */}
       <div className="measure-tab">
-        {[["med", "Medidas"], ["prot", "Proteções"], ["log", "Lógica"], ["evt", "Eventos"]].map(([id, lbl]) => (
+        {[["med", "Medidas"], ["led", "LEDs"], ["prot", "Proteções"], ["log", "Lógica"], ["evt", "Eventos"]].map(([id, lbl]) => (
           <button key={id} className={`mtb${measTab === id ? " on" : ""}`} onClick={() => setMeasTab(id)}>{lbl}</button>
         ))}
       </div>
@@ -128,18 +128,54 @@ export default function MeasuresPanel({
 
       {/* LÓGICA tab */}
       {measTab === "log" && (
-        <div className="measures-scroll" style={{ padding: "8px 10px", fontSize: 10, color: "var(--tx3)", fontFamily: "var(--fm)" }}>
-          <div style={{ marginBottom: 6, fontWeight: 700, color: "var(--tx2)", fontSize: 9, letterSpacing: 1, textTransform: "uppercase" }}>Output Matrix</div>
+        <div className="measures-scroll" style={{ padding: "8px 10px", fontSize: 13, color: "var(--tx3)", fontFamily: "var(--fm)" }}>
+          <div style={{ marginBottom: 6, fontWeight: 700, color: "var(--tx2)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>Output Matrix</div>
           {Object.entries(outMatrix ?? {}).map(([row, cols]) => {
             const active = Object.keys(cols).filter(c => cols[c]);
             if (!active.length) return null;
             return (
-              <div key={row} style={{ display: "flex", gap: 4, padding: "2px 0", borderBottom: "1px solid var(--bdr)" }}>
-                <span style={{ color: "var(--orange)", minWidth: 60, fontWeight: 700 }}>{row}</span>
-                <span style={{ color: "var(--tx3)" }}>{active.join(", ")}</span>
+              <div key={row} style={{ display: "flex", gap: 4, padding: "4px 0", borderBottom: "1px solid var(--bdr)" }}>
+                <span style={{ color: "var(--orange)", minWidth: 60, fontWeight: 700, fontSize: 13 }}>{row}</span>
+                <span style={{ color: "var(--tx3)", fontSize: 13 }}>{active.join(", ")}</span>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* LEDs tab */}
+      {measTab === "led" && (
+        <div className="measures-scroll" style={{ padding: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <div key={i} style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px",
+                border: "1px solid var(--bdr)",
+                borderRadius: "8px",
+                background: ledLitStates[i] ? "rgba(74, 222, 128, 0.12)" : "var(--card2)"
+              }}>
+                <div style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: ledLitStates[i] ? "var(--green)" : "var(--card3)",
+                  boxShadow: ledLitStates[i] ? "0 0 12px var(--green)" : "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: `2px solid ${ledLitStates[i] ? "var(--green)" : "var(--tx4, #3F4651)"}`
+                }} />
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--tx)" }}>L{i + 1}</span>
+                <span style={{ fontSize: "9px", color: "var(--tx3)", textAlign: "center", lineHeight: "1.3" }}>
+                  {ledLabels[i] || "—"}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -159,26 +195,27 @@ export default function MeasuresPanel({
         </div>
       )}
 
-      {/* Action buttons inline with labels */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 8px", borderTop: "1px solid var(--bdr)", flexShrink: 0 }}>
-        <span style={{ fontSize: 8, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", minWidth: 50 }}>Ajustes</span>
-        <button className={`act-btn${sendFlash ? " flash-g" : ""}`} onClick={onSend}><span className="ico">↑</span>Send</button>
-        <button className={`act-btn${getFlash ? " flash-b" : ""}`} onClick={onGet}><span className="ico">↓</span>Get</button>
-        <button className="act-btn" onClick={onOpenFile}><span className="ico">⇧</span>Open</button>
-        <button className="act-btn" onClick={onSaveFile}><span className="ico">⇩</span>Save</button>
-        <span style={{ fontSize: 8, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", marginLeft: 6, minWidth: 60 }}>Operação</span>
-        <button className="act-btn" onClick={onLiveWaveform}><span className="ico">∿</span>Live</button>
-        <button className="act-btn" onClick={onCaptureWaveform}><span className="ico">≈</span>Capture</button>
-        <button className="act-btn" onClick={onSnapshot}><span className="ico">⊙</span>Snap</button>
-        <button className="act-btn" onClick={onDump}><span className="ico">⏚</span>Dump</button>
-        <button className="act-btn" onClick={onOpenAnalytics} title="Usage Statistics" style={{ marginLeft: 4 }}><span className="ico">📊</span>Stats</button>
+      {/* Action buttons inline with labels - 1 row 4 columns each section */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderTop: "1px solid var(--bdr)", flexShrink: 0, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 10, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", minWidth: 60 }}>Ajustes</span>
+        <button className={`act-btn-v2${sendFlash ? " flash-g" : ""}`} onClick={onSend}><span className="ico">↑</span>Send</button>
+        <button className={`act-btn-v2${getFlash ? " flash-b" : ""}`} onClick={onGet}><span className="ico">↓</span>Get</button>
+        <button className="act-btn-v2" onClick={onOpenFile}><span className="ico">⇧</span>Open</button>
+        <button className="act-btn-v2" onClick={onSaveFile}><span className="ico">⇩</span>Save</button>
+
+        <span style={{ fontSize: 10, color: "var(--tx3)", fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", marginLeft: 8, minWidth: 70 }}>Operação</span>
+        <button className="act-btn-v2" onClick={onLiveWaveform}><span className="ico">∿</span>Live</button>
+        <button className="act-btn-v2" onClick={onCaptureWaveform}><span className="ico">≈</span>Capture</button>
+        <button className="act-btn-v2" onClick={onSnapshot}><span className="ico">⊙</span>Snap</button>
+        <button className="act-btn-v2" onClick={onDump}><span className="ico">⏚</span>Dump</button>
       </div>
 
-      {/* relay hardware buttons */}
-      <div className="relay-bot">
-        <button className="rbt rr" onClick={resetRelay}>RESET</button>
-        <button className="rbt r0" onClick={onOpenBk}>0</button>
-        <button className="rbt rii" onClick={onCloseBk}>I</button>
+      {/* relay hardware buttons - centered square buttons */}
+      <div className="relay-bot-v2">
+        <button className="rbt-v2 rr" onClick={resetRelay}>RESET</button>
+        <button className="rbt-v2 r0" onClick={onOpenBk}>0</button>
+        <button className="rbt-v2 rii" onClick={onCloseBk}>I</button>
+        <button className="rbt-v2 stats" onClick={onOpenAnalytics} title="Usage Statistics">📊</button>
       </div>
     </div>
   );
