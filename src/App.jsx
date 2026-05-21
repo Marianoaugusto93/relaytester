@@ -419,7 +419,7 @@ function AppInner(){
     </div>
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
       {/* CAMPO */}
-      <div className="slide-pg"><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring}/></div>
+      <div className="slide-pg"><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>
 
       {/* RELÉ */}
       <div className="slide-pg"><RelePage

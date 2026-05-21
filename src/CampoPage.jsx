@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import BorneStatusPanel from "./BorneStatusPanel.jsx";
+import BorneGuideModal from "./BorneGuideModal.jsx";
+import { BORNE_DESCRIPTIONS } from "./BorneDescriptions.js";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const SLOT_H=120,HANDLE_H=44,GAP=5,TOP_Y=GAP,BOT_Y=SLOT_H-HANDLE_H-GAP;
@@ -759,8 +762,10 @@ function BorneOpening({n,side,pending,onTClick,onTDbl}){
 
 function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
   const t=BORNE_TYPE[n];
+  const desc=BORNE_DESCRIPTIONS[n];
+  const tooltip=desc?`${desc.label} - ${desc.desc}`:null;
   return(
-    <div className={`borne-module${isFirst?' first':''}${isLast?' last':''}${t?` t-${t}`:''}`}>
+    <div className={`borne-module${isFirst?' first':''}${isLast?' last':''}${t?` t-${t}`:''}`} title={tooltip}>
       <div className="borne-zone">
         <div className="borne-cap-top"/>
         <div className="borne-pin top"/>
@@ -768,7 +773,10 @@ function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
         <div className="borne-ear-r"/>
         <BorneOpening n={n} side="top" pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
       </div>
-      <div className="borne-label"><div className="borne-number">{n}</div></div>
+      <div className="borne-label">
+        <div className="borne-number">{n}</div>
+        {desc && <div style={{fontSize:'7px',lineHeight:'1',marginTop:'1px',color:'#999',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{desc.label}</div>}
+      </div>
       <div className="borne-zone bot">
         <div className="borne-ear-l bot"/>
         <div className="borne-ear-r bot"/>
@@ -781,13 +789,14 @@ function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadWiring}){
+export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadWiring,trippedStageIds=[],relayProt={}}){
   const[switchSt,setSwitchSt]=useState(initSwitchState);
   const switchStRef=useRef(switchSt);
   const[connections,setConnections]=useState([]);
   const[pendingTid,setPendingTid]=useState(null);
   const[infoMsg,setInfoMsg]=useState('Clique em qualquer terminal para iniciar uma conexão — duplo clique num cabo ou terminal para desconectar');
   const[infoActive,setInfoActive]=useState(false);
+  const[borneGuideOpen,setBorneGuideOpen]=useState(false);
   const connIdRef=useRef(0);
 
   // Computed electrical state — inclui contatos auxiliares 52a/52b do disjuntor
@@ -940,6 +949,38 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
             </div>
             <div className="borne-arrow-r"/>
           </div>
+
+          {/* BORNE STATUS PANEL + GUIA */}
+          <div style={{width:'100%',maxWidth:900,marginTop:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+            <button
+              onClick={()=>setBorneGuideOpen(true)}
+              style={{
+                padding:'8px 16px',
+                background:'linear-gradient(135deg, var(--orange) 0%, rgba(255, 180, 77, 0.8) 100%)',
+                border:'1px solid rgba(255, 180, 77, .6)',
+                color:'#111',
+                fontWeight:700,
+                borderRadius:6,
+                cursor:'pointer',
+                fontSize:11,
+                fontFamily:'var(--fh)',
+                letterSpacing:1,
+                textTransform:'uppercase',
+                transition:'all .2s',
+                alignSelf:'center'
+              }}
+              onMouseEnter={(e)=>{e.target.style.boxShadow='0 8px 16px rgba(255, 180, 77, 0.3)';e.target.style.transform='translateY(-2px)'}}
+              onMouseLeave={(e)=>{e.target.style.boxShadow='none';e.target.style.transform='translateY(0)'}}
+            >
+              📖 Guia Completo de Bornes
+            </button>
+            <BorneStatusPanel
+              trippedStageIds={trippedStageIds}
+              bkState={bkStatus}
+              relayProt={relayProt}
+              electricalGraph={electricalGraph}
+            />
+          </div>
         </div>
 
         {/* MALETA DE TESTE */}
@@ -1042,5 +1083,8 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
         </div>
       </div>
     </div>
+
+    {/* BORNE GUIDE MODAL */}
+    <BorneGuideModal open={borneGuideOpen} onClose={()=>setBorneGuideOpen(false)}/>
   </>);
 }
