@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import CampoPage, { buildElectricalGraph, computeRelayReadings } from "./CampoPage.jsx";
 import CampoPageNew from "./CampoPageNew.jsx";
 import CampoPageV4 from "./campo/fieldV4/CampoPageV4.jsx";
@@ -12,18 +12,18 @@ import { buildSaveContent, parseSaveFile } from "./fileIO.js";
 import { S } from "./appStyles.js";
 import { Tgl, IB } from "./widgets.jsx";
 import { HelpProvider, useHelp } from "./HelpContext.jsx";
-import HelpModal from "./HelpModal.jsx";
-import Tutorial from "./Tutorial.jsx";
+const HelpModal = lazy(() => import("./HelpModal.jsx"));
+const Tutorial = lazy(() => import("./Tutorial.jsx"));
 import { LanguageProvider } from "./i18n/LanguageContext.jsx";
 import { useTranslation } from "./i18n/useTranslation.js";
 import LanguageSelector from "./LanguageSelector.jsx";
-import FaultCalculator from "./FaultCalculator.jsx";
-import PhasorDiagram from "./PhasorDiagram.jsx";
+const FaultCalculator = lazy(() => import("./FaultCalculator.jsx"));
+const PhasorDiagram = lazy(() => import("./PhasorDiagram.jsx"));
 import RelayDisplay from "./RelayDisplay.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
 import RelePage from "./RelePage.jsx";
 import TestsPage from "./TestsPage.jsx";
-import WaveformDisplay from "./WaveformDisplay.jsx";
+const WaveformDisplay = lazy(() => import("./WaveformDisplay.jsx"));
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
 import { analytics } from "./analytics.js";
@@ -113,6 +113,9 @@ function AppInner(){
 
   // ── 27 monitor hook ────────────────────────────────────────────────────────
   const{check27IdleCondition}=use27Monitor({relayProt,relayReadings,sys,injecting,trippedStageIds,setTrippedStageIds,setIsTripped,setFaultRecord,setTripHistory,setDiag,setEvts,rtc,rtp});
+
+  // ── Page view analytics ────────────────────────────────────────────────────
+  useEffect(()=>{ analytics.recordPageView(mainTab); },[mainTab]);
 
   // ── Breaker callback ───────────────────────────────────────────────────────
   /**
@@ -475,7 +478,7 @@ function AppInner(){
             const zip=new JSZip();zip.file(`${baseName}.cfg`,files.cfg);zip.file(`${baseName}.dat`,files.dat);zip.file(`${baseName}.hdr`,files.hdr);
             const blob=await zip.generateAsync({type:'blob'});
             const handle=await window.showSaveFilePicker({suggestedName:`${baseName}.zip`,types:[{description:'ZIP Archive',accept:{'application/zip':['.zip']}}]});
-            const wr=await handle.createWritable();await wr.write(blob);await wr.close();
+            const wr=await handle.createWritable();await wr.write(blob);await wr.close();analytics.recordComtradeExport(rec?.preset?.label);
             setEvts(ev=>[{time:nowShort(),icon:"∿",text:`Waveform saved: ${handle.name}`,dt:""},...ev.slice(0,20)]);
             setWfModalOpen(false);setWfSelected(null);
           }catch(err){if(err.name!=='AbortError')setEvts(ev=>[{time:nowShort(),icon:"✗",text:`Error: ${err.message}`,dt:""},...ev.slice(0,20)]);}
@@ -483,12 +486,12 @@ function AppInner(){
       </div>
     </div>
   </div>}
-  {phasorDiagOpen&&<PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/>}
-  {fcOpen&&<FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/>}
-  {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></div></div></div>}
+  {phasorDiagOpen&&<Suspense fallback={null}><PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/></Suspense>}
+  {fcOpen&&<Suspense fallback={null}><FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/></Suspense>}
+  {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><Suspense fallback={null}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></Suspense></div></div></div>}
   <AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/>
-  <HelpModal/>
-  <Tutorial show={tutorialOpen} onDismiss={closeTutorial}/>
+  <Suspense fallback={null}><HelpModal/></Suspense>
+  <Suspense fallback={null}><Tutorial show={tutorialOpen} onDismiss={closeTutorial}/></Suspense>
   </>);
 }
 

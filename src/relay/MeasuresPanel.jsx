@@ -42,13 +42,13 @@ export default function MeasuresPanel({
           <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--red)", opacity: 0.8 }}>{trippedStageIds[0]}</span>
         )}
         <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 14, color: "var(--green)", fontWeight: 700 }}>
-          {injecting ? "● Injeção" : "● Parado"}
+          {injecting ? `● ${t("relay.injecting")}` : `● ${t("relay.stopped")}`}
         </span>
       </div>
 
       {/* internal tabs */}
       <div className="measure-tab">
-        {[["med", "Medidas"], ["led", "LEDs"], ["prot", "Proteções"], ["log", "Lógica"], ["evt", "Eventos"]].map(([id, lbl]) => (
+        {[["med", t("relay.measures")], ["led", t("relay.leds")], ["prot", t("relay.protections")], ["log", t("relay.logic")], ["evt", t("relay.events")]].map(([id, lbl]) => (
           <button key={id} className={`mtb${measTab === id ? " on" : ""}`} onClick={() => setMeasTab(id)}>{lbl}</button>
         ))}
       </div>
@@ -58,9 +58,9 @@ export default function MeasuresPanel({
         <div className="measures-scroll">
           {/* CORR */}
           <div className="measures-h">
-            <span>CORR</span>
-            <span style={{ textAlign: "right" }}>Sec</span>
-            <button className={showPrimary ? "on" : ""} onClick={() => setShowPrimary(v => !v)}>≡ Primária</button>
+            <span>{t("relay.current")}</span>
+            <span style={{ textAlign: "right" }}>{t("relay.secondary")}</span>
+            <button className={showPrimary ? "on" : ""} onClick={() => setShowPrimary(v => !v)}>≡ {t("relay.primary")}</button>
           </div>
           <div className="measures-wrap">
             {[["Iₐ", ci.Ia, rtc], ["Iᵦ", ci.Ib, rtc], ["I꜀", ci.Ic, rtc]].map(([lbl, ph, ratio]) => (
@@ -84,9 +84,9 @@ export default function MeasuresPanel({
 
           {/* TENS */}
           <div className="measures-h" style={{ marginTop: 6 }}>
-            <span>TENS</span>
-            <span style={{ textAlign: "right" }}>Sec</span>
-            <button className={showPrimary ? "on" : ""} onClick={() => setShowPrimary(v => !v)}>≡ Primária</button>
+            <span>{t("relay.tens_short")}</span>
+            <span style={{ textAlign: "right" }}>{t("relay.secondary")}</span>
+            <button className={showPrimary ? "on" : ""} onClick={() => setShowPrimary(v => !v)}>≡ {t("relay.primary")}</button>
           </div>
           <div className="measures-wrap">
             {[["Vₐ", vi.Va, rtp], ["Vᵦ", vi.Vb, rtp], ["V꜀", vi.Vc, rtp]].map(([lbl, ph, ratio]) => (
@@ -100,7 +100,7 @@ export default function MeasuresPanel({
 
           {/* POT */}
           <div className="measures-h" style={{ marginTop: 6 }}>
-            <span>POT</span>
+            <span>{t("relay.pot_short")}</span>
           </div>
           <div className="measures-wrap">
             <div className="m-row"><span className="nm">P</span><span className="v t">{fmtPow(pTotal?.P)}</span></div>

@@ -1,0 +1,346 @@
+{
+  "nav": {
+    "campo": "Campo",
+    "rele": "Relé",
+    "painel": "Painel",
+    "online": "Online"
+  },
+  "topbar": {
+    "subtitle": "INTEGRAL PROTECTION ENGINEERING PLATFORM"
+  },
+  "tabs": {
+    "preFault": "Pre-Fault",
+    "fault": "Fault",
+    "relay": "Relé",
+    "output": "Output",
+    "input": "Input",
+    "sys": "Sistema"
+  },
+  "mainTabs": {
+    "relay": "Proteção",
+    "output": "Saídas",
+    "input": "Entradas",
+    "sys": "Sistema"
+  },
+  "controls": {
+    "inject": "Injetar",
+    "stop": "Parar",
+    "resetFault": "↺ Reset Fault",
+    "faultCalculator": "⚡ Calculador de Falta",
+    "send": "Send\nSettings",
+    "get": "Get\nSettings",
+    "getWaveform": "Get\nWaveform",
+    "openFile": "Open\nFile",
+    "saveFile": "Save\nFile",
+    "snapshot": "Snapshot",
+    "dumpState": "Dump\nState",
+    "reset": "RESET",
+    "phasorDiagram": "◎ Phasor Diagram"
+  },
+  "labels": {
+    "ia": "Ia",
+    "ib": "Ib",
+    "ic": "Ic",
+    "va": "Va",
+    "vb": "Vb",
+    "vc": "Vc",
+    "manual": "Manual",
+    "balanced": "3φ Equil.",
+    "magnitude": "Mag",
+    "angle": "Ang",
+    "frequency": "Frequency",
+    "nominal": "Nominal",
+    "preFaultCurrent": "PF Current",
+    "currentInjection": "Current Injection",
+    "preFaultVoltage": "PF Voltage",
+    "voltageInjection": "Voltage Injection",
+    "preFaultDuration": "Pre-Fault Duration (s)",
+    "preFaultEnabled": "Pre-Fault Enabled",
+    "preFaultDisabled": "Pre-Fault Disabled"
+  },
+  "status": {
+    "simulation": "Simulation",
+    "tripped": "Tripped",
+    "running": "Running",
+    "stopped": "Stopped",
+    "tripTimer": "Trip Timer (sec)",
+    "breaker": "Breaker BAY-01",
+    "spring": "Mola",
+    "springLoaded": "Carregada",
+    "springLoading": "Carregando...",
+    "closed52a": "52a ON / FECHADO",
+    "open52bTrip": "52b ON / TRIP",
+    "open52b": "52b ON / ABERTO",
+    "systemOk": "● SISTEMA OK",
+    "tripActuated": "⚠ TRIP ATUADO"
+  },
+  "events": {
+    "title": "Event Recorder",
+    "noEvents": "No events recorded"
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "noSim": "No simulation",
+    "func": "Func",
+    "status": "Status",
+    "stage": "Stage",
+    "time": "Time",
+    "notes": "Notes"
+  },
+  "settings": {
+    "preset": "PRESET",
+    "eduScenarios": "Educational Scenarios",
+    "adjustBase": "Adjustment Base",
+    "primary": "Primary Value",
+    "secondary": "Secondary Value",
+    "multiple": "CT Multiple",
+    "startPhases": "Start Phases",
+    "anyPhase": "Any (qualquer 1φ)",
+    "allPhases": "All (todas 3φ)",
+    "voltageSelection": "Voltage Selection",
+    "phaseNeutral": "Fase-Terra (Ph-N)",
+    "phasePhase": "Fase-Fase (Ph-Ph)",
+    "hysteresis": "Hysteresis (%)",
+    "lowVBlock": "Low-V Block (27)",
+    "pickupInst": "Pickup (Inst)",
+    "pickupTime": "Pickup (Time)",
+    "pickupPu": "Pickup (pu)",
+    "pickupI2": "Pickup I₂ (A)",
+    "pickupSubfreq": "Pickup subfreq (Hz)",
+    "pickupOverfreq": "Pickup sobrefreq (Hz)",
+    "pickup32R": "Pickup 32R (W)",
+    "pickup32F": "Pickup 32F (W)",
+    "timeDial": "Time Dial",
+    "curve": "Curve",
+    "timeOp": "Time Op. (s)",
+    "mta": "MTA (°)",
+    "polarization": "Polarization",
+    "direction": "Direction",
+    "forward": "Forward",
+    "reverse": "Reverse",
+    "vminPol": "Vmin Pol.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "stage": "Stage",
+    "shots": "Nº de Shots",
+    "reclaimTime": "Reclaim Time",
+    "deadTimes": "Dead Times (s) por shot",
+    "shot": "Shot"
+  },
+  "sys": {
+    "pt": "Potential Transformer (TP)",
+    "ct": "Current Transformer (TC)",
+    "vPri": "V Pri",
+    "vSec": "V Sec",
+    "iPri": "I Pri",
+    "iSec": "I Sec",
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "rtp": "RTP = ",
+    "rtc": "RTC = "
+  },
+  "matrix": {
+    "signal": "Signal",
+    "binaryInputs": "Binary Inputs",
+    "cbStatus": "CB Status",
+    "cbCommands": "CB Commands",
+    "protectionStages": "Protection Stages"
+  },
+  "waveform": {
+    "title": "FAULT RECORDS",
+    "noRecords": "No trip records available.",
+    "close": "Close",
+    "download": "Download"
+  },
+  "help": {
+    "title": "HELP & REFERENCE",
+    "close": "Close help",
+    "topics": {
+      "getting-started": {
+        "label": "Primeiros Passos",
+        "content": [
+          {
+            "heading": "Bem-vindo ao RelayLab 360",
+            "body": "RelayLab 360 é um simulador de bancada de teste de relés de proteção. Use-o para aprender comissionamento de relés, configurar ajustes de proteção e simular condições de falta em um ambiente virtual seguro."
+          },
+          {
+            "heading": "Três Áreas Principais",
+            "body": "Campo — fiação física entre a maleta de teste e os terminais do relé.\nRelé — injeção de fasores, ajustes de proteção e comportamento do relé.\nPainel — painel do disjuntor e diagrama unifilar."
+          }
+        ]
+      },
+      "wiring-basics": {
+        "label": "Fiação Básica",
+        "content": [
+          {
+            "heading": "Aba Campo",
+            "body": "A aba Campo representa uma maleta de teste física conectada a um relé via chave de aferição e bloco de terminais. Arraste fios entre terminais compatíveis para montar o circuito de injeção."
+          },
+          {
+            "heading": "Nomenclatura de Terminais",
+            "body": "i1_pos / i1_neg — jacks de saída de corrente na maleta.\nv1_pos / v1_neg — jacks de saída de tensão.\nbi1_pos / bi1_neg — jacks de entrada binária.\nbo1_pos / bo1_neg — jacks de saída binária.\ntb_N_top / tb_N_bottom — aberturas do bloco de terminais (curto-circuito interno)."
+          },
+          {
+            "heading": "Chave de Aferição",
+            "body": "Na posição CIMA (fechada) a chave passa a corrente para o relé. Na posição BAIXO os jacks banana S1/S2 são curto-circuitados, fornecendo estado seguro ao fazer conexões."
+          }
+        ]
+      },
+      "phasors-101": {
+        "label": "Fasores 101",
+        "content": [
+          {
+            "heading": "O que é um Fasor?",
+            "body": "Um fasor representa uma grandeza senoidal pela sua magnitude e ângulo de fase. A maleta de teste injeta esses valores nas entradas de corrente e tensão do relé."
+          },
+          {
+            "heading": "Trifásico Equilibrado",
+            "body": "Use o modo '3φ Equil.' para definir automaticamente Ib e Ic defasados 120° de Ia. Escolha sequência de rotação ABC ou ACB."
+          },
+          {
+            "heading": "Pré-Falta / Falta",
+            "body": "Valores de Pré-Falta são injetados antes da falta. Quando Pré-Falta está habilitada, a simulação injeta o estado de pré-falta pela duração configurada, depois muda para o estado de falta."
+          }
+        ]
+      },
+      "protection-settings": {
+        "label": "Ajustes de Proteção",
+        "content": [
+          {
+            "heading": "Funções ANSI/IEC",
+            "body": "50/50N — Sobrecorrente instantânea (fase / neutro).\n51/51N — Sobrecorrente temporizada com curvas IEC, US, IEEE, ANSI ou Tempo Definido.\n67/67N — Sobrecorrente direcional usando ângulo MTA e tensão de polarização.\n27/59 — Sub/sobretensão com histerese.\n47 — Tensão de sequência negativa."
+          },
+          {
+            "heading": "Pickup e Time Dial",
+            "body": "Pickup (Ipu) define a corrente de limiar em ampères. Time Dial (TD) escala a curva de operação. TD maior = tempo de atuação maior."
+          },
+          {
+            "heading": "Matriz de Saída",
+            "body": "A Matriz de Saída vincula cada estágio de proteção às saídas binárias (BOs) e LEDs do relé. Uma célula marcada significa que esse estágio ativa essa saída ao atuar."
+          }
+        ]
+      },
+      "relay-outputs": {
+        "label": "Saídas do Relé",
+        "content": [
+          {
+            "heading": "Saídas Binárias (BO)",
+            "body": "BOs são contatos de saída físicos no relé que fecham quando um estágio de proteção atua. No simulador podem ser ligados via aba Campo para abrir o disjuntor."
+          },
+          {
+            "heading": "Entradas Binárias (BI)",
+            "body": "BIs recebem sinais externos (ex.: retorno de posição do disjuntor). Use a Matriz de Entrada para configurar qual BI corresponde a qual função."
+          },
+          {
+            "heading": "Indicadores LED",
+            "body": "LEDs no painel frontal do relé acendem quando o estágio atribuído atua. Permanecem travados até reset manual."
+          }
+        ]
+      },
+      "comtrade-export": {
+        "label": "Exportação COMTRADE",
+        "content": [
+          {
+            "heading": "O que é COMTRADE?",
+            "body": "COMTRADE (IEEE C37.111) é um formato padrão para armazenar dados de perturbação do sistema elétrico. O RelayLab 360 gera um pacote com três arquivos: .cfg (configuração), .dat (dados amostrados), .hdr (cabeçalho)."
+          },
+          {
+            "heading": "Como Exportar",
+            "body": "Após um atuação do relé, abra o painel de Fault Records, selecione o registro de trip e clique em Download. Os arquivos são empacotados como arquivo ZIP."
+          },
+          {
+            "heading": "Detalhes do Formato",
+            "body": "Formato ASCII, 960 amostras/s, 8 canais analógicos: IA, IB, IC, IGS, VA, VB, VC, VN. O evento de trip está ancorado no ponto de pré-trigger de 500 ms."
+          }
+        ]
+      }
+    }
+  },
+  "tutorial": {
+    "step": "PASSO",
+    "of": "DE",
+    "skip": "PULAR",
+    "prev": "ANTERIOR",
+    "next": "PRÓXIMO",
+    "finish": "CONCLUIR",
+    "dontShow": "Não mostrar novamente",
+    "goToStep": "Ir para passo",
+    "discardTour": "Descartar tour?",
+    "steps": [
+      {
+        "title": "Bem-vindo ao RelayLab 360",
+        "description": "Uma plataforma integral para engenharia de proteção. Clique em 'Próximo' para começar o tour."
+      },
+      {
+        "title": "Aba Campo — Simulador de Fiação",
+        "description": "Configure a fiação física do teste. Conecte os terminais da maleta ao bloco de terminais e à chave de aferição."
+      },
+      {
+        "title": "Aba Relé — Injeção de Corrente",
+        "description": "Injete correntes trifásicas e tensões para simular faltas. Configure os fasores (magnitude e ângulo) para testar diferentes cenários de proteção."
+      },
+      {
+        "title": "Aba Painel — Circuito e Proteção",
+        "description": "Visualize o disjuntor, diagrama de comando (ladder) e diagrama unifilar. Monitore os estados da proteção e saídas binárias."
+      },
+      {
+        "title": "Configurações de Proteção",
+        "description": "Na aba Relé, configure os estágios de proteção (50/51, 67, 27/59, etc.) com seus parâmetros técnicos e curvas características."
+      },
+      {
+        "title": "Executar Simulação",
+        "description": "Clique em 'Injetar' para iniciar a simulação. O relé detectará a falta e disparará o disjuntor de acordo com as configurações de proteção."
+      }
+    ]
+  },
+  "lang": {
+    "pt": "Português",
+    "en": "English",
+    "es": "Español"
+  },
+  "customScenarios": {
+    "title": "Cenários Personalizados",
+    "newBtn": "+ Novo",
+    "nameLabel": "Nome do Cenário *",
+    "namePlaceholder": "ex.: Falta A-T Fase A",
+    "descLabel": "Descrição",
+    "descPlaceholder": "O que este cenário testa...",
+    "diffLabel": "Dificuldade",
+    "expTripLabel": "Estágio de Trip Esperado",
+    "expTripPlaceholder": "ex.: 50-1",
+    "expTimeLabel": "Tempo Esperado (s)",
+    "expTimePlaceholder": "0.05",
+    "captureHint": "Irá capturar o estado atual",
+    "captureDesc": "Fasores, matrizes e todos os ajustes de proteção serão salvos do estado atual da UI.",
+    "activeFns": "Funções ativas:",
+    "none": "nenhuma",
+    "saveBtn": "Salvar Cenário",
+    "updateBtn": "Atualizar",
+    "cancelBtn": "Cancelar",
+    "importLbl": "Importar",
+    "importBtn": "Carregar .json",
+    "empty": "Nenhum cenário personalizado salvo ainda.",
+    "loadBtn": "Carregar",
+    "editBtn": "Editar",
+    "exportBtn": "Exportar",
+    "deleteBtn": "Excluir",
+    "msgNameRequired": "Nome é obrigatório.",
+    "msgSaved": "Cenário salvo.",
+    "msgUpdated": "Cenário atualizado.",
+    "msgSaveFailed": "Falha ao salvar (armazenamento cheio?).",
+    "msgDeleted": "Excluído.",
+    "msgLoaded": "Carregado nos ajustes do relé.",
+    "msgExported": "Exportado.",
+    "msgImported": "Importado com sucesso.",
+    "msgImportFailed": "Falha na importação (armazenamento cheio?).",
+    "msgInvalidFile": "Arquivo de cenário inválido.",
+    "msgReadError": "Não foi possível ler o arquivo.",
+    "confirmDelete": "Excluir este cenário?",
+    "info46": "Pickup = I₂ (seq. negativa) em Ampères secundários. Tempo Definido.",
+    "info81": "81U-1..3 = subfrequência · 81O-1..3 = sobrefrequência · Frequência ajustada no painel lateral (Frequency).",
+    "info32": "32R-1..2 = potência reversa (P3φ < −pickup) · 32F-1..2 = potência direta (P3φ > pickup) · Pickup em Watts secundários.",
+    "info79dead": "Dead time = tempo aberto antes de religar. Reclaim time = tempo após religamento bem-sucedido para resetar o contador de shots.",
+    "infoCbOpened": "BI mapeada recebe sinal quando o disjuntor abre (contato 52b). A contagem de tempo do trip para neste instante.",
+    "infoCbClosed": "BI mapeada recebe sinal quando o disjuntor fecha (contato 52a). Registrado no Event Log."
+  }
+}

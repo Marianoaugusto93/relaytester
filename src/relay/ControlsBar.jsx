@@ -22,8 +22,8 @@ export default function ControlsBar({ ss, stime, isTripped, maletaTripped, runSi
           {tripped
             ? `TRIP · ${stime.toFixed(3)} s`
             : running
-              ? `Injetando · ${stime.toFixed(3)} s`
-              : `Parado · TRIP timer ${stime.toFixed(3)} s`}
+              ? `${t("relay.injecting")} · ${stime.toFixed(3)} s`
+              : `${t("relay.stopped")} · ${t("relay.tripTimer")} ${stime.toFixed(3)} s`}
         </span>
       </div>
       <button className="cb-btn calc" onClick={() => setFcOpen(true)}>

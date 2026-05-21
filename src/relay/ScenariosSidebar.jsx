@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EDUCATIONAL_SCENARIOS } from "../scenarios/educational-scenarios.js";
+import { getAllCustomScenarios } from "../scenarios/customScenarios.js";
 import { useTranslation } from "../i18n/useTranslation.js";
 import CustomScenarioBuilder from "./CustomScenarioBuilder.jsx";
 import ScenarioVisualEditor from "../ScenarioVisualEditor.jsx";
@@ -9,6 +10,15 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
   const [activeId, setActiveId] = useState(null);
   const [showBuilder, setShowBuilder] = useState(false);
   const [showVisualEditor, setShowVisualEditor] = useState(false);
+  const [customScenarios, setCustomScenarios] = useState([]);
+
+  useEffect(() => {
+    setCustomScenarios(getAllCustomScenarios());
+  }, []);
+
+  const refreshCustomScenarios = () => {
+    setCustomScenarios(getAllCustomScenarios());
+  };
 
   const handleLoad = (s) => {
     setActiveId(s.id);
@@ -72,6 +82,17 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
             onClick={() => handleLoad(s)}
           >
             <span className="nm">{s.label}</span>
+            <span className="ds">{s.description?.slice(0, 50)}</span>
+          </button>
+        ))}
+        {customScenarios.map(s => (
+          <button
+            key={`custom-${s.id}`}
+            className={`scen${activeId === s.id ? " on" : ""}`}
+            title={s.description}
+            onClick={() => handleLoad(s)}
+          >
+            <span className="nm">{s.label || s.name}</span>
             <span className="ds">{s.description?.slice(0, 50)}</span>
           </button>
         ))}
@@ -140,22 +161,23 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,.65)", zIndex: 600,
           display: "flex", alignItems: "center", justifyContent: "center"
-        }} onClick={() => setShowVisualEditor(false)}>
+        }} onClick={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}>
           <div style={{
             background: "var(--card)", border: "1px solid var(--bdr)", borderRadius: 12,
             width: 460, maxHeight: "88vh", display: "flex", flexDirection: "column", overflow: "hidden",
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", padding: "10px 14px 10px", borderBottom: "1px solid var(--bdr)", flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 13, flex: 1, color: "var(--orange)", fontFamily: "var(--fh)", textTransform: "uppercase", letterSpacing: "1px" }}>Visual Editor</span>
-              <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => setShowVisualEditor(false)}>✕</button>
+              <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}>✕</button>
             </div>
             <ScenarioVisualEditor
               sys={sys}
-              onClose={() => setShowVisualEditor(false)}
+              onClose={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}
               onSave={(s) => {
                 applyTestPreset(s);
                 setActiveId(s.id);
                 setShowVisualEditor(false);
+                refreshCustomScenarios();
               }}
             />
           </div>
@@ -167,20 +189,20 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,.65)", zIndex: 500,
           display: "flex", alignItems: "center", justifyContent: "center"
-        }} onClick={() => setShowBuilder(false)}>
+        }} onClick={() => { refreshCustomScenarios(); setShowBuilder(false); }}>
           <div style={{
             background: "var(--card)", border: "1px solid var(--bdr)", borderRadius: 12,
             width: 420, maxHeight: "80vh", overflowY: "auto", padding: "14px 0"
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", alignItems: "center", padding: "0 14px 10px", borderBottom: "1px solid var(--bdr)", marginBottom: 4 }}>
               <span style={{ fontWeight: 700, fontSize: 13, flex: 1 }}>Novo Cenário</span>
-              <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => setShowBuilder(false)}>✕</button>
+              <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => { refreshCustomScenarios(); setShowBuilder(false); }}>✕</button>
             </div>
             <CustomScenarioBuilder
               prot={prot}
               outMatrix={outMatrix}
               inMatrix={inMatrix}
-              applyTestPreset={(s) => { applyTestPreset(s); setActiveId(s.id); setShowBuilder(false); }}
+              applyTestPreset={(s) => { applyTestPreset(s); setActiveId(s.id); setShowBuilder(false); refreshCustomScenarios(); }}
               phasors={phasors}
             />
           </div>

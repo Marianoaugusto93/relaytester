@@ -116,6 +116,30 @@ export class AnalyticsEngine {
   }
 
   /**
+   * Record that a page/tab was viewed by the user.
+   * @param {string} pageName - Name of the page or tab (e.g. "relay", "campo", "painel")
+   */
+  recordPageView(pageName) {
+    const name = sanitizeName(pageName || "Unknown");
+    const data = loadData();
+    if (!data.pageViews) data.pageViews = {};
+    data.pageViews[name] = (data.pageViews[name] || 0) + 1;
+    saveData(data);
+  }
+
+  /**
+   * Record that a COMTRADE export was performed.
+   * @param {string} scenarioName - Label of the scenario/preset being exported
+   */
+  recordComtradeExport(scenarioName) {
+    const name = sanitizeName(scenarioName || "Unknown");
+    const data = loadData();
+    if (!data.comtradeExports) data.comtradeExports = {};
+    data.comtradeExports[name] = (data.comtradeExports[name] || 0) + 1;
+    saveData(data);
+  }
+
+  /**
    * Get statistics for a single scenario.
    * @param {string} scenarioName
    * @returns {{ count: number, totalTime: number, avgTime: number, tripErrors: number } | null}

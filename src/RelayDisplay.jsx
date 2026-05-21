@@ -1,9 +1,11 @@
 import{toRect}from"./protection.js";
 import{protOrder,ledCols}from"./defaults.js";
 
+import{useTranslation}from"./i18n/useTranslation.js";
+
 export default function RelayDisplay({ci,vi,i0,v0,i2lcd,rtc,rtp,Inom,freqLcd,pTotal,pA,pB,pC,injecting,rp,setRp,relayProt,trippedStageIds,bkState,ledLabels,ledLitStates,evts,faultRecord,relayTab,setRelayTab,mensTab,setMensTab,sys}){
-  const ff=(v,d=2)=>v.toFixed(d);const fa=v=>v.toFixed(1);
-  const pageNames=["I Secundária","I Primária","I Múltiplo TC","V Secundária","V Primária","V Múltiplo TP","P Secundária","P Primária","Seq. / Freq.","Fault Record"];
+  const{t}=useTranslation();const ff=(v,d=2)=>v.toFixed(d);const fa=v=>v.toFixed(1);
+  const pageNames=[t("relay.secondary_current"),t("relay.primary_current"),t("relay.current_multiple"),t("relay.secondary_voltage"),t("relay.primary_voltage"),t("relay.voltage_multiple"),t("relay.secondary_power"),t("relay.primary_power"),t("relay.seq_freq"),t("relay.fault_record")];
   const totalPages=10;
 
   const renderPage=()=>{
@@ -41,23 +43,23 @@ export default function RelayDisplay({ci,vi,i0,v0,i2lcd,rtc,rtp,Inom,freqLcd,pTo
     const df=freqLcd-60;
     return(<div className="rp-mensuracao">
       <div className="rp-subnav">
-        {[["corr","CORR."],["tens","TENS."],["pot","POT."],["sist","SIST."]].map(([id,lbl])=>(
+        {[["corr",t("relay.corr_short")],["tens",t("relay.tens_short")],["pot",t("relay.pot_short")],["sist",t("relay.sist_short")]].map(([id,lbl])=>(
           <button key={id} className={`rp-snb ${mensTab===id?"on":""}`} onClick={()=>setMensTab(id)}>{lbl}</button>
         ))}
       </div>
       <div className="rp-mensuracao-content">
         {mensTab==="corr"&&(<div>
-          <div className="rp-section"><div className="rp-stitle">I SECUNDÁRIA</div>
+          <div className="rp-section"><div className="rp-stitle">{t("relay.secondary_uppercase")}</div>
             {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(ci[ph].mag)} A ∠{fa(ci[ph].ang)}°</span></div>)}
             <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3I₀</span><span className="rp-val">{ff(i0.mag,3)} A ∠{fa(i0.ang)}°</span></div>
           </div>
           <div className="rp-sep" style={{margin:"0 10px"}}/>
-          <div className="rp-section"><div className="rp-stitle">I PRIMÁRIA</div>
+          <div className="rp-section"><div className="rp-stitle">{t("relay.primary_uppercase")}</div>
             {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}</span><span className="rp-val">{ff(ci[ph].mag*rtc)} A</span></div>)}
             <div className="rp-sep"/><div className="rp-row"><span className="rp-lbl">3I₀ pri</span><span className="rp-val">{ff(i0.mag*rtc,3)} A</span></div>
           </div>
           <div className="rp-sep" style={{margin:"0 10px"}}/>
-          <div className="rp-section"><div className="rp-stitle">MÚLTIPLO TC (×In)</div>
+          <div className="rp-section"><div className="rp-stitle">{t("relay.multiple_uppercase")} (×In)</div>
             {["Ia","Ib","Ic"].map(ph=><div key={ph} className="rp-row"><span className="rp-lbl">{ph}/In</span><span className="rp-val">{Inom>0?(ci[ph].mag/Inom).toFixed(3):"-"}×</span></div>)}
           </div>
           <div className="rp-sep" style={{margin:"0 10px"}}/>

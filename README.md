@@ -306,6 +306,52 @@ npm run preview  # Serve o /dist localmente (valida antes do deploy)
 
 ---
 
+## Troubleshooting
+
+### Application does not load / blank screen
+- Clear browser cache and hard-reload (`Ctrl+Shift+R`).
+- Ensure JavaScript is enabled.
+- Try an incognito/private window to rule out extension conflicts.
+
+### [▶ Injetar] does nothing or counter stays at 0.000s
+- Check that the browser tab is active and not throttled (some browsers throttle background tabs).
+- If on **CAMPO** tab, verify that current outputs are wired to relay inputs — the relay reads zero until connected.
+- Open the browser DevTools console (F12) and report any red error messages.
+
+### COMTRADE download dialog does not appear
+- The File System Access API (`showSaveFilePicker`) requires Chrome 86+ or Edge 86+.
+- Firefox and Safari fall back to a direct download — check your Downloads folder.
+- If running locally via `npm run preview`, ensure the page is served over `http://localhost` (not `file://`).
+
+### Protection function does not trip
+- Confirm the function is **enabled** in the PROT. tab of ReGrid Pro.
+- Verify the injected current/voltage exceeds the pickup threshold (shown in the function settings form).
+- For directional functions (67/67N), check that polarizing voltage is non-zero.
+- Use the **Diag** column in the function form to see per-stage evaluation details.
+
+### LocalStorage / custom scenarios lost
+- Custom scenarios are stored in `localStorage` under key `relaytester_custom_scenarios`.
+- Private/incognito mode does not persist `localStorage` across sessions.
+- Export your scenarios as JSON (Exportar button) before closing an incognito window.
+
+---
+
+## Browser Matrix
+
+| Browser | Version | Support | Notes |
+|---------|---------|---------|-------|
+| Chrome | 90+ | Full | Recommended — all APIs supported |
+| Edge | 90+ | Full | Chromium-based; identical to Chrome |
+| Firefox | 115+ | Partial | No `showSaveFilePicker`; COMTRADE falls back to direct download |
+| Safari | 16.4+ | Partial | No `showSaveFilePicker`; Web Audio API available |
+| Opera | 76+ | Full | Chromium-based |
+| Mobile Chrome | 112+ | Partial | Layout not optimized for narrow screens |
+| Mobile Safari | 16.4+ | Partial | Touch events work; file picker unavailable |
+
+**Minimum requirements:** ES2020 support, Web Audio API, `localStorage` available.
+
+---
+
 ## Normas Referenciadas
 
 | Norma | Assunto |
