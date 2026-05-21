@@ -931,9 +931,44 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
   return(<>
     <style>{campoCSS}</style>
-    <div className="campo-root" data-tutorial-target="campo-wiring" ref={rootRef}>
+    <div className="campo-root" data-tutorial-target="campo-wiring" ref={rootRef} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+
+      {/* SIDEBAR ESQUERDA — Guia e Status de Bornes */}
+      <div style={{width:280,flexShrink:0,display:'flex',flexDirection:'column',gap:8}}>
+        <button
+          onClick={()=>setBorneGuideOpen(true)}
+          style={{
+            padding:'10px 14px',
+            background:'linear-gradient(135deg, var(--orange) 0%, rgba(255, 180, 77, 0.8) 100%)',
+            border:'1px solid rgba(255, 180, 77, .6)',
+            color:'#111',
+            fontWeight:700,
+            borderRadius:8,
+            cursor:'pointer',
+            fontSize:11,
+            fontFamily:'var(--fh)',
+            letterSpacing:1,
+            textTransform:'uppercase',
+            transition:'all .2s',
+            boxShadow:'0 4px 12px rgba(255, 180, 77, 0.2)'
+          }}
+          onMouseEnter={(e)=>{e.target.style.boxShadow='0 8px 16px rgba(255, 180, 77, 0.4)';e.target.style.transform='translateY(-2px)'}}
+          onMouseLeave={(e)=>{e.target.style.boxShadow='0 4px 12px rgba(255, 180, 77, 0.2)';e.target.style.transform='translateY(0)'}}
+        >
+          📖 Guia de Bornes
+        </button>
+        <div style={{overflowY:'auto',maxHeight:'calc(100vh - 120px)'}}>
+          <BorneStatusPanel
+            trippedStageIds={trippedStageIds}
+            bkState={bkStatus}
+            relayProt={relayProt}
+            electricalGraph={electricalGraph}
+          />
+        </div>
+      </div>
+
       {/* MAIN AREA — Régua, Maleta, Chave */}
-      <div className="campo-main" ref={mainRef} style={{position:'relative'}}>
+      <div className="campo-main" ref={mainRef} style={{position:'relative',flex:1}}>
         <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
 
         {/* RÉGUA DE BORNES */}
@@ -948,38 +983,6 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
               {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
             </div>
             <div className="borne-arrow-r"/>
-          </div>
-
-          {/* BORNE STATUS PANEL + GUIA */}
-          <div style={{width:'100%',maxWidth:900,marginTop:16,display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-            <button
-              onClick={()=>setBorneGuideOpen(true)}
-              style={{
-                padding:'8px 16px',
-                background:'linear-gradient(135deg, var(--orange) 0%, rgba(255, 180, 77, 0.8) 100%)',
-                border:'1px solid rgba(255, 180, 77, .6)',
-                color:'#111',
-                fontWeight:700,
-                borderRadius:6,
-                cursor:'pointer',
-                fontSize:11,
-                fontFamily:'var(--fh)',
-                letterSpacing:1,
-                textTransform:'uppercase',
-                transition:'all .2s',
-                alignSelf:'center'
-              }}
-              onMouseEnter={(e)=>{e.target.style.boxShadow='0 8px 16px rgba(255, 180, 77, 0.3)';e.target.style.transform='translateY(-2px)'}}
-              onMouseLeave={(e)=>{e.target.style.boxShadow='none';e.target.style.transform='translateY(0)'}}
-            >
-              📖 Guia Completo de Bornes
-            </button>
-            <BorneStatusPanel
-              trippedStageIds={trippedStageIds}
-              bkState={bkStatus}
-              relayProt={relayProt}
-              electricalGraph={electricalGraph}
-            />
           </div>
         </div>
 
