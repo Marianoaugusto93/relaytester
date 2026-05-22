@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { BORNE_DESCRIPTIONS, BORNE_GROUPS } from "./BorneDescriptions.js";
+import { useTranslation } from "./i18n/useTranslation.js";
 
 export default function BorneGuideModal({ open, onClose }) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!open) return null;
@@ -51,7 +53,7 @@ export default function BorneGuideModal({ open, onClose }) {
           background: "linear-gradient(90deg, var(--card2) 0%, var(--card) 100%)"
         }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "var(--tx)", fontFamily: "var(--fh)", letterSpacing: 1, textTransform: "uppercase" }}>
-            📖 Guia de Bornes da Régua
+            📖 {t("guide.title")}
           </div>
           <button onClick={onClose} style={{
             background: "transparent",
@@ -78,16 +80,16 @@ export default function BorneGuideModal({ open, onClose }) {
           overflowX: "auto"
         }}>
           <button style={tabStyle(activeTab === "overview")} onClick={() => setActiveTab("overview")}>
-            🏠 Visão Geral
+            🏠 {t("guide.tabs.overview")}
           </button>
-          <button style={tabStyle(activeTab === "saída")} onClick={() => setActiveTab("saída")}>
-            📤 Saídas (BO)
+          <button style={tabStyle(activeTab === "saida")} onClick={() => setActiveTab("saida")}>
+            📤 {t("guide.tabs.saida")}
           </button>
           <button style={tabStyle(activeTab === "feedback")} onClick={() => setActiveTab("feedback")}>
-            📡 Feedback (52a/52b)
+            📡 {t("guide.tabs.feedback")}
           </button>
           <button style={tabStyle(activeTab === "comando")} onClick={() => setActiveTab("comando")}>
-            🎛️ Bobinas (TC/FC)
+            🎛️ {t("guide.tabs.comando")}
           </button>
         </div>
 
@@ -105,29 +107,18 @@ export default function BorneGuideModal({ open, onClose }) {
           {/* OVERVIEW */}
           {activeTab === "overview" && (
             <div>
-              <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: "var(--tx)" }}>
-                Entendendo a Régua de Bornes
-              </h2>
-
               <div style={{ background: "rgba(255, 180, 77, 0.1)", border: "1px solid rgba(255, 180, 77, 0.3)", borderRadius: 6, padding: 12, marginBottom: 16 }}>
-                <p style={{ margin: "0 0 8px 0", fontWeight: 700 }}>
-                  ⚡ O que é a Régua de Bornes?
-                </p>
                 <p style={{ margin: 0 }}>
-                  É uma interface física com 16 pontos de conexão (bornes) que simula as ligações entre a maleta de testes, o relé de proteção e o disjuntor. Cada borne é um "orifício" onde você pode plugar um fio para criar conexões elétricas.
+                  {t("guide.content.overview")}
                 </p>
               </div>
-
-              <h3 style={{ fontSize: 12, fontWeight: 700, marginBottom: 10, color: "var(--tx)", marginTop: 16 }}>
-                Os 3 Grupos de Bornes:
-              </h3>
 
               <div style={{ marginBottom: 12 }}>
                 <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                   <span style={{ fontSize: 20 }}>📤</span>
                   <div>
-                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>Saídas Binárias (BO) - TB 1-8</div>
-                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>O relé "grita" para a maleta: "Detectei uma falta!"</div>
+                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>{t("guide.groups.saida_title")}</div>
+                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>{t("guide.groups.saida_desc")}</div>
                   </div>
                 </div>
               </div>
@@ -136,8 +127,8 @@ export default function BorneGuideModal({ open, onClose }) {
                 <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                   <span style={{ fontSize: 20 }}>📡</span>
                   <div>
-                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>Feedback do Disjuntor (52a/52b) - TB 9-12</div>
-                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>O disjuntor informa: "Estou aberto" ou "Estou fechado"</div>
+                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>{t("guide.groups.feedback_title")}</div>
+                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>{t("guide.groups.feedback_desc")}</div>
                   </div>
                 </div>
               </div>
@@ -146,37 +137,23 @@ export default function BorneGuideModal({ open, onClose }) {
                 <div style={{ display: "flex", gap: 8 }}>
                   <span style={{ fontSize: 20 }}>🎛️</span>
                   <div>
-                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>Bobinas (TC/FC) - TB 13-16</div>
-                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>O relé comanda: "ABRE!" ou "FECHA!"</div>
+                    <div style={{ fontWeight: 700, color: "var(--tx)" }}>{t("guide.groups.comando_title")}</div>
+                    <div style={{ fontSize: 11, color: "var(--tx3)" }}>{t("guide.groups.comando_desc")}</div>
                   </div>
                 </div>
-              </div>
-
-              <div style={{ background: "rgba(100, 181, 246, 0.1)", border: "1px solid rgba(100, 181, 246, 0.3)", borderRadius: 6, padding: 12 }}>
-                <p style={{ margin: "0 0 8px 0", fontWeight: 700 }}>
-                  🔄 O Fluxo Completo:
-                </p>
-                <ol style={{ margin: 0, paddingLeft: 20, fontSize: 11 }}>
-                  <li>Você injeta uma falta na maleta</li>
-                  <li>O relé detecta (Função 50, 51, 67, 27, etc.)</li>
-                  <li>O relé ativa uma saída binária (BO3, BO4, BO5 ou BO6)</li>
-                  <li>O relé comanda a bobina de trip (TC)</li>
-                  <li>O disjuntor abre (contatos 52a/52b mudam)</li>
-                  <li>A maleta recebe confirmação do trip</li>
-                </ol>
               </div>
             </div>
           )}
 
           {/* SAÍDAS */}
-          {activeTab === "saída" && (
+          {activeTab === "saida" && (
             <div>
               <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: "var(--tx)" }}>
-                Saídas Binárias (BO3 a BO6)
+                {t("guide.tabs.saida")}
               </h2>
 
               <p style={{ marginBottom: 16, color: "var(--tx3)" }}>
-                São 4 "canais de comunicação" que o relé usa para informar à maleta qual falta detectou.
+                {t("guide.content.saida")}
               </p>
 
               {[1, 3, 5, 7].map((n) => {

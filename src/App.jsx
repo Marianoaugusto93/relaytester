@@ -129,7 +129,7 @@ function AppInner(){
     setBkState(prev=>{
       if(prev!==state){
         const icon=state==='closed'?'🔒':'🔓';
-        const msg=state==='closed'?'Disjuntor FECHADO — 52a ON':(latch?'Disjuntor ABERTO por TRIP — 52b ON':'Disjuntor ABERTO — 52b ON');
+        const msg=state==='closed'?t('appEvents.disjuntorClosed52a'):(latch?t('appEvents.disjuntorOpenTrip52b'):t('appEvents.disjuntorOpen52b'));
         setEvts(ev=>[{time:nowShort(),icon,text:msg,dt:''},...ev.slice(0,20)]);
         if(state==='open'&&ssRef.current==='running'){
           const im=inMatrixRef.current;
@@ -152,23 +152,23 @@ function AppInner(){
           if(fn79?.enabled&&!ar.locked){
             if(ar.shot>=(fn79.shots||3)){
               ar.locked=true;
-              setEvts(ev=>[{time:nowShort(),icon:"🔒",text:`79 LOCKOUT após ${ar.shot} religamentos`,dt:''},...ev.slice(0,20)]);
+              setEvts(ev=>[{time:nowShort(),icon:"🔒",text:t('appEvents.reclose79Lockout',{shot:ar.shot}),dt:''},...ev.slice(0,20)]);
             }else{
               const deadTimes=fn79.deadTimes||[0.5,5.0,15.0];
               const dt=Math.round((deadTimes[ar.shot]??deadTimes[deadTimes.length-1])*1000);
               if(ar.reclaimTimer){clearTimeout(ar.reclaimTimer);ar.reclaimTimer=null}
               if(ar.deadTimer){clearTimeout(ar.deadTimer);ar.deadTimer=null}
               const shotNum=ar.shot+1;
-              setEvts(ev=>[{time:nowShort(),icon:"⏱",text:`79 Shot #${shotNum}: dead time ${dt/1000}s — aguardando religamento...`,dt:''},...ev.slice(0,20)]);
+              setEvts(ev=>[{time:nowShort(),icon:"⏱",text:t('appEvents.reclose79WaitingDeadTime',{shotNum:shotNum,deadTime:(dt/1000).toFixed(1)}),dt:''},...ev.slice(0,20)]);
               ar.deadTimer=setTimeout(()=>{
                 ar.deadTimer=null;ar.shot++;
                 setTrippedStageIds([]);setIsTripped(false);setFaultRecord(null);
                 setBkCloseCtr(c=>c+1);
-                setEvts(ev=>[{time:nowShort(),icon:"🔄",text:`79 Religando... (shot ${ar.shot}/${fn79.shots||3})`,dt:''},...ev.slice(0,20)]);
+                setEvts(ev=>[{time:nowShort(),icon:"🔄",text:t('appEvents.reclose79Reclosing',{shot:ar.shot,shots:fn79.shots||3}),dt:''},...ev.slice(0,20)]);
                 const rt=Math.round((fn79.reclaimTime||3.0)*1000);
                 ar.reclaimTimer=setTimeout(()=>{
                   ar.reclaimTimer=null;ar.shot=0;ar.locked=false;
-                  setEvts(ev=>[{time:nowShort(),icon:"✓",text:`79 Religamento bem-sucedido — contador resetado`,dt:''},...ev.slice(0,20)]);
+                  setEvts(ev=>[{time:nowShort(),icon:"✓",text:t('appEvents.reclose79Success'),dt:''},...ev.slice(0,20)]);
                 },rt);
               },dt);
             }
@@ -304,7 +304,7 @@ function AppInner(){
     if(preset.phasors){setP(deepClone(preset.phasors));}
     setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);
     if(preset.label){analytics.recordScenarioLoad(preset.label);}
-    setEvts(ev=>[{time:nowShort(),icon:'⚡',text:`Preset "${preset.label}" aplicado — configurações enviadas ao relé.`,dt:''},...ev.slice(0,20)]);
+    setEvts(ev=>[{time:nowShort(),icon:'⚡',text:t('appEvents.presetApplied',{name:preset.label}),dt:''},...ev.slice(0,20)]);
   },[]);
 
   // ── Analytics-wrapped simulation controls ──────────────────────────────────
@@ -322,7 +322,7 @@ function AppInner(){
    * Prevents reset if 27 function is active (low-voltage protection).
    */
   const resetRelay=()=>{
-    if(!injecting){const active27=check27IdleCondition();if(active27.length>0){setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`Reset bloqueado: 27 ativa (${active27.map(s=>s.id).join(", ")}). Habilite Low-V Block ou injete tensão.`,dt:""},...ev.slice(0,20)]);return;}}
+    if(!injecting){const active27=check27IdleCondition();if(active27.length>0){setEvts(ev=>[{time:nowShort(),icon:"⚠",text:t('appEvents.resetBlocked',{stages:active27.map(s=>s.id).join(", ")}),dt:""},...ev.slice(0,20)]);return;}}
     setTrippedStageIds([]);setIsTripped(false);setFaultRecord(null);
   };
 

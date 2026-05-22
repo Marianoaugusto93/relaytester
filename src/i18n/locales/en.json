@@ -376,5 +376,450 @@
     "multiple_uppercase_volt": "PT MULTIPLE",
     "secondary_uppercase_power": "P SECONDARY",
     "primary_uppercase_power": "P PRIMARY"
+  },
+  "borne": {
+    "descriptions": {
+      "1": {
+        "label": "BO3-1",
+        "desc": "Phase A Overcurrent",
+        "fullName": "BO3 — Binary Output 3",
+        "detail": "Signals detection of overcurrent (excessive current) on phase A",
+        "related": "Function 50/50N (Overcurrent Protection)",
+        "usage": "Connect to BI3 on the suitcase so it receives the trip signal"
+      },
+      "2": {
+        "label": "BO3-2",
+        "desc": "Phase A Overcurrent",
+        "fullName": "BO3 — Binary Output 3",
+        "detail": "Signals detection of overcurrent (excessive current) on phase A",
+        "related": "Function 50/50N (Overcurrent Protection)",
+        "usage": "Connect to BI3 on the suitcase so it receives the trip signal"
+      },
+      "3": {
+        "label": "BO4-1",
+        "desc": "Ground Fault",
+        "fullName": "BO4 — Binary Output 4",
+        "detail": "Signals detection of GROUND FAULT (L-G) — phase current diverting to neutral/ground",
+        "related": "Function 50N/51N (Ground Fault Protection)",
+        "usage": "Connect to BI4 on the suitcase. Activates on phase imbalance or ground fault"
+      },
+      "4": {
+        "label": "BO4-2",
+        "desc": "Ground Fault",
+        "fullName": "BO4 — Binary Output 4",
+        "detail": "Signals detection of GROUND FAULT (L-G) — phase current diverting to neutral/ground",
+        "related": "Function 50N/51N (Ground Fault Protection)",
+        "usage": "Connect to BI4 on the suitcase. Activates on phase imbalance or ground fault"
+      },
+      "5": {
+        "label": "BO5-1",
+        "desc": "Negative Sequence",
+        "fullName": "BO5 — Binary Output 5",
+        "detail": "Signals detection of NEGATIVE SEQUENCE — imbalance between phases (motors running in reverse)",
+        "related": "Function 47 (Negative Sequence Protection)",
+        "usage": "Connect to BI5 on the suitcase. Protects motors against phase reversal"
+      },
+      "6": {
+        "label": "BO5-2",
+        "desc": "Negative Sequence",
+        "fullName": "BO5 — Binary Output 5",
+        "detail": "Signals detection of NEGATIVE SEQUENCE — imbalance between phases (motors running in reverse)",
+        "related": "Function 47 (Negative Sequence Protection)",
+        "usage": "Connect to BI5 on the suitcase. Protects motors against phase reversal"
+      },
+      "7": {
+        "label": "BO6-1",
+        "desc": "Underfrequency",
+        "fullName": "BO6 — Binary Output 6",
+        "detail": "Signals detection of UNDERFREQUENCY — grid frequency below normal (lack of generation)",
+        "related": "Function 81U (Underfrequency Protection)",
+        "usage": "Connect to BI6 on the suitcase. Protects against grid frequency collapse"
+      },
+      "8": {
+        "label": "BO6-2",
+        "desc": "Underfrequency",
+        "fullName": "BO6 — Binary Output 6",
+        "detail": "Signals detection of UNDERFREQUENCY — grid frequency below normal (lack of generation)",
+        "related": "Function 81U (Underfrequency Protection)",
+        "usage": "Connect to BI6 on the suitcase. Protects against grid frequency collapse"
+      },
+      "9": {
+        "label": "52a-1",
+        "desc": "CB Closed",
+        "fullName": "52a — Closed Auxiliary Contact",
+        "detail": "Indicates the BREAKER is CLOSED (power on, normal). Physically coupled to the mechanism.",
+        "related": "Breaker Status",
+        "usage": "Connect to BI1 on the suitcase. When CB is closed, this contact is closed."
+      },
+      "10": {
+        "label": "52a-2",
+        "desc": "CB Closed",
+        "fullName": "52a — Closed Auxiliary Contact",
+        "detail": "Indicates the BREAKER is CLOSED (power on, normal). Physically coupled to the mechanism.",
+        "related": "Breaker Status",
+        "usage": "Connect to BI1 on the suitcase. When CB is closed, this contact is closed."
+      },
+      "11": {
+        "label": "52b-1",
+        "desc": "CB Open",
+        "fullName": "52b — Open Auxiliary Contact",
+        "detail": "Indicates the BREAKER is OPEN (trip performed, off). Physically coupled to the mechanism.",
+        "related": "Breaker Status",
+        "usage": "Connect to BI2 on the suitcase. When CB is open, this contact is closed."
+      },
+      "12": {
+        "label": "52b-2",
+        "desc": "CB Open",
+        "fullName": "52b — Open Auxiliary Contact",
+        "detail": "Indicates the BREAKER is OPEN (trip performed, off). Physically coupled to the mechanism.",
+        "related": "Breaker Status",
+        "usage": "Connect to BI2 on the suitcase. When CB is open, this contact is closed."
+      },
+      "13": {
+        "label": "TC-1",
+        "desc": "Trip Coil",
+        "fullName": "TC — Trip Coil",
+        "detail": "Electromagnetic coil that OPENS the breaker. When energized, it pulls the opening mechanism.",
+        "related": "Breaker Open Command",
+        "usage": "Connect to a power source (24VDC typical). When activated, opens the CB."
+      },
+      "14": {
+        "label": "TC-2",
+        "desc": "Trip Coil",
+        "fullName": "TC — Trip Coil",
+        "detail": "Electromagnetic coil that OPENS the breaker. When energized, it pulls the opening mechanism.",
+        "related": "Breaker Open Command",
+        "usage": "Connect to a power source (24VDC typical). When activated, opens the CB."
+      },
+      "15": {
+        "label": "FC-1",
+        "desc": "Close Coil",
+        "fullName": "FC — Close Coil",
+        "detail": "Electromagnetic coil that CLOSES the breaker. When energized, it pulls the closing mechanism (reclosing).",
+        "related": "Breaker Close Command",
+        "usage": "Connect to a power source (24VDC typical). When activated, closes the CB."
+      },
+      "16": {
+        "label": "FC-2",
+        "desc": "Close Coil",
+        "fullName": "FC — Close Coil",
+        "detail": "Electromagnetic coil that CLOSES the breaker. When energized, it pulls the closing mechanism (reclosing).",
+        "related": "Breaker Close Command",
+        "usage": "Connect to a power source (24VDC typical). When activated, closes the CB."
+      }
+    },
+    "groups": {
+      "saída": {
+        "title": "Binary Outputs (BO)",
+        "description": "Signals the RELAY sends to the SUITCASE when it detects a fault"
+      },
+      "feedback": {
+        "title": "Breaker Feedback (52a/52b)",
+        "description": "Signals the BREAKER sends to the RELAY reporting its status"
+      },
+      "comando": {
+        "title": "Command Coils (TC/FC)",
+        "description": "Orders the RELAY sends to the BREAKER to act (open or close)"
+      }
+    }
+  },
+  "presets": {
+    "test": {
+      "oc_ph": {
+        "label": "51/50 Phase",
+        "desc": "Time-overcurrent + instantaneous phase"
+      },
+      "oc_neu": {
+        "label": "51N/50N Neutral",
+        "desc": "Time-overcurrent + instantaneous neutral"
+      },
+      "oc_all": {
+        "label": "50/51/50N/51N",
+        "desc": "Full overcurrent — phase + neutral"
+      },
+      "dir_ph": {
+        "label": "67 Directional",
+        "desc": "Directional phase overcurrent (quadrature pol., MTA −45°)"
+      },
+      "dir_neu": {
+        "label": "67N Directional N",
+        "desc": "Directional neutral overcurrent (−V₀ pol.)"
+      },
+      "volt_2759": {
+        "label": "27/59 Voltage",
+        "desc": "Undervoltage and overvoltage (phase-ground)"
+      },
+      "seq_v47": {
+        "label": "47 Seq.V",
+        "desc": "Negative-sequence voltage V₂"
+      },
+      "seq_i46": {
+        "label": "46 Seq.I",
+        "desc": "Negative-sequence overcurrent I₂"
+      },
+      "freq81": {
+        "label": "81U Freq",
+        "desc": "Underfrequency 81U (3 stages)"
+      },
+      "rev_pwr32": {
+        "label": "32R Rev.Pwr",
+        "desc": "Reverse power (32R) — protects generators against motoring"
+      },
+      "ar79_51": {
+        "label": "79+51/50",
+        "desc": "Auto-reclose with phase overcurrent (3 shots)"
+      }
+    },
+    "wiring": {
+      "i3ph": {
+        "label": "I Three-Phase",
+        "desc": "Three-phase current injection (3 phases + return)"
+      },
+      "i1ph": {
+        "label": "I Single A",
+        "desc": "Single-phase current injection on phase A"
+      },
+      "v3ph": {
+        "label": "V Three-Phase",
+        "desc": "Three-phase voltage injection (3 phases + ground)"
+      },
+      "iv3ph": {
+        "label": "I+V Full",
+        "desc": "Full three-phase injection: 3 currents + 3 voltages"
+      },
+      "cb_if": {
+        "label": "CB Interface",
+        "desc": "Breaker interface: BO3, 52a/52b, TC, FC"
+      },
+      "full": {
+        "label": "Full Bench",
+        "desc": "Three-phase I+V + full breaker interface"
+      }
+    },
+    "curves": {
+      "iec_si": "IEC — Standard Inverse",
+      "iec_vi": "IEC — Very Inverse",
+      "iec_ei": "IEC — Extremely Inverse",
+      "iec_li": "IEC — Long Inverse",
+      "iec_si_short": "IEC — Short Inverse",
+      "us_mod": "US — Moderately Inverse",
+      "us_inv": "US — Inverse",
+      "us_vi": "US — Very Inverse",
+      "us_ei": "US — Extremely Inverse",
+      "us_short": "US — Short Inverse",
+      "ieee_mod": "IEEE — Moderately Inverse",
+      "ieee_vi": "IEEE — Very Inverse",
+      "ieee_ei": "IEEE — Extremely Inverse",
+      "ansi_mod": "ANSI — Moderately Inverse",
+      "ansi_ni": "ANSI — Normally Inverse",
+      "ansi_vi": "ANSI — Very Inverse",
+      "ansi_ei": "ANSI — Extremely Inverse",
+      "dt": "Definite Time"
+    }
+  },
+  "comando": {
+    "legend": {
+      "title": "Symbol Legend",
+      "entries": ["Input", "Feedback", "Output", "Protection", "Command"]
+    },
+    "tips": {
+      "BCS": {
+        "title": "BCS — Supervisory Command Button",
+        "body": "Authorization signal coming from the supervisory system (SCADA). When present, it enables the breaker command circuits."
+      },
+      "LM": {
+        "title": "LM — Spring Limit",
+        "body": "Indicates the closing spring is fully charged. The breaker can only close when this contact is active."
+      },
+      "BL": {
+        "title": "BL — Blocking Coil",
+        "body": "Anti-pump: prevents immediate reclosing after protection trip."
+      },
+      "BAD": {
+        "title": "BAD — Auxiliary Trip Coil",
+        "body": "Auxiliary contact that operates under specific tripping conditions of the protection relay."
+      },
+      "BA1": {
+        "title": "BA1 — Auxiliary Coil 1",
+        "body": "Auxiliary command relay in the closing circuit."
+      },
+      "BB": {
+        "title": "BB — Blocking Coil",
+        "body": "Inhibits the closing command when safety conditions are not met."
+      },
+      "GL": {
+        "title": "GL — Trip Coil",
+        "body": "Main opening coil. When energized it drives the tripping mechanism."
+      },
+      "AP": {
+        "title": "AP — Trip Lockout",
+        "body": "Indicates the protection relay has tripped and the breaker is locked open."
+      },
+      "BD1": {
+        "title": "BD1 — Auxiliary Contact 52a",
+        "body": "Mirror of breaker position: closed when the breaker is closed."
+      },
+      "GT2": {
+        "title": "GT2 — Auxiliary Contact 52b",
+        "body": "Inverted mirror: closed when the breaker is open."
+      },
+      "K": {
+        "title": "K — Auxiliary Command Relay",
+        "body": "Intermediate relay that isolates the breaker command circuits."
+      },
+      "N": {
+        "title": "N — Anti-pump Relay",
+        "body": "Prevents multiple consecutive closings."
+      },
+      "BF": {
+        "title": "BF — Breaker Failure Relay",
+        "body": "Supervises opening: if the breaker fails to open in time, triggers backup protection."
+      },
+      "BM": {
+        "title": "BM — Spring Motor",
+        "body": "Electric motor that recharges the closing spring after each operation."
+      }
+    }
+  },
+  "status_reasons": {
+    "oc_phase_active": "Phase Overcurrent Detected (50/51)",
+    "oc_neutral_active": "Ground Fault Detected (50N/51N)",
+    "negseq_active": "Negative Sequence Detected (47)",
+    "underfreq_active": "Underfrequency Detected (81U)",
+    "cb_closed_active": "Breaker is CLOSED (energized)",
+    "cb_open_active": "Breaker is OPEN (trip performed)",
+    "trip_coil_active": "Trip Coil energized (open command)",
+    "close_coil_active": "Close Coil active (restore command)",
+    "no_oc_phase": "No phase overcurrent detected",
+    "no_oc_neutral": "No ground fault detected",
+    "no_negseq": "No sequence imbalance detected",
+    "normal_freq": "Frequency normal or above threshold",
+    "cb_not_closed": "Breaker is not closed",
+    "cb_not_open": "Breaker is not tripped",
+    "no_trip_cmd": "No active trip command",
+    "no_close_cmd": "No active close command"
+  },
+  "analytics": {
+    "title": "Usage Statistics",
+    "closeBtn": "Close statistics",
+    "clearConfirm": "Clear all usage statistics?",
+    "totalUses": "Total uses",
+    "avgTime": "Average time",
+    "scenariosTracked": "Scenarios tracked",
+    "lastUpdated": "Updated",
+    "noData": "No data yet. Load a scenario and start an injection.",
+    "headers": {
+      "scenario": "Scenario",
+      "uses": "Uses",
+      "avgTime": "Average Time",
+      "errors": "Errors"
+    },
+    "exportBtn": "⇩ Export CSV",
+    "clearBtn": "✕ Clear Stats",
+    "closeBtn2": "Close"
+  },
+  "guide": {
+    "title": "Terminal Block Guide",
+    "closeBtn": "Close Guide",
+    "tabs": {
+      "overview": "Overview",
+      "saida": "Outputs (BO)",
+      "feedback": "Feedback (52a/52b)",
+      "comando": "Coils (TC/FC)"
+    },
+    "content": {
+      "overview": "Physical interface with 16 connection points (terminals) that simulates the links between the test suitcase, the protection relay, and the breaker. Each terminal is a connection point where you can plug a wire to create electrical connections.",
+      "saida": "Four communication channels the relay uses to inform the suitcase which fault it detected. BO3 (TB1-2): phase overcurrent. BO4 (TB3-4): ground fault. BO5 (TB5-6): negative sequence. BO6 (TB7-8): underfrequency.",
+      "feedback": "Auxiliary contacts that inform the relay of the breaker status. 52a (TB9-10): breaker CLOSED — contact closed when CB is closed. 52b (TB11-12): breaker OPEN — contact closed when CB is open (after trip). The two contacts are complementary and provide redundancy.",
+      "comando": "Electromagnetic coils that the relay energizes to order the breaker to open or close. TC (TB13-14): Trip Coil — opens the breaker. When energized, it pulls the tripping mechanism. FC (TB15-16): Close Coil — closes the breaker. Used in automatic reclosing after a temporary fault."
+    },
+    "groups": {
+      "saida_title": "Binary Outputs (BO) — TB 1-8",
+      "saida_desc": "The relay tells the suitcase: 'I detected a fault!'",
+      "feedback_title": "Breaker Feedback (52a/52b) — TB 9-12",
+      "feedback_desc": "The breaker tells the relay: 'I am open' or 'I am closed'",
+      "comando_title": "Coils (TC/FC) — TB 13-16",
+      "comando_desc": "The relay commands the breaker: 'OPEN!' or 'CLOSE!'"
+    }
+  },
+  "campo": {
+    "info": {
+      "defaultPrompt": "Click any terminal to see details...",
+      "connRemoved": "1 connection removed",
+      "connsRemoved": "{count} connections removed",
+      "closeCoilNotWired": "Wire the FC coil (TB15-TB16) to this breaker",
+      "springNotLoaded": "Spring not loaded — click FC to arm",
+      "cbAlreadyClosed": "Breaker already closed",
+      "closeCb": "Close breaker"
+    },
+    "status": {
+      "voltage": "Voltage",
+      "ok": "OK",
+      "warn": "WARN",
+      "fail": "FAIL"
+    },
+    "sections": {
+      "borneira": "Terminal Block",
+      "maleta": "Test Suitcase",
+      "chave": "Calibration Switch",
+      "disjuntor": "Breaker",
+      "presets": "Presets"
+    }
+  },
+  "appEvents": {
+    "presetApplied": "Preset \"{name}\" applied — settings sent to the relay.",
+    "resetBlocked": "Reset blocked: 27 active ({stages}). Enable Low-V Block or inject voltage.",
+    "disjuntorClosed52a": "Breaker CLOSED — 52a ON",
+    "disjuntorOpenTrip52b": "Breaker OPEN by TRIP — 52b ON",
+    "disjuntorOpen52b": "Breaker OPEN — 52b ON",
+    "reclose79Lockout": "79 LOCKOUT after {shot} reclosures",
+    "reclose79WaitingDeadTime": "79 Shot #{shotNum}: dead time {deadTime}s — waiting for reclose...",
+    "reclose79Reclosing": "79 Reclosing... (shot {shot}/{shots})",
+    "reclose79Success": "79 Reclose successful — counter reset"
+  },
+  "wiringErrors": {
+    "switch_bot": "Lower switch terminal does not accept external wires",
+    "current_voltage": "Cannot connect current terminals to voltage",
+    "analog_borne": "Analog cannot go to the terminal block",
+    "duplicate": "Connection already exists",
+    "self_loop": "Self-loop not allowed",
+    "terminal_invalid": "Invalid terminal",
+    "bo_not_tc": "BO not connected to TC",
+    "graph_unavailable": "Electrical graph unavailable",
+    "bo_invalid": "Invalid BO terminal",
+    "format_invalid": "Invalid JSON format — expected array or {presets:[]}",
+    "item_not_object": "Item is not an object",
+    "item_invalid_structure": "Invalid structure",
+    "max_presets": "Limit of {max} presets reached",
+    "parse_error": "Parse error: {message}",
+    "preset_name_required": "Preset name is required",
+    "preset_saved": "Preset saved successfully",
+    "preset_max": "Maximum of {max} presets reached",
+    "preset_save_error": "Save error: {message}"
+  },
+  "scenarioEditor": {
+    "sections": {
+      "identification": "Identification",
+      "protectionFn": "Protection Function",
+      "currentInjection": "Current Injection",
+      "voltageInjection": "Voltage Injection",
+      "settings": "Settings"
+    },
+    "labels": {
+      "scenarioName": "Scenario name",
+      "scenarioDesc": "Description",
+      "objective": "Learning objective..."
+    },
+    "placeholders": {
+      "name": "Scenario name",
+      "objective": "Learning objective..."
+    },
+    "messages": {
+      "nameRequired": "Name required",
+      "saved": "Scenario saved successfully!"
+    },
+    "buttons": {
+      "save": "Save Scenario"
+    }
   }
 }

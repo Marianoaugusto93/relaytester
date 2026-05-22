@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { BORNE_DESCRIPTIONS, BORNE_GROUPS } from "./BorneDescriptions.js";
+import { useTranslation } from "./i18n/useTranslation.js";
+import { useBorneDescriptions, useBorneGroups } from "./BorneDescriptions.js";
 
 export default function BorneStatusPanel({
   trippedStageIds = [],
@@ -7,6 +8,9 @@ export default function BorneStatusPanel({
   relayProt = {},
   electricalGraph
 }) {
+  const { t } = useTranslation();
+  const BORNE_DESCRIPTIONS = useBorneDescriptions();
+  const BORNE_GROUPS = useBorneGroups();
   const activeBornes = useMemo(() => {
     const active = {};
 
@@ -39,23 +43,23 @@ export default function BorneStatusPanel({
 
     let reason = "";
     if (isActive) {
-      if (n >= 1 && n <= 2) reason = "Detecção de Sobrecorrente Fase A (50/51)";
-      if (n >= 3 && n <= 4) reason = "Detecção de Falta à Terra (50N/51N)";
-      if (n >= 5 && n <= 6) reason = "Detecção de Sequência Negativa (47)";
-      if (n >= 7 && n <= 8) reason = "Detecção de Sub-Frequência (81U)";
-      if (n >= 9 && n <= 10) reason = "Disjuntor está FECHADO (alimentando)";
-      if (n >= 11 && n <= 12) reason = "Disjuntor está ABERTO (trip realizado)";
-      if (n >= 13 && n <= 14) reason = "Bobina de Trip foi energizada (comando de abertura)";
-      if (n >= 15 && n <= 16) reason = "Bobina de Fechamento ativa (comando de restore)";
+      if (n >= 1 && n <= 2) reason = t("status_reasons.oc_phase_active");
+      if (n >= 3 && n <= 4) reason = t("status_reasons.oc_neutral_active");
+      if (n >= 5 && n <= 6) reason = t("status_reasons.negseq_active");
+      if (n >= 7 && n <= 8) reason = t("status_reasons.underfreq_active");
+      if (n >= 9 && n <= 10) reason = t("status_reasons.cb_closed_active");
+      if (n >= 11 && n <= 12) reason = t("status_reasons.cb_open_active");
+      if (n >= 13 && n <= 14) reason = t("status_reasons.trip_coil_active");
+      if (n >= 15 && n <= 16) reason = t("status_reasons.close_coil_active");
     } else {
-      if (n >= 1 && n <= 2) reason = "Nenhuma sobrecorrente detectada";
-      if (n >= 3 && n <= 4) reason = "Nenhuma falta à terra detectada";
-      if (n >= 5 && n <= 6) reason = "Nenhum desequilíbrio de sequência detectado";
-      if (n >= 7 && n <= 8) reason = "Frequência normal ou acima do limite";
-      if (n >= 9 && n <= 10) reason = "Disjuntor não está fechado";
-      if (n >= 11 && n <= 12) reason = "Disjuntor não está em trip";
-      if (n >= 13 && n <= 14) reason = "Sem comando de trip ativo";
-      if (n >= 15 && n <= 16) reason = "Sem comando de fechamento ativo";
+      if (n >= 1 && n <= 2) reason = t("status_reasons.no_oc_phase");
+      if (n >= 3 && n <= 4) reason = t("status_reasons.no_oc_neutral");
+      if (n >= 5 && n <= 6) reason = t("status_reasons.no_negseq");
+      if (n >= 7 && n <= 8) reason = t("status_reasons.normal_freq");
+      if (n >= 9 && n <= 10) reason = t("status_reasons.cb_not_closed");
+      if (n >= 11 && n <= 12) reason = t("status_reasons.cb_not_open");
+      if (n >= 13 && n <= 14) reason = t("status_reasons.no_trip_cmd");
+      if (n >= 15 && n <= 16) reason = t("status_reasons.no_close_cmd");
     }
 
     return { desc, isActive, reason, group };

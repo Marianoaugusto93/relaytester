@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "./i18n/useTranslation.js";
 import { saveCustomScenario } from "./scenarios/customScenarios.js";
 import { calcTheoreticalTripTime, calc51NTheoreticalTripTime, get50TheoreticalTime, get50NTheoreticalTime, toRect, fromRect } from "./protection.js";
 import { defaultProtections } from "./defaults.js";
@@ -167,6 +168,7 @@ function SectionHead({ label, color }) {
 }
 
 export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
+  const { t } = useTranslation();
   // Scenario metadata
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -239,7 +241,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
   }, [currents, voltages, selectedFn, stageSettings, sys]);
 
   const handleSave = () => {
-    if (!name.trim()) { showMsg("Nome obrigatório", false); return; }
+    if (!name.trim()) { showMsg(t("scenarioEditor.messages.nameRequired"), false); return; }
 
     // Build scenario object matching the format applyTestPreset expects
     const id = `visual_${Date.now()}`;
@@ -301,7 +303,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
     const ok = saveCustomScenario(scenario);
     if (ok) {
-      showMsg("Cenário salvo com sucesso!");
+      showMsg(t("scenarioEditor.messages.saved"));
       if (onSave) onSave(scenario);
       setTimeout(() => onClose && onClose(), 800);
     } else {
@@ -466,13 +468,13 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
         {/* Name & Description */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <SectionHead label="Identificação" color="var(--orange)" />
+          <SectionHead label={t("scenarioEditor.sections.identification")} color="var(--orange)" />
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>Nome *</label>
+            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>{t("scenarioEditor.labels.scenarioName")} *</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Nome do cenário"
+              placeholder={t("scenarioEditor.placeholders.name")}
               maxLength={60}
               style={{
                 background: "var(--card2)", border: "1px solid var(--bdr)",
@@ -482,11 +484,11 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>Descrição</label>
+            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>{t("scenarioEditor.labels.scenarioDesc")}</label>
             <textarea
               value={desc}
               onChange={e => setDesc(e.target.value)}
-              placeholder="Objetivo didático..."
+              placeholder={t("scenarioEditor.placeholders.objective")}
               rows={2}
               style={{
                 background: "var(--card2)", border: "1px solid var(--bdr)",
@@ -500,7 +502,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
         {/* Function selector */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <SectionHead label="Função de Proteção" color="var(--lav)" />
+          <SectionHead label={t("scenarioEditor.sections.protectionFn")} color="var(--lav)" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
             {EDITOR_FUNCTIONS.map(f => (
               <button
@@ -528,7 +530,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
         {/* Current injection sliders */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <SectionHead label="Injeção de Corrente" color="var(--cyan)" />
+          <SectionHead label={t("scenarioEditor.sections.currentInjection")} color="var(--cyan)" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[
               { key: "Ia", label: "Ia Mag", color: "var(--cyan)" },
@@ -573,7 +575,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
         {/* Voltage injection sliders */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <SectionHead label="Injeção de Tensão" color="var(--warm)" />
+          <SectionHead label={t("scenarioEditor.sections.voltageInjection")} color="var(--warm)" />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[
               { key: "Va", label: "Va Mag", color: "var(--warm)" },
@@ -646,7 +648,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
             textTransform: "uppercase", transition: "all .15s",
           }}
         >
-          Salvar Cenário
+          {t("scenarioEditor.buttons.save")}
         </button>
         <button
           onClick={handleReset}

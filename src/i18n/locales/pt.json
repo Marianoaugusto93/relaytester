@@ -376,5 +376,450 @@
     "multiple_uppercase_volt": "MÚLTIPLO TP",
     "secondary_uppercase_power": "P SECUNDÁRIA",
     "primary_uppercase_power": "P PRIMÁRIA"
+  },
+  "borne": {
+    "descriptions": {
+      "1": {
+        "label": "BO3-1",
+        "desc": "Sobrecorrente Fase A",
+        "fullName": "BO3 — Saída Binária 3",
+        "detail": "Sinaliza detecção de sobrecorrente (corrente excessiva) na fase A",
+        "related": "Função 50/50N (Proteção de Sobrecorrente)",
+        "usage": "Conecte a BI3 da maleta para ela receber o sinal de trip"
+      },
+      "2": {
+        "label": "BO3-2",
+        "desc": "Sobrecorrente Fase A",
+        "fullName": "BO3 — Saída Binária 3",
+        "detail": "Sinaliza detecção de sobrecorrente (corrente excessiva) na fase A",
+        "related": "Função 50/50N (Proteção de Sobrecorrente)",
+        "usage": "Conecte a BI3 da maleta para ela receber o sinal de trip"
+      },
+      "3": {
+        "label": "BO4-1",
+        "desc": "Falta à Terra",
+        "fullName": "BO4 — Saída Binária 4",
+        "detail": "Sinaliza detecção de FALTA À TERRA (L-G) — corrente de fase desviando para o neutro/terra",
+        "related": "Função 50N/51N (Proteção de Falta à Terra)",
+        "usage": "Conecte a BI4 da maleta. Ativa quando há desequilíbrio de fase ou falta para terra"
+      },
+      "4": {
+        "label": "BO4-2",
+        "desc": "Falta à Terra",
+        "fullName": "BO4 — Saída Binária 4",
+        "detail": "Sinaliza detecção de FALTA À TERRA (L-G) — corrente de fase desviando para o neutro/terra",
+        "related": "Função 50N/51N (Proteção de Falta à Terra)",
+        "usage": "Conecte a BI4 da maleta. Ativa quando há desequilíbrio de fase ou falta para terra"
+      },
+      "5": {
+        "label": "BO5-1",
+        "desc": "Sequência Negativa",
+        "fullName": "BO5 — Saída Binária 5",
+        "detail": "Sinaliza detecção de SEQUÊNCIA NEGATIVA — desequilíbrio entre fases (motores girando ao contrário)",
+        "related": "Função 47 (Proteção de Sequência Negativa)",
+        "usage": "Conecte a BI5 da maleta. Protege motores contra inversão de fase"
+      },
+      "6": {
+        "label": "BO5-2",
+        "desc": "Sequência Negativa",
+        "fullName": "BO5 — Saída Binária 5",
+        "detail": "Sinaliza detecção de SEQUÊNCIA NEGATIVA — desequilíbrio entre fases (motores girando ao contrário)",
+        "related": "Função 47 (Proteção de Sequência Negativa)",
+        "usage": "Conecte a BI5 da maleta. Protege motores contra inversão de fase"
+      },
+      "7": {
+        "label": "BO6-1",
+        "desc": "Sub-Frequência",
+        "fullName": "BO6 — Saída Binária 6",
+        "detail": "Sinaliza detecção de SUB-FREQUÊNCIA — frequência da rede abaixo do normal (falta de geração)",
+        "related": "Função 81U (Proteção de Sub-Frequência)",
+        "usage": "Conecte a BI6 da maleta. Protege contra colapso da frequência da rede"
+      },
+      "8": {
+        "label": "BO6-2",
+        "desc": "Sub-Frequência",
+        "fullName": "BO6 — Saída Binária 6",
+        "detail": "Sinaliza detecção de SUB-FREQUÊNCIA — frequência da rede abaixo do normal (falta de geração)",
+        "related": "Função 81U (Proteção de Sub-Frequência)",
+        "usage": "Conecte a BI6 da maleta. Protege contra colapso da frequência da rede"
+      },
+      "9": {
+        "label": "52a-1",
+        "desc": "CB Fechado",
+        "fullName": "52a — Contato Auxiliar Fechado",
+        "detail": "Indica que o DISJUNTOR está FECHADO (alimentação ligada, normal). Fisicamente acoplado ao mecanismo.",
+        "related": "Status do Disjuntor",
+        "usage": "Conecte a BI1 da maleta. Quando CB está fechado, este contato fica fechado."
+      },
+      "10": {
+        "label": "52a-2",
+        "desc": "CB Fechado",
+        "fullName": "52a — Contato Auxiliar Fechado",
+        "detail": "Indica que o DISJUNTOR está FECHADO (alimentação ligada, normal). Fisicamente acoplado ao mecanismo.",
+        "related": "Status do Disjuntor",
+        "usage": "Conecte a BI1 da maleta. Quando CB está fechado, este contato fica fechado."
+      },
+      "11": {
+        "label": "52b-1",
+        "desc": "CB Aberto",
+        "fullName": "52b — Contato Auxiliar Aberto",
+        "detail": "Indica que o DISJUNTOR está ABERTO (trip realizado, desligado). Fisicamente acoplado ao mecanismo.",
+        "related": "Status do Disjuntor",
+        "usage": "Conecte a BI2 da maleta. Quando CB está aberto, este contato fica fechado."
+      },
+      "12": {
+        "label": "52b-2",
+        "desc": "CB Aberto",
+        "fullName": "52b — Contato Auxiliar Aberto",
+        "detail": "Indica que o DISJUNTOR está ABERTO (trip realizado, desligado). Fisicamente acoplado ao mecanismo.",
+        "related": "Status do Disjuntor",
+        "usage": "Conecte a BI2 da maleta. Quando CB está aberto, este contato fica fechado."
+      },
+      "13": {
+        "label": "TC-1",
+        "desc": "Bobina Trip",
+        "fullName": "TC — Trip Coil (Bobina de Trip)",
+        "detail": "Bobina eletromagnética que ABRE o disjuntor. Quando energizada, puxa mecanismo de abertura.",
+        "related": "Comando de Abertura do Disjuntor",
+        "usage": "Conecte a fonte de energia (24VDC típico). Quando ativada, abre o CB."
+      },
+      "14": {
+        "label": "TC-2",
+        "desc": "Bobina Trip",
+        "fullName": "TC — Trip Coil (Bobina de Trip)",
+        "detail": "Bobina eletromagnética que ABRE o disjuntor. Quando energizada, puxa mecanismo de abertura.",
+        "related": "Comando de Abertura do Disjuntor",
+        "usage": "Conecte a fonte de energia (24VDC típico). Quando ativada, abre o CB."
+      },
+      "15": {
+        "label": "FC-1",
+        "desc": "Bobina Fechamento",
+        "fullName": "FC — Close Coil (Bobina de Fechamento)",
+        "detail": "Bobina eletromagnética que FECHA o disjuntor. Quando energizada, puxa mecanismo de fechamento (reclosing).",
+        "related": "Comando de Fechamento do Disjuntor",
+        "usage": "Conecte a fonte de energia (24VDC típico). Quando ativada, fecha o CB."
+      },
+      "16": {
+        "label": "FC-2",
+        "desc": "Bobina Fechamento",
+        "fullName": "FC — Close Coil (Bobina de Fechamento)",
+        "detail": "Bobina eletromagnética que FECHA o disjuntor. Quando energizada, puxa mecanismo de fechamento (reclosing).",
+        "related": "Comando de Fechamento do Disjuntor",
+        "usage": "Conecte a fonte de energia (24VDC típico). Quando ativada, fecha o CB."
+      }
+    },
+    "groups": {
+      "saída": {
+        "title": "Saídas Binárias (BO)",
+        "description": "Sinais que o RELÉ manda para a MALETA quando detecta uma falta"
+      },
+      "feedback": {
+        "title": "Feedback do Disjuntor (52a/52b)",
+        "description": "Sinais que o DISJUNTOR manda para o RELÉ informando seu status"
+      },
+      "comando": {
+        "title": "Bobinas de Comando (TC/FC)",
+        "description": "Ordens que o RELÉ manda para o DISJUNTOR agir (abrir ou fechar)"
+      }
+    }
+  },
+  "presets": {
+    "test": {
+      "oc_ph": {
+        "label": "51/50 Fase",
+        "desc": "Sobrecorrente temporizada + instantânea de fase"
+      },
+      "oc_neu": {
+        "label": "51N/50N Neutro",
+        "desc": "Sobrecorrente de neutro temporizada + instantânea"
+      },
+      "oc_all": {
+        "label": "50/51/50N/51N",
+        "desc": "Sobrecorrente completa — fase + neutro"
+      },
+      "dir_ph": {
+        "label": "67 Direcional",
+        "desc": "Sobrecorrente direcional de fase (pol. quadratura, MTA −45°)"
+      },
+      "dir_neu": {
+        "label": "67N Direcional N",
+        "desc": "Sobrecorrente direcional de neutro (pol. −V₀)"
+      },
+      "volt_2759": {
+        "label": "27/59 Tensão",
+        "desc": "Subtensão e sobretensão (fase-terra)"
+      },
+      "seq_v47": {
+        "label": "47 Seq.V",
+        "desc": "Tensão de sequência negativa V₂"
+      },
+      "seq_i46": {
+        "label": "46 Seq.I",
+        "desc": "Sobrecorrente de sequência negativa I₂"
+      },
+      "freq81": {
+        "label": "81U Freq",
+        "desc": "Subfrequência 81U (3 estágios)"
+      },
+      "rev_pwr32": {
+        "label": "32R Pot.Rev.",
+        "desc": "Potência reversa (32R) — protege geradores contra motorização"
+      },
+      "ar79_51": {
+        "label": "79+51/50",
+        "desc": "Auto-religamento com sobrecorrente de fase (3 shots)"
+      }
+    },
+    "wiring": {
+      "i3ph": {
+        "label": "I Trifásico",
+        "desc": "Injeção trifásica de corrente (3 fases + retorno)"
+      },
+      "i1ph": {
+        "label": "I Mono A",
+        "desc": "Injeção monofásica de corrente na fase A"
+      },
+      "v3ph": {
+        "label": "V Trifásico",
+        "desc": "Injeção trifásica de tensão (3 fases + terra)"
+      },
+      "iv3ph": {
+        "label": "I+V Completo",
+        "desc": "Injeção trifásica completa: 3 correntes + 3 tensões"
+      },
+      "cb_if": {
+        "label": "Interface CB",
+        "desc": "Interface do disjuntor: BO3, 52a/52b, TC, FC"
+      },
+      "full": {
+        "label": "Bancada Completa",
+        "desc": "I+V trifásico + interface completa do disjuntor"
+      }
+    },
+    "curves": {
+      "iec_si": "IEC — Curva Padrão Inversa",
+      "iec_vi": "IEC — Curva Muito Inversa",
+      "iec_ei": "IEC — Curva Extremamente Inversa",
+      "iec_li": "IEC — Curva Longa Inversa",
+      "iec_si_short": "IEC — Curva Curta Inversa",
+      "us_mod": "US — Curva Moderadamente Inversa",
+      "us_inv": "US — Curva Inversa",
+      "us_vi": "US — Curva Muito Inversa",
+      "us_ei": "US — Curva Extremamente Inversa",
+      "us_short": "US — Curva Curta Inversa",
+      "ieee_mod": "IEEE — Curva Moderadamente Inversa",
+      "ieee_vi": "IEEE — Curva Muito Inversa",
+      "ieee_ei": "IEEE — Curva Extremamente Inversa",
+      "ansi_mod": "ANSI — Curva Moderadamente Inversa",
+      "ansi_ni": "ANSI — Curva Normalmente Inversa",
+      "ansi_vi": "ANSI — Curva Muito Inversa",
+      "ansi_ei": "ANSI — Curva Extremamente Inversa",
+      "dt": "Tempo Definido"
+    }
+  },
+  "comando": {
+    "legend": {
+      "title": "Legenda de Símbolos",
+      "entries": ["Entrada", "Feedback", "Saída", "Proteção", "Comando"]
+    },
+    "tips": {
+      "BCS": {
+        "title": "BCS — Botão de Comando Supervisório",
+        "body": "Sinal de autorização vindo do sistema supervisório (SCADA). Quando presente, habilita os circuitos de comando do disjuntor."
+      },
+      "LM": {
+        "title": "LM — Limite de Mola (Spring Limit)",
+        "body": "Indica que a mola de fechamento está totalmente carregada. O disjuntor só pode fechar quando este contato estiver ativo."
+      },
+      "BL": {
+        "title": "BL — Bobina de Bloqueio",
+        "body": "Anti-rebote: impede novo fechamento imediato após abertura por proteção."
+      },
+      "BAD": {
+        "title": "BAD — Bobina Auxiliar de Disparo",
+        "body": "Contato auxiliar que atua em condições específicas de disparo do relé de proteção."
+      },
+      "BA1": {
+        "title": "BA1 — Bobina Auxiliar 1",
+        "body": "Relé auxiliar de comando no circuito de fechamento."
+      },
+      "BB": {
+        "title": "BB — Bobina de Bloqueio",
+        "body": "Inibe o comando de fechamento quando as condições de segurança não estão satisfeitas."
+      },
+      "GL": {
+        "title": "GL — Bobina de Disparo (Trip Coil)",
+        "body": "Bobina principal de abertura. Quando energizada aciona o mecanismo de disparo."
+      },
+      "AP": {
+        "title": "AP — Travamento de Trip",
+        "body": "Indica que o relé de proteção disparou e o disjuntor está travado em aberto."
+      },
+      "BD1": {
+        "title": "BD1 — Contato Auxiliar 52a",
+        "body": "Espelho da posição do disjuntor: fechado quando o disjuntor está fechado."
+      },
+      "GT2": {
+        "title": "GT2 — Contato Auxiliar 52b",
+        "body": "Espelho invertido: fechado quando o disjuntor está aberto."
+      },
+      "K": {
+        "title": "K — Relé Auxiliar de Comando",
+        "body": "Relé intermediário que isola os circuitos de comando do disjuntor."
+      },
+      "N": {
+        "title": "N — Relé Anti-rebote (Anti-pump)",
+        "body": "Evita múltiplos fechamentos consecutivos."
+      },
+      "BF": {
+        "title": "BF — Relé de Falha de Disjuntor",
+        "body": "Supervisiona a abertura: se o disjuntor não abrir no tempo previsto, aciona retaguarda."
+      },
+      "BM": {
+        "title": "BM — Motor da Mola",
+        "body": "Motor elétrico que recarrega a mola de fechamento após cada operação."
+      }
+    }
+  },
+  "status_reasons": {
+    "oc_phase_active": "Detecção de Sobrecorrente Fase (50/51)",
+    "oc_neutral_active": "Detecção de Falta à Terra (50N/51N)",
+    "negseq_active": "Detecção de Sequência Negativa (47)",
+    "underfreq_active": "Detecção de Sub-Frequência (81U)",
+    "cb_closed_active": "Disjuntor está FECHADO (alimentando)",
+    "cb_open_active": "Disjuntor está ABERTO (trip realizado)",
+    "trip_coil_active": "Bobina de Trip foi energizada (comando de abertura)",
+    "close_coil_active": "Bobina de Fechamento ativa (comando de restore)",
+    "no_oc_phase": "Nenhuma sobrecorrente detectada",
+    "no_oc_neutral": "Nenhuma falta à terra detectada",
+    "no_negseq": "Nenhum desequilíbrio de sequência detectado",
+    "normal_freq": "Frequência normal ou acima do limite",
+    "cb_not_closed": "Disjuntor não está fechado",
+    "cb_not_open": "Disjuntor não está em trip",
+    "no_trip_cmd": "Sem comando de trip ativo",
+    "no_close_cmd": "Sem comando de fechamento ativo"
+  },
+  "analytics": {
+    "title": "Estatísticas de Uso",
+    "closeBtn": "Fechar estatísticas",
+    "clearConfirm": "Limpar todas as estatísticas de uso?",
+    "totalUses": "Total de usos",
+    "avgTime": "Tempo médio",
+    "scenariosTracked": "Cenários rastreados",
+    "lastUpdated": "Atualizado",
+    "noData": "Sem dados ainda. Carregue um cenário e inicie uma injeção.",
+    "headers": {
+      "scenario": "Cenário",
+      "uses": "Usos",
+      "avgTime": "Tempo Médio",
+      "errors": "Erros"
+    },
+    "exportBtn": "⇩ Exportar CSV",
+    "clearBtn": "✕ Limpar Stats",
+    "closeBtn2": "Fechar"
+  },
+  "guide": {
+    "title": "Guia de Bornes da Régua",
+    "closeBtn": "Fechar Guia",
+    "tabs": {
+      "overview": "Visão Geral",
+      "saida": "Saídas (BO)",
+      "feedback": "Feedback (52a/52b)",
+      "comando": "Bobinas (TC/FC)"
+    },
+    "content": {
+      "overview": "Interface física com 16 pontos de conexão (bornes) que simula as ligações entre a maleta de testes, o relé de proteção e o disjuntor. Cada borne é um ponto de conexão onde você pode plugar um fio para criar conexões elétricas.",
+      "saida": "São 4 canais de comunicação que o relé usa para informar à maleta qual falta detectou. BO3 (TB1-2): sobrecorrente de fase. BO4 (TB3-4): falta à terra. BO5 (TB5-6): sequência negativa. BO6 (TB7-8): sub-frequência.",
+      "feedback": "Contatos auxiliares que informam ao relé o status do disjuntor. 52a (TB9-10): disjuntor FECHADO — contato fica fechado quando CB está fechado. 52b (TB11-12): disjuntor ABERTO — contato fica fechado quando CB está aberto (após trip). Os dois contatos são complementares e fornecem redundância.",
+      "comando": "Bobinas eletromagnéticas que o relé energiza para ordenar ao disjuntor que abra ou feche. TC (TB13-14): Trip Coil — abre o disjuntor. Quando energizada, puxa o mecanismo de disparo. FC (TB15-16): Close Coil — fecha o disjuntor. Usada em religamento automático após falta temporária."
+    },
+    "groups": {
+      "saida_title": "Saídas Binárias (BO) — TB 1-8",
+      "saida_desc": "O relé informa à maleta: 'Detectei uma falta!'",
+      "feedback_title": "Feedback do Disjuntor (52a/52b) — TB 9-12",
+      "feedback_desc": "O disjuntor informa ao relé: 'Estou aberto' ou 'Estou fechado'",
+      "comando_title": "Bobinas (TC/FC) — TB 13-16",
+      "comando_desc": "O relé comanda ao disjuntor: 'ABRE!' ou 'FECHA!'"
+    }
+  },
+  "campo": {
+    "info": {
+      "defaultPrompt": "Clique em qualquer terminal para ver detalhes...",
+      "connRemoved": "1 conexão removida",
+      "connsRemoved": "{count} conexões removidas",
+      "closeCoilNotWired": "Ligue a bobina FC (TB15-TB16) para este disjuntor",
+      "springNotLoaded": "Mola não carregada — clique em FC para armar",
+      "cbAlreadyClosed": "Disjuntor já fechado",
+      "closeCb": "Fechar disjuntor"
+    },
+    "status": {
+      "voltage": "Tensão",
+      "ok": "OK",
+      "warn": "AVISO",
+      "fail": "FALHA"
+    },
+    "sections": {
+      "borneira": "Régua de Bornes",
+      "maleta": "Maleta de Teste",
+      "chave": "Chave de Aferição",
+      "disjuntor": "Disjuntor",
+      "presets": "Predefinições"
+    }
+  },
+  "appEvents": {
+    "presetApplied": "Preset \"{name}\" aplicado — configurações enviadas ao relé.",
+    "resetBlocked": "Reset bloqueado: 27 ativa ({stages}). Habilite Low-V Block ou injete tensão.",
+    "disjuntorClosed52a": "Disjuntor FECHADO — 52a ON",
+    "disjuntorOpenTrip52b": "Disjuntor ABERTO por TRIP — 52b ON",
+    "disjuntorOpen52b": "Disjuntor ABERTO — 52b ON",
+    "reclose79Lockout": "79 LOCKOUT após {shot} religamentos",
+    "reclose79WaitingDeadTime": "79 Shot #{shotNum}: dead time {deadTime}s — aguardando religamento...",
+    "reclose79Reclosing": "79 Religando... (shot {shot}/{shots})",
+    "reclose79Success": "79 Religamento bem-sucedido — contador resetado"
+  },
+  "wiringErrors": {
+    "switch_bot": "Terminal inferior da chave não aceita cabo externo",
+    "current_voltage": "Não pode conectar terminais de corrente a tensão",
+    "analog_borne": "Analógico não pode ir para borneira",
+    "duplicate": "Conexão já existe",
+    "self_loop": "Autorrelação proibida",
+    "terminal_invalid": "Terminal inválido",
+    "bo_not_tc": "BO não conectado a TC",
+    "graph_unavailable": "Grafo elétrico indisponível",
+    "bo_invalid": "Terminal BO inválido",
+    "format_invalid": "Formato JSON inválido — esperado array ou {presets:[]}",
+    "item_not_object": "Item não é um objeto",
+    "item_invalid_structure": "Estrutura inválida",
+    "max_presets": "Limite de {max} presets atingido",
+    "parse_error": "Erro de parse: {message}",
+    "preset_name_required": "Nome do preset é obrigatório",
+    "preset_saved": "Preset salvo com sucesso",
+    "preset_max": "Máximo de {max} presets atingido",
+    "preset_save_error": "Erro ao salvar: {message}"
+  },
+  "scenarioEditor": {
+    "sections": {
+      "identification": "Identificação",
+      "protectionFn": "Função de Proteção",
+      "currentInjection": "Injeção de Corrente",
+      "voltageInjection": "Injeção de Tensão",
+      "settings": "Configurações"
+    },
+    "labels": {
+      "scenarioName": "Nome do cenário",
+      "scenarioDesc": "Descrição",
+      "objective": "Objetivo didático..."
+    },
+    "placeholders": {
+      "name": "Nome do cenário",
+      "objective": "Objetivo didático..."
+    },
+    "messages": {
+      "nameRequired": "Nome obrigatório",
+      "saved": "Cenário salvo com sucesso!"
+    },
+    "buttons": {
+      "save": "Salvar Cenário"
+    }
   }
 }

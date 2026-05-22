@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "../i18n/useTranslation.js";
 
 // ─── Design tokens (mirrored from PainelPage) ──────────────────────────────
 const C = {
@@ -11,40 +12,27 @@ const C = {
 };
 const col = (on, name) => on ? C[name] : C.off;
 
-// ─── Legenda — Elementos principais ──────────────────────────────────────────
-const LEGEND_ITEMS = [
-  { key: 'BCS', desc: 'Comando supervisório', cat: 'entrada' },
-  { key: 'LM',  desc: 'Mola carregada', cat: 'feedback' },
-  { key: 'GL',  desc: 'Bobina de disparo', cat: 'saida' },
-  { key: 'AP',  desc: 'Anti-recuo trip', cat: 'protecao' },
-  { key: 'BD1', desc: 'Contato 52a (fechado)', cat: 'feedback' },
-  { key: 'GT2', desc: 'Contato 52b (aberto)', cat: 'feedback' },
-  { key: 'K',   desc: 'Relé auxiliar', cat: 'comando' },
-  { key: 'BM',  desc: 'Motor da mola', cat: 'saida' },
-];
-
-// ─── Tooltips ───────────────────────────────────────────────────────────────
-const TIPS = {
-  BCS: { title: 'BCS — Botão de Comando Supervisório',  body: 'Sinal de autorização vindo do sistema supervisório (SCADA). Quando presente, habilita os circuitos de comando do disjuntor.' },
-  LM:  { title: 'LM — Limite de Mola (Spring Limit)',   body: 'Indica que a mola de fechamento está totalmente carregada. O disjuntor só pode fechar quando este contato estiver ativo.' },
-  BL:  { title: 'BL — Bobina de Bloqueio',              body: 'Anti-rebote: impede novo fechamento imediato após abertura por proteção.' },
-  BAD: { title: 'BAD — Bobina Auxiliar de Disparo',     body: 'Contato auxiliar que atua em condições específicas de disparo do relé de proteção.' },
-  BA1: { title: 'BA1 — Bobina Auxiliar 1',              body: 'Relé auxiliar de comando no circuito de fechamento.' },
-  BB:  { title: 'BB — Bobina de Bloqueio',              body: 'Inibe o comando de fechamento quando as condições de segurança não estão satisfeitas.' },
-  GL:  { title: 'GL — Bobina de Disparo (Trip Coil)',   body: 'Bobina principal de abertura. Quando energizada aciona o mecanismo de disparo.' },
-  AP:  { title: 'AP — Travamento de Trip',              body: 'Indica que o relé de proteção disparou e o disjuntor está travado em aberto.' },
-  BD1: { title: 'BD1 — Contato Auxiliar 52a',           body: 'Espelho da posição do disjuntor: fechado quando o disjuntor está fechado.' },
-  GT2: { title: 'GT2 — Contato Auxiliar 52b',           body: 'Espelho invertido: fechado quando o disjuntor está aberto.' },
-  K:   { title: 'K — Relé Auxiliar de Comando',         body: 'Relé intermediário que isola os circuitos de comando do disjuntor.' },
-  N:   { title: 'N — Relé Anti-rebote (Anti-pump)',      body: 'Evita múltiplos fechamentos consecutivos.' },
-  BF:  { title: 'BF — Relé de Falha de Disjuntor',      body: 'Supervisiona a abertura: se o disjuntor não abrir no tempo previsto, aciona retaguarda.' },
-  AB:  { title: 'AB — Bobina de Abertura',               body: 'Bobina secundária de abertura (shunt trip).' },
-  BA:  { title: 'BA — Bobina de Fechamento',             body: 'Bobina de comando de fechamento (close coil).' },
-  BM:  { title: 'BM — Motor da Mola',                   body: 'Motor elétrico que recarrega a mola de fechamento após cada operação.' },
-};
 
 // ─── SVG do diagrama de comando ─────────────────────────────────────────────
 function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
+  const { t } = useTranslation();
+  const TIPS = {
+    BCS: { title: t('comando.tips.BCS.title'), body: t('comando.tips.BCS.body') },
+    LM:  { title: t('comando.tips.LM.title'),  body: t('comando.tips.LM.body')  },
+    BL:  { title: t('comando.tips.BL.title'),  body: t('comando.tips.BL.body')  },
+    BAD: { title: t('comando.tips.BAD.title'), body: t('comando.tips.BAD.body') },
+    BA1: { title: t('comando.tips.BA1.title'), body: t('comando.tips.BA1.body') },
+    BB:  { title: t('comando.tips.BB.title'),  body: t('comando.tips.BB.body')  },
+    GL:  { title: t('comando.tips.GL.title'),  body: t('comando.tips.GL.body')  },
+    AP:  { title: t('comando.tips.AP.title'),  body: t('comando.tips.AP.body')  },
+    BD1: { title: t('comando.tips.BD1.title'), body: t('comando.tips.BD1.body') },
+    GT2: { title: t('comando.tips.GT2.title'), body: t('comando.tips.GT2.body') },
+    K:   { title: t('comando.tips.K.title'),   body: t('comando.tips.K.body')   },
+    N:   { title: t('comando.tips.N.title'),   body: t('comando.tips.N.body')   },
+    BF:  { title: t('comando.tips.BF.title'),  body: t('comando.tips.BF.body')  },
+    BM:  { title: t('comando.tips.BM.title'),  body: t('comando.tips.BM.body')  },
+  };
+
   const closed   = bkState === 'closed';
   const motorRun = !springLoaded;
   const [tooltip, setTooltip] = useState(null);

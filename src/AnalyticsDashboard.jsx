@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { analytics } from "./analytics.js";
+import { useTranslation } from "./i18n/useTranslation.js";
 
 /**
  * AnalyticsDashboard — modal that displays scenario usage statistics.
@@ -8,6 +9,7 @@ import { analytics } from "./analytics.js";
  *   onClose {Function} - called when user closes the modal
  */
 export default function AnalyticsDashboard({ open, onClose }) {
+  const { t } = useTranslation();
   const [data, setData] = useState({ scenarios: {}, lastUpdated: null });
   const modalRef = useRef(null);
   const closeButtonRef = useRef(null);
@@ -54,14 +56,14 @@ export default function AnalyticsDashboard({ open, onClose }) {
   }, [open]);
 
   const handleClear = useCallback(() => {
-    if (window.confirm("Limpar todas as estatísticas de uso?")) {
+    if (window.confirm(t("analytics.clearConfirm"))) {
       analytics.clearStats();
       setData({ scenarios: {}, lastUpdated: Date.now() });
     }
-  }, []);
+  }, [t]);
 
   const handleExportCSV = useCallback(() => {
-    const rows = [["Cenário", "Usos", "Tempo Médio (s)", "Erros de Trip"]];
+    const rows = [[t("analytics.headers.scenario"), t("analytics.headers.uses"), t("analytics.headers.avgTime"), "Erros de Trip"]];
     Object.entries(data.scenarios).forEach(([name, rec]) => {
       rows.push([
         `"${name.replace(/"/g, '""')}"`,
@@ -80,7 +82,7 @@ export default function AnalyticsDashboard({ open, onClose }) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [data]);
+  }, [data, t]);
 
   if (!open) return null;
 
@@ -122,12 +124,12 @@ export default function AnalyticsDashboard({ open, onClose }) {
           padding: "14px 18px", borderBottom: "1px solid var(--bdr)", flexShrink: 0,
         }}>
           <span style={{ fontSize: 16, fontWeight: 800, color: "var(--tx)", fontFamily: "var(--fh)", letterSpacing: 1, textTransform: "uppercase", flex: 1 }} id="analytics-title">
-            Estatísticas de Uso
+            {t("analytics.title")}
           </span>
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            aria-label="Fechar estatísticas"
+            aria-label={t("analytics.closeBtn")}
             style={{
               background: "transparent", border: "1px solid var(--bdr)", color: "var(--tx3)",
               width: 30, height: 30, borderRadius: 8, cursor: "pointer", fontSize: 14,
@@ -146,11 +148,11 @@ export default function AnalyticsDashboard({ open, onClose }) {
           borderBottom: "1px solid var(--bdr)", flexShrink: 0,
           background: "var(--card2)",
         }}>
-          <SummaryItem label="Total de usos" value={totalUses} />
-          <SummaryItem label="Tempo médio" value={`${totalAvg.toFixed(2)} s`} />
-          <SummaryItem label="Cenários rastreados" value={entries.length} />
+          <SummaryItem label={t("analytics.totalUses")} value={totalUses} />
+          <SummaryItem label={t("analytics.avgTime")} value={`${totalAvg.toFixed(2)} s`} />
+          <SummaryItem label={t("analytics.scenariosTracked")} value={entries.length} />
           <div style={{ marginLeft: "auto", fontSize: 9, color: "var(--tx3)", fontFamily: "var(--fm)", alignSelf: "flex-end" }}>
-            Atualizado: {lastUpdatedStr}
+            {t("analytics.lastUpdated")}: {lastUpdatedStr}
           </div>
         </div>
 
@@ -161,19 +163,24 @@ export default function AnalyticsDashboard({ open, onClose }) {
               padding: "40px 20px", textAlign: "center",
               color: "var(--tx3)", fontSize: 13, fontFamily: "var(--fm)",
             }}>
-              Sem dados ainda. Carregue um cenário e inicie uma injeção.
+              {t("analytics.noData")}
             </div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11, fontFamily: "var(--fm)" }}>
               <thead>
                 <tr style={{ background: "var(--card3)", position: "sticky", top: 0 }}>
-                  {["Cenário", "Usos", "Tempo Médio", "Erros"].map(h => (
-                    <th key={h} style={{
+                  {[
+                    { key: "scenario", label: t("analytics.headers.scenario") },
+                    { key: "uses", label: t("analytics.headers.uses") },
+                    { key: "avgTime", label: t("analytics.headers.avgTime") },
+                    { key: "errors", label: t("analytics.headers.errors") },
+                  ].map(({key, label}) => (
+                    <th key={key} style={{
                       padding: "8px 14px", textAlign: "left",
                       color: "var(--tx3)", fontWeight: 700, fontSize: 9,
                       textTransform: "uppercase", letterSpacing: ".8px",
                       borderBottom: "1px solid var(--bdr)",
-                    }}>{h}</th>
+                    }}>{label}</th>
                   ))}
                 </tr>
               </thead>
@@ -206,13 +213,13 @@ export default function AnalyticsDashboard({ open, onClose }) {
           padding: "12px 18px", borderTop: "1px solid var(--bdr)", flexShrink: 0,
         }}>
           <FooterBtn onClick={handleExportCSV} disabled={entries.length === 0}>
-            ⇩ Exportar CSV
+            {t("analytics.exportBtn")}
           </FooterBtn>
           <FooterBtn onClick={handleClear} danger disabled={entries.length === 0}>
-            ✕ Limpar Stats
+            {t("analytics.clearBtn")}
           </FooterBtn>
           <FooterBtn onClick={onClose} primary>
-            Fechar
+            {t("analytics.closeBtn2")}
           </FooterBtn>
         </div>
       </div>

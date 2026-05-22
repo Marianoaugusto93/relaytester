@@ -18,12 +18,31 @@ function resolve(obj, key) {
 }
 
 /**
- * Hook that returns a translation function t(key).
+ * Hook that returns a translation function t(key, params).
  * Usage: const { t } = useTranslation();
  *        t("buttons.apply") → "Aplicar" (pt) / "Apply" (en)
+ *        t("error.required", { field: "Pickup" }) → "Campo Pickup é obrigatório"
+ * @param {string} key - Dot-separated key (e.g. "buttons.apply")
+ * @param {Object} [params] - Optional object for interpolation
+ * @returns {string} Translated and interpolated string
  */
 export function useTranslation() {
   const { locale } = useLanguage();
-  const t = (key) => resolve(locale, key);
+  const t = (key, params) => {
+    const str = resolve(locale, key);
+
+    // Warn on miss in DEV mode
+    if (str === key && import.meta.env.DEV) {
+      console.warn('[i18n] Missing key:', key);
+    }
+
+    // Interpolate if params provided
+    if (params) {
+      return str.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
+    }
+
+    return str;
+  };
+
   return { t };
 }

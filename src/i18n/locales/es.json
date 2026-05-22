@@ -376,5 +376,450 @@
     "multiple_uppercase_volt": "MÚLTIPLO TP",
     "secondary_uppercase_power": "P SECUNDARIA",
     "primary_uppercase_power": "P PRIMARIA"
+  },
+  "borne": {
+    "descriptions": {
+      "1": {
+        "label": "BO3-1",
+        "desc": "Sobrecorriente Fase A",
+        "fullName": "BO3 — Salida Binaria 3",
+        "detail": "Señaliza la detección de sobrecorriente (corriente excesiva) en la fase A",
+        "related": "Función 50/50N (Protección de Sobrecorriente)",
+        "usage": "Conecte a BI3 de la maleta para que reciba la señal de disparo"
+      },
+      "2": {
+        "label": "BO3-2",
+        "desc": "Sobrecorriente Fase A",
+        "fullName": "BO3 — Salida Binaria 3",
+        "detail": "Señaliza la detección de sobrecorriente (corriente excesiva) en la fase A",
+        "related": "Función 50/50N (Protección de Sobrecorriente)",
+        "usage": "Conecte a BI3 de la maleta para que reciba la señal de disparo"
+      },
+      "3": {
+        "label": "BO4-1",
+        "desc": "Falla a Tierra",
+        "fullName": "BO4 — Salida Binaria 4",
+        "detail": "Señaliza la detección de FALLA A TIERRA (L-G) — corriente de fase desviándose al neutro/tierra",
+        "related": "Función 50N/51N (Protección de Falla a Tierra)",
+        "usage": "Conecte a BI4 de la maleta. Se activa con desequilibrio de fase o falla a tierra"
+      },
+      "4": {
+        "label": "BO4-2",
+        "desc": "Falla a Tierra",
+        "fullName": "BO4 — Salida Binaria 4",
+        "detail": "Señaliza la detección de FALLA A TIERRA (L-G) — corriente de fase desviándose al neutro/tierra",
+        "related": "Función 50N/51N (Protección de Falla a Tierra)",
+        "usage": "Conecte a BI4 de la maleta. Se activa con desequilibrio de fase o falla a tierra"
+      },
+      "5": {
+        "label": "BO5-1",
+        "desc": "Secuencia Negativa",
+        "fullName": "BO5 — Salida Binaria 5",
+        "detail": "Señaliza la detección de SECUENCIA NEGATIVA — desequilibrio entre fases (motores girando al revés)",
+        "related": "Función 47 (Protección de Secuencia Negativa)",
+        "usage": "Conecte a BI5 de la maleta. Protege motores contra inversión de fase"
+      },
+      "6": {
+        "label": "BO5-2",
+        "desc": "Secuencia Negativa",
+        "fullName": "BO5 — Salida Binaria 5",
+        "detail": "Señaliza la detección de SECUENCIA NEGATIVA — desequilibrio entre fases (motores girando al revés)",
+        "related": "Función 47 (Protección de Secuencia Negativa)",
+        "usage": "Conecte a BI5 de la maleta. Protege motores contra inversión de fase"
+      },
+      "7": {
+        "label": "BO6-1",
+        "desc": "Subfrecuencia",
+        "fullName": "BO6 — Salida Binaria 6",
+        "detail": "Señaliza la detección de SUBFRECUENCIA — frecuencia de la red por debajo de lo normal (falta de generación)",
+        "related": "Función 81U (Protección de Subfrecuencia)",
+        "usage": "Conecte a BI6 de la maleta. Protege contra colapso de la frecuencia de la red"
+      },
+      "8": {
+        "label": "BO6-2",
+        "desc": "Subfrecuencia",
+        "fullName": "BO6 — Salida Binaria 6",
+        "detail": "Señaliza la detección de SUBFRECUENCIA — frecuencia de la red por debajo de lo normal (falta de generación)",
+        "related": "Función 81U (Protección de Subfrecuencia)",
+        "usage": "Conecte a BI6 de la maleta. Protege contra colapso de la frecuencia de la red"
+      },
+      "9": {
+        "label": "52a-1",
+        "desc": "Interruptor Cerrado",
+        "fullName": "52a — Contacto Auxiliar Cerrado",
+        "detail": "Indica que el INTERRUPTOR está CERRADO (alimentación encendida, normal). Físicamente acoplado al mecanismo.",
+        "related": "Estado del Interruptor",
+        "usage": "Conecte a BI1 de la maleta. Cuando el interruptor está cerrado, este contacto queda cerrado."
+      },
+      "10": {
+        "label": "52a-2",
+        "desc": "Interruptor Cerrado",
+        "fullName": "52a — Contacto Auxiliar Cerrado",
+        "detail": "Indica que el INTERRUPTOR está CERRADO (alimentación encendida, normal). Físicamente acoplado al mecanismo.",
+        "related": "Estado del Interruptor",
+        "usage": "Conecte a BI1 de la maleta. Cuando el interruptor está cerrado, este contacto queda cerrado."
+      },
+      "11": {
+        "label": "52b-1",
+        "desc": "Interruptor Abierto",
+        "fullName": "52b — Contacto Auxiliar Abierto",
+        "detail": "Indica que el INTERRUPTOR está ABIERTO (disparo realizado, apagado). Físicamente acoplado al mecanismo.",
+        "related": "Estado del Interruptor",
+        "usage": "Conecte a BI2 de la maleta. Cuando el interruptor está abierto, este contacto queda cerrado."
+      },
+      "12": {
+        "label": "52b-2",
+        "desc": "Interruptor Abierto",
+        "fullName": "52b — Contacto Auxiliar Abierto",
+        "detail": "Indica que el INTERRUPTOR está ABIERTO (disparo realizado, apagado). Físicamente acoplado al mecanismo.",
+        "related": "Estado del Interruptor",
+        "usage": "Conecte a BI2 de la maleta. Cuando el interruptor está abierto, este contacto queda cerrado."
+      },
+      "13": {
+        "label": "TC-1",
+        "desc": "Bobina de Disparo",
+        "fullName": "TC — Trip Coil (Bobina de Disparo)",
+        "detail": "Bobina electromagnética que ABRE el interruptor. Cuando se energiza, acciona el mecanismo de apertura.",
+        "related": "Comando de Apertura del Interruptor",
+        "usage": "Conecte a una fuente de energía (24VDC típico). Cuando se activa, abre el interruptor."
+      },
+      "14": {
+        "label": "TC-2",
+        "desc": "Bobina de Disparo",
+        "fullName": "TC — Trip Coil (Bobina de Disparo)",
+        "detail": "Bobina electromagnética que ABRE el interruptor. Cuando se energiza, acciona el mecanismo de apertura.",
+        "related": "Comando de Apertura del Interruptor",
+        "usage": "Conecte a una fuente de energía (24VDC típico). Cuando se activa, abre el interruptor."
+      },
+      "15": {
+        "label": "FC-1",
+        "desc": "Bobina de Cierre",
+        "fullName": "FC — Close Coil (Bobina de Cierre)",
+        "detail": "Bobina electromagnética que CIERRA el interruptor. Cuando se energiza, acciona el mecanismo de cierre (recierre).",
+        "related": "Comando de Cierre del Interruptor",
+        "usage": "Conecte a una fuente de energía (24VDC típico). Cuando se activa, cierra el interruptor."
+      },
+      "16": {
+        "label": "FC-2",
+        "desc": "Bobina de Cierre",
+        "fullName": "FC — Close Coil (Bobina de Cierre)",
+        "detail": "Bobina electromagnética que CIERRA el interruptor. Cuando se energiza, acciona el mecanismo de cierre (recierre).",
+        "related": "Comando de Cierre del Interruptor",
+        "usage": "Conecte a una fuente de energía (24VDC típico). Cuando se activa, cierra el interruptor."
+      }
+    },
+    "groups": {
+      "saída": {
+        "title": "Salidas Binarias (BO)",
+        "description": "Señales que el RELÉ envía a la MALETA cuando detecta una falla"
+      },
+      "feedback": {
+        "title": "Retroalimentación del Interruptor (52a/52b)",
+        "description": "Señales que el INTERRUPTOR envía al RELÉ informando su estado"
+      },
+      "comando": {
+        "title": "Bobinas de Comando (TC/FC)",
+        "description": "Órdenes que el RELÉ envía al INTERRUPTOR para que actúe (abrir o cerrar)"
+      }
+    }
+  },
+  "presets": {
+    "test": {
+      "oc_ph": {
+        "label": "51/50 Fase",
+        "desc": "Sobrecorriente temporizada + instantánea de fase"
+      },
+      "oc_neu": {
+        "label": "51N/50N Neutro",
+        "desc": "Sobrecorriente de neutro temporizada + instantánea"
+      },
+      "oc_all": {
+        "label": "50/51/50N/51N",
+        "desc": "Sobrecorriente completa — fase + neutro"
+      },
+      "dir_ph": {
+        "label": "67 Direccional",
+        "desc": "Sobrecorriente direccional de fase (pol. cuadratura, MTA −45°)"
+      },
+      "dir_neu": {
+        "label": "67N Direccional N",
+        "desc": "Sobrecorriente direccional de neutro (pol. −V₀)"
+      },
+      "volt_2759": {
+        "label": "27/59 Tensión",
+        "desc": "Subtensión y sobretensión (fase-tierra)"
+      },
+      "seq_v47": {
+        "label": "47 Sec.V",
+        "desc": "Tensión de secuencia negativa V₂"
+      },
+      "seq_i46": {
+        "label": "46 Sec.I",
+        "desc": "Sobrecorriente de secuencia negativa I₂"
+      },
+      "freq81": {
+        "label": "81U Frec",
+        "desc": "Subfrecuencia 81U (3 etapas)"
+      },
+      "rev_pwr32": {
+        "label": "32R Pot.Inv.",
+        "desc": "Potencia inversa (32R) — protege generadores contra motorización"
+      },
+      "ar79_51": {
+        "label": "79+51/50",
+        "desc": "Recierre automático con sobrecorriente de fase (3 disparos)"
+      }
+    },
+    "wiring": {
+      "i3ph": {
+        "label": "I Trifásica",
+        "desc": "Inyección trifásica de corriente (3 fases + retorno)"
+      },
+      "i1ph": {
+        "label": "I Mono A",
+        "desc": "Inyección monofásica de corriente en la fase A"
+      },
+      "v3ph": {
+        "label": "V Trifásica",
+        "desc": "Inyección trifásica de tensión (3 fases + tierra)"
+      },
+      "iv3ph": {
+        "label": "I+V Completa",
+        "desc": "Inyección trifásica completa: 3 corrientes + 3 tensiones"
+      },
+      "cb_if": {
+        "label": "Interfaz Interruptor",
+        "desc": "Interfaz del interruptor: BO3, 52a/52b, TC, FC"
+      },
+      "full": {
+        "label": "Banco Completo",
+        "desc": "I+V trifásica + interfaz completa del interruptor"
+      }
+    },
+    "curves": {
+      "iec_si": "IEC — Curva Inversa Estándar",
+      "iec_vi": "IEC — Curva Muy Inversa",
+      "iec_ei": "IEC — Curva Extremadamente Inversa",
+      "iec_li": "IEC — Curva Larga Inversa",
+      "iec_si_short": "IEC — Curva Corta Inversa",
+      "us_mod": "US — Curva Moderadamente Inversa",
+      "us_inv": "US — Curva Inversa",
+      "us_vi": "US — Curva Muy Inversa",
+      "us_ei": "US — Curva Extremadamente Inversa",
+      "us_short": "US — Curva Corta Inversa",
+      "ieee_mod": "IEEE — Curva Moderadamente Inversa",
+      "ieee_vi": "IEEE — Curva Muy Inversa",
+      "ieee_ei": "IEEE — Curva Extremadamente Inversa",
+      "ansi_mod": "ANSI — Curva Moderadamente Inversa",
+      "ansi_ni": "ANSI — Curva Normalmente Inversa",
+      "ansi_vi": "ANSI — Curva Muy Inversa",
+      "ansi_ei": "ANSI — Curva Extremadamente Inversa",
+      "dt": "Tiempo Definido"
+    }
+  },
+  "comando": {
+    "legend": {
+      "title": "Leyenda de Símbolos",
+      "entries": ["Entrada", "Retroalimentación", "Salida", "Protección", "Comando"]
+    },
+    "tips": {
+      "BCS": {
+        "title": "BCS — Botón de Comando Supervisorio",
+        "body": "Señal de autorización proveniente del sistema supervisorio (SCADA). Cuando está presente, habilita los circuitos de comando del interruptor."
+      },
+      "LM": {
+        "title": "LM — Límite de Resorte (Spring Limit)",
+        "body": "Indica que el resorte de cierre está totalmente cargado. El interruptor solo puede cerrar cuando este contacto está activo."
+      },
+      "BL": {
+        "title": "BL — Bobina de Bloqueo",
+        "body": "Antirrebote: impide un nuevo cierre inmediato tras una apertura por protección."
+      },
+      "BAD": {
+        "title": "BAD — Bobina Auxiliar de Disparo",
+        "body": "Contacto auxiliar que actúa bajo condiciones específicas de disparo del relé de protección."
+      },
+      "BA1": {
+        "title": "BA1 — Bobina Auxiliar 1",
+        "body": "Relé auxiliar de comando en el circuito de cierre."
+      },
+      "BB": {
+        "title": "BB — Bobina de Bloqueo",
+        "body": "Inhibe el comando de cierre cuando las condiciones de seguridad no están satisfechas."
+      },
+      "GL": {
+        "title": "GL — Bobina de Disparo (Trip Coil)",
+        "body": "Bobina principal de apertura. Al energizarse acciona el mecanismo de disparo."
+      },
+      "AP": {
+        "title": "AP — Enclavamiento de Disparo",
+        "body": "Indica que el relé de protección ha disparado y el interruptor está enclavado en abierto."
+      },
+      "BD1": {
+        "title": "BD1 — Contacto Auxiliar 52a",
+        "body": "Espejo de la posición del interruptor: cerrado cuando el interruptor está cerrado."
+      },
+      "GT2": {
+        "title": "GT2 — Contacto Auxiliar 52b",
+        "body": "Espejo invertido: cerrado cuando el interruptor está abierto."
+      },
+      "K": {
+        "title": "K — Relé Auxiliar de Comando",
+        "body": "Relé intermedio que aísla los circuitos de comando del interruptor."
+      },
+      "N": {
+        "title": "N — Relé Antirrebote (Anti-pump)",
+        "body": "Evita múltiples cierres consecutivos."
+      },
+      "BF": {
+        "title": "BF — Relé de Falla de Interruptor",
+        "body": "Supervisa la apertura: si el interruptor no abre en el tiempo previsto, acciona la protección de respaldo."
+      },
+      "BM": {
+        "title": "BM — Motor del Resorte",
+        "body": "Motor eléctrico que recarga el resorte de cierre tras cada operación."
+      }
+    }
+  },
+  "status_reasons": {
+    "oc_phase_active": "Detección de Sobrecorriente de Fase (50/51)",
+    "oc_neutral_active": "Detección de Falla a Tierra (50N/51N)",
+    "negseq_active": "Detección de Secuencia Negativa (47)",
+    "underfreq_active": "Detección de Subfrecuencia (81U)",
+    "cb_closed_active": "El interruptor está CERRADO (alimentando)",
+    "cb_open_active": "El interruptor está ABIERTO (disparo realizado)",
+    "trip_coil_active": "Bobina de Disparo energizada (comando de apertura)",
+    "close_coil_active": "Bobina de Cierre activa (comando de restablecimiento)",
+    "no_oc_phase": "No se detectó sobrecorriente",
+    "no_oc_neutral": "No se detectó falla a tierra",
+    "no_negseq": "No se detectó desequilibrio de secuencia",
+    "normal_freq": "Frecuencia normal o por encima del umbral",
+    "cb_not_closed": "El interruptor no está cerrado",
+    "cb_not_open": "El interruptor no está disparado",
+    "no_trip_cmd": "Sin comando de disparo activo",
+    "no_close_cmd": "Sin comando de cierre activo"
+  },
+  "analytics": {
+    "title": "Estadísticas de Uso",
+    "closeBtn": "Cerrar estadísticas",
+    "clearConfirm": "¿Borrar todas las estadísticas de uso?",
+    "totalUses": "Total de usos",
+    "avgTime": "Tiempo promedio",
+    "scenariosTracked": "Escenarios rastreados",
+    "lastUpdated": "Actualizado",
+    "noData": "Sin datos aún. Cargue un escenario e inicie una inyección.",
+    "headers": {
+      "scenario": "Escenario",
+      "uses": "Usos",
+      "avgTime": "Tiempo Promedio",
+      "errors": "Errores"
+    },
+    "exportBtn": "⇩ Exportar CSV",
+    "clearBtn": "✕ Borrar Estadísticas",
+    "closeBtn2": "Cerrar"
+  },
+  "guide": {
+    "title": "Guía de Bornes de la Regleta",
+    "closeBtn": "Cerrar Guía",
+    "tabs": {
+      "overview": "Visión General",
+      "saida": "Salidas (BO)",
+      "feedback": "Retroalimentación (52a/52b)",
+      "comando": "Bobinas (TC/FC)"
+    },
+    "content": {
+      "overview": "Interfaz física con 16 puntos de conexión (bornes) que simula las conexiones entre la maleta de pruebas, el relé de protección y el interruptor. Cada borne es un punto de conexión donde se puede enchufar un cable para crear conexiones eléctricas.",
+      "saida": "Son 4 canales de comunicación que el relé usa para informar a la maleta qué falla detectó. BO3 (TB1-2): sobrecorriente de fase. BO4 (TB3-4): falla a tierra. BO5 (TB5-6): secuencia negativa. BO6 (TB7-8): subfrecuencia.",
+      "feedback": "Contactos auxiliares que informan al relé el estado del interruptor. 52a (TB9-10): interruptor CERRADO — contacto cerrado cuando el CB está cerrado. 52b (TB11-12): interruptor ABIERTO — contacto cerrado cuando el CB está abierto (tras disparo). Los dos contactos son complementarios y brindan redundancia.",
+      "comando": "Bobinas electromagnéticas que el relé energiza para ordenar al interruptor abrir o cerrar. TC (TB13-14): Trip Coil — abre el interruptor. Al energizarse, acciona el mecanismo de disparo. FC (TB15-16): Close Coil — cierra el interruptor. Se usa en recierre automático tras una falla temporal."
+    },
+    "groups": {
+      "saida_title": "Salidas Binarias (BO) — TB 1-8",
+      "saida_desc": "El relé informa a la maleta: '¡Detecté una falla!'",
+      "feedback_title": "Retroalimentación del Interruptor (52a/52b) — TB 9-12",
+      "feedback_desc": "El interruptor informa al relé: 'Estoy abierto' o 'Estoy cerrado'",
+      "comando_title": "Bobinas (TC/FC) — TB 13-16",
+      "comando_desc": "El relé comanda al interruptor: '¡ABRIR!' o '¡CERRAR!'"
+    }
+  },
+  "campo": {
+    "info": {
+      "defaultPrompt": "Haga clic en cualquier terminal para ver detalles...",
+      "connRemoved": "1 conexión eliminada",
+      "connsRemoved": "{count} conexiones eliminadas",
+      "closeCoilNotWired": "Cablee la bobina FC (TB15-TB16) a este interruptor",
+      "springNotLoaded": "Resorte no cargado — haga clic en FC para armar",
+      "cbAlreadyClosed": "Interruptor ya cerrado",
+      "closeCb": "Cerrar interruptor"
+    },
+    "status": {
+      "voltage": "Tensión",
+      "ok": "OK",
+      "warn": "AVISO",
+      "fail": "FALLA"
+    },
+    "sections": {
+      "borneira": "Regleta de Bornes",
+      "maleta": "Maleta de Prueba",
+      "chave": "Interruptor de Calibración",
+      "disjuntor": "Interruptor",
+      "presets": "Predefiniciones"
+    }
+  },
+  "appEvents": {
+    "presetApplied": "Preset \"{name}\" aplicado — ajustes enviados al relé.",
+    "resetBlocked": "Reset bloqueado: 27 activa ({stages}). Habilite Bloqueo Baja-V o inyecte tensión.",
+    "disjuntorClosed52a": "Interruptor CERRADO — 52a ON",
+    "disjuntorOpenTrip52b": "Interruptor ABIERTO por DISPARO — 52b ON",
+    "disjuntorOpen52b": "Interruptor ABIERTO — 52b ON",
+    "reclose79Lockout": "79 BLOQUEO después de {shot} recierre",
+    "reclose79WaitingDeadTime": "79 Disparo #{shotNum}: tiempo muerto {deadTime}s — esperando recierre...",
+    "reclose79Reclosing": "79 Recierre... (disparo {shot}/{shots})",
+    "reclose79Success": "79 Recierre exitoso — contador reiniciado"
+  },
+  "wiringErrors": {
+    "switch_bot": "El terminal inferior del interruptor no acepta cable externo",
+    "current_voltage": "No se pueden conectar terminales de corriente a tensión",
+    "analog_borne": "Analógico no puede ir a la regleta",
+    "duplicate": "La conexión ya existe",
+    "self_loop": "Autorrelación prohibida",
+    "terminal_invalid": "Terminal inválido",
+    "bo_not_tc": "BO no conectado a TC",
+    "graph_unavailable": "Grafo eléctrico no disponible",
+    "bo_invalid": "Terminal BO inválido",
+    "format_invalid": "Formato JSON inválido — se esperaba array o {presets:[]}",
+    "item_not_object": "El elemento no es un objeto",
+    "item_invalid_structure": "Estructura inválida",
+    "max_presets": "Límite de {max} presets alcanzado",
+    "parse_error": "Error de parseo: {message}",
+    "preset_name_required": "El nombre del preset es obligatorio",
+    "preset_saved": "Preset guardado correctamente",
+    "preset_max": "Máximo de {max} presets alcanzado",
+    "preset_save_error": "Error al guardar: {message}"
+  },
+  "scenarioEditor": {
+    "sections": {
+      "identification": "Identificación",
+      "protectionFn": "Función de Protección",
+      "currentInjection": "Inyección de Corriente",
+      "voltageInjection": "Inyección de Tensión",
+      "settings": "Configuración"
+    },
+    "labels": {
+      "scenarioName": "Nombre del escenario",
+      "scenarioDesc": "Descripción",
+      "objective": "Objetivo didáctico..."
+    },
+    "placeholders": {
+      "name": "Nombre del escenario",
+      "objective": "Objetivo didáctico..."
+    },
+    "messages": {
+      "nameRequired": "Nombre requerido",
+      "saved": "¡Escenario guardado con éxito!"
+    },
+    "buttons": {
+      "save": "Guardar Escenario"
+    }
   }
 }
