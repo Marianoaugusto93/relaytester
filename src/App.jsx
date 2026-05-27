@@ -27,7 +27,7 @@ const WaveformDisplay = lazy(() => import("./WaveformDisplay.jsx"));
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
 import { analytics } from "./analytics.js";
-import AnalyticsDashboard from "./AnalyticsDashboard.jsx";
+const AnalyticsDashboard = lazy(() => import("./AnalyticsDashboard.jsx"));
 
 function AppInner(){
   const{t}=useTranslation();
@@ -489,7 +489,7 @@ function AppInner(){
   {phasorDiagOpen&&<Suspense fallback={null}><PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/></Suspense>}
   {fcOpen&&<Suspense fallback={null}><FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/></Suspense>}
   {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><Suspense fallback={null}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></Suspense></div></div></div>}
-  <AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/>
+  {analyticsOpen&&<Suspense fallback={null}><AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/></Suspense>}
   <Suspense fallback={null}><HelpModal/></Suspense>
   <Suspense fallback={null}><Tutorial show={tutorialOpen} onDismiss={closeTutorial}/></Suspense>
   </>);

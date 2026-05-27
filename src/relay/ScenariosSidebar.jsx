@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { EDUCATIONAL_SCENARIOS } from "../scenarios/educational-scenarios.js";
 import { getAllCustomScenarios, toggleFavorite, exportAllCustomScenarios, exportScenarioAsJson, saveCustomScenario } from "../scenarios/customScenarios.js";
 import { useTranslation } from "../i18n/useTranslation.js";
 import CustomScenarioBuilder from "./CustomScenarioBuilder.jsx";
-import ScenarioVisualEditor from "../ScenarioVisualEditor.jsx";
+const ScenarioVisualEditor = lazy(() => import("../ScenarioVisualEditor.jsx"));
 
 export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, inMatrix, phasors, applyTestPreset, sys }) {
   const { t } = useTranslation();
@@ -100,13 +100,14 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
 
       {/* Search bar (only affects custom scenarios) */}
       {customScenarios.length > 0 && (
-        <div style={{ padding: "6px 10px 4px" }}>
+        <div style={{ padding: "6px 10px 4px" }} role="search">
           <input
             type="text"
             className="scen-search"
             placeholder="Buscar cenário…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Buscar cenários customizados por nome"
             style={{
               width: "100%",
               padding: "6px 8px",
@@ -163,6 +164,8 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
                 refreshCustomScenarios();
               }}
               title={s.favorite ? "Remover favorito" : "Marcar como favorito"}
+              aria-label={`${s.favorite ? "Remover" : "Marcar"} ${s.name || s.label} como favorito`}
+              aria-pressed={s.favorite}
               style={{
                 background: "none",
                 border: "none",
@@ -182,6 +185,7 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
                 exportScenarioAsJson(s);
               }}
               title="Exportar cenário"
+              aria-label={`Exportar ${s.name || s.label} como arquivo JSON`}
               style={{
                 background: "none",
                 border: "none",
@@ -298,16 +302,18 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
               <span style={{ fontWeight: 700, fontSize: 13, flex: 1, color: "var(--orange)", fontFamily: "var(--fh)", textTransform: "uppercase", letterSpacing: "1px" }}>Visual Editor</span>
               <button style={{ background: "none", border: "1px solid var(--bdr)", borderRadius: 6, color: "var(--tx3)", padding: "2px 8px", cursor: "pointer" }} onClick={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}>✕</button>
             </div>
-            <ScenarioVisualEditor
-              sys={sys}
-              onClose={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}
-              onSave={(s) => {
-                applyTestPreset(s);
-                setActiveId(s.id);
-                setShowVisualEditor(false);
-                refreshCustomScenarios();
-              }}
-            />
+            <Suspense fallback={<div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--tx3)'}}>Carregando...</div>}>
+              <ScenarioVisualEditor
+                sys={sys}
+                onClose={() => { refreshCustomScenarios(); setShowVisualEditor(false); }}
+                onSave={(s) => {
+                  applyTestPreset(s);
+                  setActiveId(s.id);
+                  setShowVisualEditor(false);
+                  refreshCustomScenarios();
+                }}
+              />
+            </Suspense>
           </div>
         </div>
       )}
