@@ -37,13 +37,13 @@ export default function CampoCanvas({
           <rect width="1000" height="680" fill="url(#bg-grad)" />
 
           {/* Zone backgrounds — subtle tint for each zone */}
-          <rect x="20"  y="40" width="160" height="620" fill="#06B6D4" opacity="0.04" rx="8" />
-          <rect x="200" y="40" width="500" height="620" fill="#FFE033" opacity="0.03" rx="8" />
-          <rect x="700" y="40" width="280" height="620" fill="#F97316" opacity="0.04" rx="8" />
+          <rect x="20"  y="40" width="160" height="620" fill="#06B6D4" opacity="0.10" rx="8" />
+          <rect x="200" y="40" width="500" height="620" fill="#FFE033" opacity="0.08" rx="8" />
+          <rect x="700" y="40" width="280" height="620" fill="#F97316" opacity="0.10" rx="8" />
 
           {/* Zone separators (vertical) */}
-          <line x1="195" y1="40" x2="195" y2="660" stroke="#2a2e36" strokeWidth="1" strokeDasharray="6,4" />
-          <line x1="700" y1="40" x2="700" y2="660" stroke="#2a2e36" strokeWidth="1" strokeDasharray="6,4" />
+          <line x1="195" y1="40" x2="195" y2="660" stroke="#3a4452" strokeWidth="1" strokeDasharray="6,4" opacity="0.8" />
+          <line x1="700" y1="40" x2="700" y2="660" stroke="#3a4452" strokeWidth="1" strokeDasharray="6,4" opacity="0.8" />
 
           {/* Vertical separator between BO/BI (left) and Corrente/Tensão (right) */}
           <line x1="120" y1="40" x2="120" y2="540" stroke="#444" strokeWidth="1" opacity="0.5" />
@@ -67,11 +67,11 @@ export default function CampoCanvas({
 
           {/* Maleta section labels - Two columns layout */}
           {/* Left column labels */}
-          <text x="80" y="65" fontSize="9" fontWeight="600" textAnchor="middle" fill="#9F7AEA">SAÍDA</text>
-          <text x="80" y="260" fontSize="9" fontWeight="600" textAnchor="middle" fill="#67E8F9">ENTRADA</text>
+          <text x="80" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#9F7AEA">SAÍDA</text>
+          <text x="80" y="260" fontSize="11" fontWeight="700" textAnchor="middle" fill="#67E8F9">ENTRADA</text>
           {/* Right column labels */}
-          <text x="160" y="65" fontSize="9" fontWeight="600" textAnchor="middle" fill="#1e88e5">CORRENTE</text>
-          <text x="160" y="385" fontSize="9" fontWeight="600" textAnchor="middle" fill="#1e88e5">TENSÃO</text>
+          <text x="160" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">CORRENTE</text>
+          <text x="160" y="385" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">TENSÃO</text>
 
           {/* Phase row backgrounds in CHAVE zone — subtle stripes for visual grouping */}
           {switchRows.filter(r => r.kind === 'current').map(row => (
@@ -194,13 +194,25 @@ export default function CampoCanvas({
             const fromTerm = TERMINALS.find(t => t.id === cable.from);
             const phase = fromTerm?.group || 'cmd';
             const pathStr = buildManhattanPath(p1, p2, phase, i);
-            const color = cableColorFor ? cableColorFor(cable.from, cable.to) : '#444444';
+
+            // Check if cable is invalid (validates electrical rules)
+            const validation = validateConnection(cable.from, cable.to, cables);
+            const isInvalid = !validation.valid;
+            const color = isInvalid ? '#FF3333' : (cableColorFor ? cableColorFor(cable.from, cable.to) : '#444444');
+
             return (
               <path
                 key={i}
                 d={pathStr}
-                className="cable-normal"
-                style={{ opacity: 0.85, stroke: color, strokeWidth: 2.5, fill: 'none', strokeLinecap: 'round' }}
+                className={isInvalid ? "cable-invalid" : "cable-normal"}
+                style={{
+                  opacity: isInvalid ? 0.6 : 0.85,
+                  stroke: color,
+                  strokeWidth: isInvalid ? 3 : 2.5,
+                  fill: 'none',
+                  strokeLinecap: 'round',
+                  filter: isInvalid ? 'drop-shadow(0 0 3px rgba(255, 51, 51, 0.8))' : 'none'
+                }}
               />
             );
           })}

@@ -370,9 +370,13 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 
 .campo-page-new{display:flex;gap:8px;padding:8px;height:100%;background:transparent}
 .campo-sidebar-new{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:transparent;overflow-y:auto;overflow-x:hidden}
-.campo-canvas-new{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden}
-.cam-svg-container{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
-.cam-svg-wrapper{width:100%;height:100%;position:relative}
+.campo-canvas-new{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:auto}
+.campo-canvas-new::-webkit-scrollbar{width:8px;height:8px}
+.campo-canvas-new::-webkit-scrollbar-track{background:rgba(0,0,0,.2);border-radius:4px}
+.campo-canvas-new::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;transition:background .2s}
+.campo-canvas-new::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.25)}
+.cam-svg-container{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:auto}
+.cam-svg-wrapper{width:100%;height:100%;position:relative;min-width:1000px;min-height:680px}
 
 .cam-card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:10px;flex-shrink:0}
 .cam-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tx);margin-bottom:8px;display:flex;align-items:center;gap:6px}
