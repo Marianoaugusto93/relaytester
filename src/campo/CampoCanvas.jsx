@@ -28,7 +28,7 @@ export default function CampoCanvas({
   return (
     <div className="campo-canvas-new">
       <div className="cam-svg-container">
-        <svg viewBox="0 0 1000 680" className="cam-svg-wrapper" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 1000 680" className="cam-svg-wrapper" preserveAspectRatio="xMidYMid meet" style={{ willChange: 'transform' }}>
           {/* Background */}
           <defs>
             <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
