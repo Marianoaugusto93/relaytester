@@ -791,7 +791,10 @@
       "voltage": "Voltage",
       "ok": "OK",
       "warn": "WARN",
-      "fail": "FAIL"
+      "fail": "FAIL",
+      "circuits": "Circuits",
+      "error": "ERR",
+      "total": "TOTAL"
     },
     "sections": {
       "borneira": "Terminal Block",

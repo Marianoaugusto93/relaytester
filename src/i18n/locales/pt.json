@@ -791,7 +791,10 @@
       "voltage": "Tensão",
       "ok": "OK",
       "warn": "AVISO",
-      "fail": "FALHA"
+      "fail": "FALHA",
+      "circuits": "Circuitos",
+      "error": "ERRO",
+      "total": "TOTAL"
     },
     "sections": {
       "borneira": "Régua de Bornes",

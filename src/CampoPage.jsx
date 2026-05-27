@@ -811,6 +811,18 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   // Estado das entradas binárias da maleta (monitoramento em tempo real)
   const biMonitor=useMemo(()=>MALETA_BI.map(bi=>({id:bi.id,active:electricalGraph.areConnected(bi.posId,bi.negId)})),[electricalGraph]);
 
+  // Status de circuitos: contagem de cabos válidos, inválidos e total
+  const circuitStatus=useMemo(()=>{
+    if(connections.length===0)return{state:'idle',valid:0,invalid:0,total:0};
+    let valid=0,invalid=0;
+    connections.forEach(c=>{
+      const check=validateConnection(c.from,c.to,switchSt);
+      if(check.valid)valid++;else invalid++;
+    });
+    const state=invalid>0?'error':valid>0?'ok':'idle';
+    return{state,valid,invalid,total:connections.length};
+  },[connections,switchSt]);
+
   // Notifica App.jsx sempre que o estado elétrico muda (chave, cabos ou disjuntor)
   useEffect(()=>{
     if(onFieldStateChange)onFieldStateChange({connections,internalConns,closeCoilWired,switchSt});
@@ -959,7 +971,41 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
         >
           {t('campo.buttons.borneGuide')}
         </button>
-        <div style={{overflowY:'auto',maxHeight:'calc(100vh - 120px)'}}>
+        {/* CIRCUIT STATUS PILLS */}
+        <div style={{display:'flex',flexDirection:'column',gap:4}}>
+          <div style={{fontSize:9,fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase',color:'#555',marginBottom:2}}>{t('campo.status.circuits')}</div>
+          <div style={{display:'flex',gap:4}}>
+            <div style={{
+              flex:1,textAlign:'center',padding:'4px 2px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:'var(--fh)',letterSpacing:.5,
+              background:circuitStatus.state==='ok'?'rgba(74,222,128,.18)':'rgba(74,222,128,.06)',
+              border:`1px solid ${circuitStatus.state==='ok'?'#4ade80':'rgba(74,222,128,.25)'}`,
+              color:circuitStatus.state==='ok'?'#4ade80':'#3a5a3a',
+              transition:'all .3s'
+            }}>
+              {circuitStatus.valid} {t('campo.status.ok')}
+            </div>
+            <div style={{
+              flex:1,textAlign:'center',padding:'4px 2px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:'var(--fh)',letterSpacing:.5,
+              background:circuitStatus.state==='error'?'rgba(248,113,113,.18)':'rgba(248,113,113,.06)',
+              border:`1px solid ${circuitStatus.state==='error'?'#f87171':'rgba(248,113,113,.25)'}`,
+              color:circuitStatus.state==='error'?'#f87171':'#5a3a3a',
+              transition:'all .3s'
+            }}>
+              {circuitStatus.invalid} {t('campo.status.error')}
+            </div>
+            <div style={{
+              flex:1,textAlign:'center',padding:'4px 2px',borderRadius:5,fontSize:10,fontWeight:700,fontFamily:'var(--fh)',letterSpacing:.5,
+              background:circuitStatus.total>0?'rgba(250,204,21,.13)':'rgba(250,204,21,.05)',
+              border:`1px solid ${circuitStatus.total>0?'rgba(250,204,21,.5)':'rgba(250,204,21,.2)'}`,
+              color:circuitStatus.total>0?'#facc15':'#5a4e00',
+              transition:'all .3s'
+            }}>
+              {circuitStatus.total} {t('campo.status.total')}
+            </div>
+          </div>
+        </div>
+
+        <div style={{overflowY:'auto',maxHeight:'calc(100vh - 180px)'}}>
           <BorneStatusPanel
             trippedStageIds={trippedStageIds}
             bkState={bkStatus}
