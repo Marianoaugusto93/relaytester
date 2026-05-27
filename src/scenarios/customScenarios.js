@@ -1,11 +1,11 @@
 /**
  * Custom scenario persistence layer.
  * Stores, retrieves, and manages user-defined test scenarios in localStorage.
- * Storage key: "customScenarios" (JSON array, max 10 items)
+ * Storage key: "customScenarios" (JSON array, max 50 items)
  */
 
 const STORAGE_KEY = "customScenarios";
-const MAX_SCENARIOS = 10;
+const MAX_SCENARIOS = 50;
 
 /**
  * Load all custom scenarios from localStorage.
@@ -89,7 +89,7 @@ export function exportScenarioAsJson(scenario) {
 /**
  * Import a scenario from a JSON file via file input.
  * @param {File} file - File object from input[type=file]
- * @returns {Promise<Object>} Parsed scenario object
+ * @returns {Promise<Object>} Parsed scenario object or array of scenarios
  */
 export function importScenarioFromFile(file) {
   return new Promise((resolve, reject) => {
@@ -106,4 +106,38 @@ export function importScenarioFromFile(file) {
     reader.onerror = () => reject(new Error("File read error"));
     reader.readAsText(file);
   });
+}
+
+/**
+ * Toggle favorite status on a custom scenario.
+ * @param {string} id - Scenario id
+ * @returns {boolean} true on success, false if not found
+ */
+export function toggleFavorite(id) {
+  try {
+    const all = getAllCustomScenarios();
+    const scenario = all.find(s => s.id === id);
+    if (!scenario) return false;
+    scenario.favorite = !scenario.favorite;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Export all custom scenarios as a JSON file download.
+ * @param {Array} scenarios - Array of scenario objects
+ */
+export function exportAllCustomScenarios(scenarios) {
+  if (!scenarios || scenarios.length === 0) return;
+  const blob = new Blob([JSON.stringify(scenarios, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  a.download = `custom_scenarios_${timestamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

@@ -361,6 +361,10 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .rele-right-v2 .tabs-row{border-radius:12px 12px 0 0}
 .rele-right-v2 .rele-content{border-radius:0 0 12px 12px}
 
+.scen-search{width:100%;padding:6px 8px;border-radius:4px;border:1px solid var(--bdr);background:var(--card2);color:var(--tx);font-size:12px;font-family:var(--fi);outline:none;transition:all .2s}.scen-search:focus{border-color:rgba(14,165,233,.5);background:var(--card3);box-shadow:0 0 0 2px rgba(14,165,233,.1)}
+.scen-search::placeholder{color:var(--tx3)}
+.scen-star{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:14px;padding:4px 6px;transition:color 0.2s}.scen-star:hover{color:#FFD700}
+.scen-export-btn{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:12px;padding:4px 6px;transition:color 0.2s}.scen-export-btn:hover{color:var(--tx2)}
 .scen-footer{border-top:1px solid var(--bdr);padding:8px 10px;display:flex;flex-direction:column;gap:5px;flex-shrink:0}
 .measures-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .measures-scroll{flex:1;overflow-y:auto;min-height:0}

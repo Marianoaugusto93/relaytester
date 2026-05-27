@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { EDUCATIONAL_SCENARIOS } from "../scenarios/educational-scenarios.js";
-import { getAllCustomScenarios } from "../scenarios/customScenarios.js";
+import { getAllCustomScenarios, toggleFavorite, exportAllCustomScenarios, exportScenarioAsJson, saveCustomScenario } from "../scenarios/customScenarios.js";
 import { useTranslation } from "../i18n/useTranslation.js";
 import CustomScenarioBuilder from "./CustomScenarioBuilder.jsx";
 import ScenarioVisualEditor from "../ScenarioVisualEditor.jsx";
@@ -11,6 +11,7 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
   const [showBuilder, setShowBuilder] = useState(false);
   const [showVisualEditor, setShowVisualEditor] = useState(false);
   const [customScenarios, setCustomScenarios] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     setCustomScenarios(getAllCustomScenarios());
@@ -19,6 +20,14 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
   const refreshCustomScenarios = () => {
     setCustomScenarios(getAllCustomScenarios());
   };
+
+  const filteredCustom = customScenarios
+    .filter(s => !searchTerm || s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.label?.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      if (a.favorite && !b.favorite) return -1;
+      if (!a.favorite && b.favorite) return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
   const handleLoad = (s) => {
     setActiveId(s.id);
@@ -36,13 +45,30 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
       reader.onload = (ev) => {
         try {
           const obj = JSON.parse(ev.target.result);
-          if (!obj.fns || !Array.isArray(obj.fns)) { alert("Arquivo inválido"); return; }
-          if (!obj.id) obj.id = `import_${Date.now()}`;
-          obj.type = "custom";
-          if (!obj.label && obj.name) obj.label = obj.name.slice(0, 20);
-          applyTestPreset(obj);
-          setActiveId(obj.id);
-        } catch { alert("Erro ao ler arquivo"); }
+
+          if (Array.isArray(obj)) {
+            // Batch import: array of scenarios
+            obj.forEach((scenario, idx) => {
+              if (!scenario.id) scenario.id = `import_${Date.now()}_${idx}`;
+              if (!scenario.type) scenario.type = "custom";
+              if (!scenario.label && scenario.name) scenario.label = scenario.name.slice(0, 20);
+              if (!scenario.createdAt) scenario.createdAt = new Date().toISOString();
+              saveCustomScenario(scenario);
+            });
+            refreshCustomScenarios();
+          } else {
+            // Single scenario import
+            if (!obj.fns || !Array.isArray(obj.fns)) { alert("Arquivo inválido: fns array required"); return; }
+            if (!obj.id) obj.id = `import_${Date.now()}`;
+            obj.type = "custom";
+            if (!obj.label && obj.name) obj.label = obj.name.slice(0, 20);
+            if (!obj.createdAt) obj.createdAt = new Date().toISOString();
+            saveCustomScenario(obj);
+            applyTestPreset(obj);
+            setActiveId(obj.id);
+            refreshCustomScenarios();
+          }
+        } catch (err) { alert("Erro ao ler arquivo: " + err.message); }
       };
       reader.readAsText(file);
     };
@@ -72,6 +98,29 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
         </button>
       </div>
 
+      {/* Search bar (only affects custom scenarios) */}
+      {customScenarios.length > 0 && (
+        <div style={{ padding: "6px 10px 4px" }}>
+          <input
+            type="text"
+            className="scen-search"
+            placeholder="Buscar cenário…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "6px 8px",
+              borderRadius: "4px",
+              border: "1px solid var(--bdr)",
+              background: "var(--card2)",
+              color: "var(--tx)",
+              fontSize: 12,
+              boxSizing: "border-box"
+            }}
+          />
+        </div>
+      )}
+
       {/* Scenario list */}
       <div className="scen-list">
         {EDUCATIONAL_SCENARIOS.map(s => (
@@ -85,75 +134,154 @@ export default function ScenariosSidebar({ pfMode, setPfMode, prot, outMatrix, i
             <span className="ds">{s.description?.slice(0, 50)}</span>
           </button>
         ))}
-        {customScenarios.map(s => (
-          <button
+        {filteredCustom.map(s => (
+          <div
             key={`custom-${s.id}`}
-            className={`scen${activeId === s.id ? " on" : ""}`}
-            title={s.description}
-            onClick={() => handleLoad(s)}
+            style={{
+              display: "flex",
+              gap: 4,
+              alignItems: "center",
+              padding: "4px 6px",
+              borderRadius: 4,
+              background: activeId === s.id ? "var(--orange-dim)" : "transparent"
+            }}
           >
-            <span className="nm">{s.label || s.name}</span>
-            <span className="ds">{s.description?.slice(0, 50)}</span>
-          </button>
+            <button
+              className={`scen${activeId === s.id ? " on" : ""}`}
+              title={s.description}
+              onClick={() => handleLoad(s)}
+              style={{ flex: 1 }}
+            >
+              <span className="nm">{s.label || s.name}{s.favorite && " ★"}</span>
+              <span className="ds">{s.description?.slice(0, 50)}</span>
+            </button>
+            <button
+              className="scen-star"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(s.id);
+                refreshCustomScenarios();
+              }}
+              title={s.favorite ? "Remover favorito" : "Marcar como favorito"}
+              style={{
+                background: "none",
+                border: "none",
+                color: s.favorite ? "#FFD700" : "var(--tx3)",
+                cursor: "pointer",
+                fontSize: 14,
+                padding: "4px 6px",
+                transition: "color 0.2s"
+              }}
+            >
+              {s.favorite ? "★" : "☆"}
+            </button>
+            <button
+              className="scen-export-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                exportScenarioAsJson(s);
+              }}
+              title="Exportar cenário"
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--tx3)",
+                cursor: "pointer",
+                fontSize: 12,
+                padding: "4px 6px",
+                transition: "color 0.2s"
+              }}
+            >
+              ↓
+            </button>
+          </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="scen-footer">
-        <button
-          style={{
-            padding: "10px 12px",
-            borderRadius: "var(--rs)",
-            border: "1px solid var(--bdr)",
-            background: "var(--card2)",
-            color: "var(--tx2)",
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: "pointer",
-            transition: "all .2s"
-          }}
-          onMouseEnter={e => { e.target.style.background = "var(--card3)"; e.target.style.color = "var(--tx)"; }}
-          onMouseLeave={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
-          onClick={() => setShowBuilder(v => !v)}
-        >
-          + Novo cenário
-        </button>
-        <button
-          style={{
-            padding: "10px 12px",
-            borderRadius: "var(--rs)",
-            border: "1px solid rgba(249,115,22,.4)",
-            background: "var(--orange-dim)",
-            color: "var(--orange)",
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: "pointer",
-            transition: "all .2s"
-          }}
-          onMouseEnter={e => { e.target.style.background = "rgba(249,115,22,.18)"; }}
-          onMouseLeave={e => { e.target.style.background = "var(--orange-dim)"; }}
-          onClick={() => setShowVisualEditor(true)}
-        >
-          + Visual Editor
-        </button>
-        <button
-          style={{
-            padding: "10px 12px",
-            borderRadius: "var(--rs)",
-            border: "1px solid var(--bdr)",
-            background: "transparent",
-            color: "var(--tx3)",
-            fontSize: 10,
-            fontWeight: 600,
-            cursor: "pointer",
-            transition: "all .2s"
-          }}
-          onMouseEnter={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
-          onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "var(--tx3)"; }}
-          onClick={handleImport}
-        >
-          Carregar .json
-        </button>
+      <div className="scen-footer" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            style={{
+              flex: 1,
+              padding: "10px 12px",
+              borderRadius: "var(--rs)",
+              border: "1px solid var(--bdr)",
+              background: "var(--card2)",
+              color: "var(--tx2)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all .2s"
+            }}
+            onMouseEnter={e => { e.target.style.background = "var(--card3)"; e.target.style.color = "var(--tx)"; }}
+            onMouseLeave={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
+            onClick={() => setShowBuilder(v => !v)}
+          >
+            + Novo cenário
+          </button>
+          <button
+            style={{
+              flex: 1,
+              padding: "10px 12px",
+              borderRadius: "var(--rs)",
+              border: "1px solid rgba(249,115,22,.4)",
+              background: "var(--orange-dim)",
+              color: "var(--orange)",
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all .2s"
+            }}
+            onMouseEnter={e => { e.target.style.background = "rgba(249,115,22,.18)"; }}
+            onMouseLeave={e => { e.target.style.background = "var(--orange-dim)"; }}
+            onClick={() => setShowVisualEditor(true)}
+          >
+            + Visual Editor
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            style={{
+              flex: 1,
+              padding: "10px 12px",
+              borderRadius: "var(--rs)",
+              border: "1px solid var(--bdr)",
+              background: "transparent",
+              color: "var(--tx3)",
+              fontSize: 10,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all .2s"
+            }}
+            onMouseEnter={e => { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}
+            onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "var(--tx3)"; }}
+            onClick={handleImport}
+          >
+            Carregar .json
+          </button>
+          <button
+            style={{
+              flex: 1,
+              padding: "10px 12px",
+              borderRadius: "var(--rs)",
+              border: "1px solid var(--bdr)",
+              background: "transparent",
+              color: customScenarios.length > 0 ? "var(--tx3)" : "var(--tx-disabled, rgba(255,255,255,0.3))",
+              fontSize: 10,
+              fontWeight: 600,
+              cursor: customScenarios.length > 0 ? "pointer" : "not-allowed",
+              transition: "all .2s",
+              opacity: customScenarios.length > 0 ? 1 : 0.5
+            }}
+            onMouseEnter={e => { if (customScenarios.length > 0) { e.target.style.background = "var(--card2)"; e.target.style.color = "var(--tx2)"; }}}
+            onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = customScenarios.length > 0 ? "var(--tx3)" : "var(--tx-disabled, rgba(255,255,255,0.3))"; }}
+            onClick={() => customScenarios.length > 0 && exportAllCustomScenarios(customScenarios)}
+            disabled={customScenarios.length === 0}
+          >
+            Exportar Todos
+          </button>
+        </div>
       </div>
 
       {/* Visual Editor modal */}
