@@ -363,7 +363,7 @@
     "voltage_multiple": "V Múltiplo TP",
     "secondary_power": "P Secundaria",
     "primary_power": "P Primaria",
-    "seq_freq": "Sec. / Freq.",
+    "seq_freq": "Seq. / Freq.",
     "fault_record": "Registro Falla",
     "corr_short": "CORR.",
     "tens_short": "TENS.",
@@ -550,11 +550,11 @@
         "desc": "Subtensión y sobretensión (fase-tierra)"
       },
       "seq_v47": {
-        "label": "47 Sec.V",
+        "label": "47 Seq.V",
         "desc": "Tensión de secuencia negativa V₂"
       },
       "seq_i46": {
-        "label": "46 Sec.I",
+        "label": "46 Seq.I",
         "desc": "Sobrecorriente de secuencia negativa I₂"
       },
       "freq81": {
