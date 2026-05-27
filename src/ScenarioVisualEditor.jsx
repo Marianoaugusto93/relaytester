@@ -56,6 +56,91 @@ function computeI2(currents) {
   ).mag;
 }
 
+// Mini phasor SVG diagram (read-only visualization)
+function PhasorMini({ currents, voltages }) {
+  const CX = 100, CY = 100, R = 80;
+  const toRad = (deg) => ((deg - 90) * Math.PI) / 180;
+
+  const allMags = [
+    currents.Ia.mag, currents.Ib.mag, currents.Ic.mag,
+    voltages.Va.mag, voltages.Vb.mag, voltages.Vc.mag,
+  ];
+  const maxMag = Math.max(5, ...allMags);
+
+  const arrow = (mag, ang, color, dashed) => {
+    const scale = mag / maxMag;
+    const x2 = CX + R * scale * Math.cos(toRad(ang));
+    const y2 = CY + R * scale * Math.sin(toRad(ang));
+    return (
+      <g key={`${color}-${ang}`}>
+        <line
+          x1={CX} y1={CY} x2={x2} y2={y2}
+          stroke={color} strokeWidth={dashed ? 1.5 : 2}
+          strokeDasharray={dashed ? "2,3" : undefined}
+          markerEnd={`url(#arr-${dashed ? "dash" : "solid"})`}
+        />
+      </g>
+    );
+  };
+
+  const degMarkers = [0, 90, 180, 270];
+
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.04)", borderRadius: 8,
+      border: "1px solid var(--bdr)", padding: 4,
+      display: "flex", justifyContent: "center",
+    }}>
+      <svg width={200} height={200} viewBox="0 0 200 200">
+        <defs>
+          <marker id="arr-solid" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="currentColor" />
+          </marker>
+          <marker id="arr-dash" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L6,3 z" fill="#6ab4f5" />
+          </marker>
+        </defs>
+        {/* Circular grid */}
+        {[0.25, 0.5, 0.75, 1].map(r => (
+          <circle key={r} cx={CX} cy={CY} r={R * r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+        ))}
+        {/* Cross axes */}
+        <line x1={CX - R} y1={CY} x2={CX + R} y2={CY} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+        <line x1={CX} y1={CY - R} x2={CX} y2={CY + R} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+        {/* Degree markers */}
+        {degMarkers.map(deg => {
+          const rx = CX + (R + 10) * Math.cos(toRad(deg));
+          const ry = CY + (R + 10) * Math.sin(toRad(deg));
+          return (
+            <text key={deg} x={rx} y={ry} textAnchor="middle" dominantBaseline="middle"
+              fill="rgba(255,255,255,0.3)" fontSize={7}>{deg}°</text>
+          );
+        })}
+        {/* Voltage arrows (dashed, blue family) */}
+        {arrow(voltages.Va.mag, voltages.Va.ang, "#6ab4f5", true)}
+        {arrow(voltages.Vb.mag, voltages.Vb.ang, "#93c5fd", true)}
+        {arrow(voltages.Vc.mag, voltages.Vc.ang, "#818cf8", true)}
+        {/* Current arrows (solid) */}
+        {arrow(currents.Ia.mag, currents.Ia.ang, "#FFD700", false)}
+        {arrow(currents.Ib.mag, currents.Ib.ang, "#E53935", false)}
+        {arrow(currents.Ic.mag, currents.Ic.ang, "#9E9E9E", false)}
+        {/* Center point */}
+        <circle cx={CX} cy={CY} r={3} fill="#111" stroke="rgba(255,255,255,0.4)" strokeWidth={1} />
+        {/* Legend */}
+        {[
+          { color: "#FFD700", label: "Ia" }, { color: "#E53935", label: "Ib" }, { color: "#9E9E9E", label: "Ic" },
+          { color: "#6ab4f5", label: "Va", dash: true }, { color: "#93c5fd", label: "Vb", dash: true }, { color: "#818cf8", label: "Vc", dash: true },
+        ].map(({ color, label, dash }, i) => (
+          <g key={label} transform={`translate(${4 + i * 32}, 190)`}>
+            <line x1={0} y1={0} x2={10} y2={0} stroke={color} strokeWidth={dash ? 1.5 : 2} strokeDasharray={dash ? "2,3" : undefined} />
+            <text x={12} y={0} dominantBaseline="middle" fill={color} fontSize={7}>{label}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 /**
  * Compute the expected trip time given phasors and a selected function + its stage settings.
  * Returns {stageId, time} for the fastest tripping stage, or null if no trip.
@@ -126,6 +211,35 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
       if (!st.enabled) continue;
       return { stageId: st.id, time: st.timeOp || 1.0 };
     }
+  }
+  if (fn === "67") {
+    const stage = stageSettings[0];
+    if (!stage?.enabled) return null;
+    if (currents.Ia.mag < stage.pickup) return null;
+    const mta = stage.mta ?? 0;
+    const relAng = ((currents.Ia.ang - mta + 360) % 360);
+    if (relAng > 90 && relAng < 270) return null;
+    return { stageId: stage.id, time: stage.timeDial ?? stage.timeOp ?? 0.1 };
+  }
+  if (fn === "67N") {
+    const stage = stageSettings[0];
+    if (!stage?.enabled) return null;
+    const I0mag = computeI0(currents);
+    if (I0mag < stage.pickup) return null;
+    const mta = stage.mta ?? 0;
+    const I0ang = (() => {
+      const sum = ["Ia", "Ib", "Ic"].reduce(
+        (acc, k) => {
+          const r = toRect(currents[k].mag, currents[k].ang);
+          return { re: acc.re + r.re, im: acc.im + r.im };
+        },
+        { re: 0, im: 0 }
+      );
+      return fromRect(sum.re, sum.im).ang;
+    })();
+    const relAng = ((I0ang - mta + 360) % 360);
+    if (relAng > 90 && relAng < 270) return null;
+    return { stageId: stage.id, time: stage.timeDial ?? stage.timeOp ?? 0.1 };
   }
   return null;
 }
@@ -531,6 +645,30 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
         {/* Current injection sliders */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <SectionHead label={t("scenarioEditor.sections.currentInjection")} color="var(--cyan)" />
+          {/* Balanced preset buttons */}
+          <div style={{ display: "flex", flexDirection: "row", gap: 4, padding: "6px 8px", background: "var(--card2)", borderRadius: 8 }}>
+            {[
+              { label: "3φ Eq 5A", fn: () => setCurrents({ Ia: { mag: 5, ang: 0 }, Ib: { mag: 5, ang: -120 }, Ic: { mag: 5, ang: 120 } }) },
+              { label: "3φ Eq 1A", fn: () => setCurrents({ Ia: { mag: 1, ang: 0 }, Ib: { mag: 1, ang: -120 }, Ic: { mag: 1, ang: 120 } }) },
+              { label: "L-G 5A/0.3", fn: () => setCurrents({ Ia: { mag: 5, ang: 0 }, Ib: { mag: 0.3, ang: -120 }, Ic: { mag: 0.3, ang: 120 } }) },
+            ].map(({ label, fn }) => (
+              <button
+                key={label}
+                onClick={fn}
+                style={{
+                  flex: 1, padding: "5px 4px", fontSize: 9, fontWeight: 700,
+                  background: "var(--card3)", border: "1px solid var(--bdr)",
+                  borderRadius: 6, color: "var(--tx2)", cursor: "pointer",
+                  fontFamily: "var(--fm)", letterSpacing: "0.3px",
+                  transition: "border-color .15s, color .15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--cyan)"; e.currentTarget.style.color = "var(--cyan)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--bdr)"; e.currentTarget.style.color = "var(--tx2)"; }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {[
               { key: "Ia", label: "Ia Mag", color: "var(--cyan)" },
@@ -541,14 +679,14 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
                 key={key}
                 label={label}
                 value={currents[key].mag}
-                min={0} max={10} step={0.1}
+                min={0} max={Math.max(10, (sys?.tc?.secA || 5) * 3)} step={0.1}
                 unit=" A"
                 color={color}
                 onChange={v => updateCurrent(key, "mag", v)}
               />
             ))}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 2 }}>
-              {["Ia", "Ib", "Ic"].map((key, i) => (
+              {["Ia", "Ib", "Ic"].map((key) => (
                 <div key={key}>
                   <div style={{ fontSize: 8, color: "var(--tx3)", marginBottom: 2, textTransform: "uppercase" }}>
                     {key} Ang (°)
@@ -592,8 +730,35 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
                 onChange={v => updateVoltage(key, "mag", v)}
               />
             ))}
+            {/* Voltage angle inputs */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 2 }}>
+              {["Va", "Vb", "Vc"].map((key) => (
+                <div key={key}>
+                  <div style={{ fontSize: 8, color: "var(--tx3)", marginBottom: 2, textTransform: "uppercase" }}>
+                    {key} Ang (°)
+                  </div>
+                  <input
+                    type="number"
+                    step="1"
+                    min="-360"
+                    max="360"
+                    value={voltages[key].ang}
+                    onChange={e => updateVoltage(key, "ang", parseFloat(e.target.value) || 0)}
+                    style={{
+                      background: "var(--card2)", border: "1px solid var(--bdr)",
+                      color: "var(--warm)", padding: "4px 6px", borderRadius: 6,
+                      fontSize: 11, fontFamily: "var(--fm)", width: "100%", outline: "none",
+                      textAlign: "right",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Mini phasor diagram */}
+        <PhasorMini currents={currents} voltages={voltages} />
 
         {/* Stage settings for selected function */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
