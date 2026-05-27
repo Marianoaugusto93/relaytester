@@ -94,6 +94,8 @@ select.sl{background:var(--card2);border:1px solid transparent;color:var(--tx);p
 .relay-shell{background:#0e1015;border-radius:var(--r);overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.07);display:flex;flex-direction:column;flex:1;min-height:0;transition:box-shadow .3s}
 .relay-shell.tripped{box-shadow:0 0 0 2px rgba(249,115,22,.6),0 0 32px rgba(249,115,22,.2),inset 0 0 0 1px rgba(249,115,22,.15);animation:trip-pulse 1.2s ease-in-out infinite}
 @keyframes trip-pulse{0%,100%{box-shadow:0 0 0 2px rgba(249,115,22,.6),0 0 32px rgba(249,115,22,.2),inset 0 0 0 1px rgba(249,115,22,.15)}50%{box-shadow:0 0 0 3px rgba(249,115,22,.9),0 0 52px rgba(249,115,22,.38),inset 0 0 0 1px rgba(249,115,22,.3)}}
+@keyframes terminal-glow{0%,100%{filter:drop-shadow(0 0 4px rgba(74,222,128,0))}50%{filter:drop-shadow(0 0 12px rgba(74,222,128,.8))}}
+.terminal-selected{animation:terminal-glow .6s ease-in-out}
 .relay-strip{height:3px;background:linear-gradient(90deg,transparent,var(--orange),#c2410c,var(--orange),transparent);flex-shrink:0}
 .relay-in{padding:10px 12px 8px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.05)}
 .relay-header{display:flex;align-items:flex-start;justify-content:space-between}

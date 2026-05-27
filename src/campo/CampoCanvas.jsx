@@ -124,7 +124,7 @@ export default function CampoCanvas({
                 <text
                   x={SLIDER_X}
                   y={labelY}
-                  fontSize={row.kind === 'current' ? '13' : '11'}
+                  fontSize={row.kind === 'current' ? '14' : '12'}
                   fontWeight="700"
                   textAnchor="middle"
                   fill="#fff"
