@@ -28,7 +28,8 @@ export default function CampoCanvas({
   return (
     <div className="campo-canvas-new">
       <div className="cam-svg-container">
-        <svg viewBox="0 0 1000 680" className="cam-svg-wrapper" preserveAspectRatio="xMidYMid meet" style={{ willChange: 'transform' }}>
+        <svg viewBox="0 0 1000 680" className="cam-svg-wrapper" preserveAspectRatio="xMidYMid meet" style={{ willChange: 'transform' }}
+             role="img" aria-label="Campo wiring diagram — suitcase, calibration switch, and relay terminals">
           {/* Background */}
           <defs>
             <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -108,7 +109,12 @@ export default function CampoCanvas({
               <g
                 key={row.id}
                 onClick={() => onSwitchToggle && onSwitchToggle(row.poleId)}
-                style={{ cursor: 'pointer' }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSwitchToggle && onSwitchToggle(row.poleId); } }}
+                tabIndex={0}
+                role="switch"
+                aria-checked={isUp}
+                aria-label={`${row.label} — ${statusText}`}
+                style={{ cursor: 'pointer', outline: 'none' }}
               >
                 <rect
                   x={SLIDER_X - SLIDER_W / 2}
@@ -295,7 +301,23 @@ export default function CampoCanvas({
                     onSelectOrigin(term.id);
                   }
                 }}
-                style={{ cursor }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (isOrigin) return;
+                    if (selectedOrigin) { if (connValid) onSelectDest(term.id); }
+                    else { onSelectOrigin(term.id); }
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    onCancelSelection && onCancelSelection();
+                  }
+                }}
+                tabIndex={cursor === 'not-allowed' ? -1 : 0}
+                role="button"
+                aria-label={`Terminal ${term.label}${isOrigin ? ' — selecionado como origem' : connValid ? ' — destino disponível' : sameNode ? ' — mesmo nó elétrico' : ''}`}
+                aria-pressed={isOrigin}
+                aria-disabled={cursor === 'not-allowed'}
+                style={{ cursor, outline: 'none' }}
               >
                 <circle
                   cx={term.x}
