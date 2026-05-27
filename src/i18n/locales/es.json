@@ -743,6 +743,41 @@
     }
   },
   "campo": {
+    "sectionsUpper": {
+      "borneira": "REGLETA DE BORNES",
+      "maleta": "MALETA DE PRUEBA",
+      "chave": "INTERRUPTOR DE CALIBRACIÓN",
+      "rele": "RELÉ DE PROTECCIÓN",
+      "binaryOut": "SALIDA BINARIA",
+      "binaryIn": "ENTRADA BINARIA",
+      "analogOut": "SALIDAS ANALÓGICAS",
+      "current": "CORRIENTE",
+      "voltage": "TENSIÓN",
+      "preset": "PREDEFINICIONES",
+      "breaker": "INTERRUPTOR",
+      "analogIn": "ENTRADAS ANALÓGICAS"
+    },
+    "buttons": {
+      "clearCables": "Limpiar Cables",
+      "closeCb": "I CERRAR CB",
+      "borneGuide": "📖 Guía de Bornes"
+    },
+    "hints": {
+      "promptStart": "Haga clic en cualquier terminal para iniciar una conexión — doble clic en un cable o terminal para desconectar",
+      "selectedFromClickDest": "\"{tid}\" seleccionado — haga clic en el destino",
+      "originPrompt": "Origen: {tid} · Haga clic en destino válido (naranja). ESC cancela.",
+      "cablesConnected": "{count} cables conectados · haga clic en una fase para abrir/cerrar el interruptor",
+      "connRemoved": "Conexión eliminada",
+      "connsRemoved": "Conexiones eliminadas",
+      "fcOn": "⚡ FC ENCENDIDA",
+      "fcOff": "FC apagada",
+      "fcDisabled": "Cablee la bobina FC (TB15-TB16)",
+      "springNotLoaded": "Resorte no cargado",
+      "cbAlreadyClosed": "Interruptor ya cerrado",
+      "closeBreaker": "Cerrar interruptor",
+      "switchClosed": "↑ CERRADO",
+      "switchOpen": "↓ ABIERTO"
+    },
     "info": {
       "defaultPrompt": "Haga clic en cualquier terminal para ver detalles...",
       "connRemoved": "1 conexión eliminada",

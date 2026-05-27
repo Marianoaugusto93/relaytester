@@ -1,4 +1,5 @@
 import { TERMINALS, computeTerminalPosition, buildManhattanPath, validateConnection } from "./routing.js";
+import { useTranslation } from "../i18n/useTranslation.js";
 
 export default function CampoCanvas({
   cables, fieldState, selectedOrigin, suggestedDests,
@@ -6,6 +7,7 @@ export default function CampoCanvas({
   cableColorFor, electricalGraph,
   switchSt, onSwitchToggle,
 }) {
+  const { t } = useTranslation();
   // Each phase row has a Y position (matches TERMINALS layout in routing.js).
   // For currents, each phase has 2 sub-rows (id1 + id2) controlled by a single toggle.
   const switchRows = [
@@ -56,22 +58,22 @@ export default function CampoCanvas({
 
           {/* Zone headers */}
           <text x="100" y="28" fontSize="14" fontWeight="700" textAnchor="middle" fill="#06B6D4" style={{ letterSpacing: '1.5px' }}>
-            MALETA DE TESTE
+            {t('campo.sectionsUpper.maleta')}
           </text>
           <text x="450" y="28" fontSize="14" fontWeight="700" textAnchor="middle" fill="#FFE033" style={{ letterSpacing: '1.5px' }}>
-            CHAVE DE AFERIÇÃO
+            {t('campo.sectionsUpper.chave')}
           </text>
           <text x="830" y="28" fontSize="14" fontWeight="700" textAnchor="middle" fill="#F97316" style={{ letterSpacing: '1.5px' }}>
-            RELÉ DE PROTEÇÃO
+            {t('campo.sectionsUpper.rele')}
           </text>
 
           {/* Maleta section labels - Two columns layout */}
           {/* Left column labels */}
-          <text x="80" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#9F7AEA">SAÍDA</text>
-          <text x="80" y="260" fontSize="11" fontWeight="700" textAnchor="middle" fill="#67E8F9">ENTRADA</text>
+          <text x="80" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#9F7AEA">{t('campo.sectionsUpper.binaryOut')}</text>
+          <text x="80" y="260" fontSize="11" fontWeight="700" textAnchor="middle" fill="#67E8F9">{t('campo.sectionsUpper.binaryIn')}</text>
           {/* Right column labels */}
-          <text x="160" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">CORRENTE</text>
-          <text x="160" y="385" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">TENSÃO</text>
+          <text x="160" y="65" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">{t('campo.sectionsUpper.current')}</text>
+          <text x="160" y="385" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1e88e5">{t('campo.sectionsUpper.voltage')}</text>
 
           {/* Phase row backgrounds in CHAVE zone — subtle stripes for visual grouping */}
           {switchRows.filter(r => r.kind === 'current').map(row => (
@@ -98,7 +100,7 @@ export default function CampoCanvas({
               ? `${row.phaseColor}cc`  // strong colored when UP/closed
               : '#7f1d1d';             // dark red when DOWN/open
             const borderColor = isUp ? '#4ade80' : '#f87171';
-            const statusText = isUp ? '↑ FECHADA' : '↓ ABERTA';
+            const statusText = isUp ? t('campo.hints.switchClosed') : t('campo.hints.switchOpen');
             const labelY = row.kind === 'current' ? sliderY + sliderH / 2 - 6 : sliderY + sliderH / 2 - 3;
             const statusY = row.kind === 'current' ? sliderY + sliderH / 2 + 12 : sliderY + sliderH / 2 + 10;
 
@@ -325,14 +327,14 @@ export default function CampoCanvas({
               <rect x="20" y="580" width="960" height="32" rx="4"
                     fill="#1e2129" opacity="0.95" stroke="#f97316" strokeWidth="1" />
               <text x="500" y="602" fontSize="12" textAnchor="middle" fill="#f0f0f5">
-                Origem: {selectedOrigin} · Clique no destino válido (laranja). ESC cancela.
+                {t('campo.hints.originPrompt', { tid: selectedOrigin })}
               </text>
             </g>
           )}
 
           {/* Cable count */}
           <text x="500" y="52" fontSize="11" textAnchor="middle" fill="#999">
-            {cables.length} cabos conectados · clique numa fase para abrir/fechar a chave
+            {t('campo.hints.cablesConnected', { count: cables.length })}
           </text>
         </svg>
       </div>

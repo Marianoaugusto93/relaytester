@@ -743,6 +743,41 @@
     }
   },
   "campo": {
+    "sectionsUpper": {
+      "borneira": "TERMINAL BLOCK",
+      "maleta": "TEST SUITCASE",
+      "chave": "CALIBRATION SWITCH",
+      "rele": "PROTECTION RELAY",
+      "binaryOut": "BINARY OUTPUT",
+      "binaryIn": "BINARY INPUT",
+      "analogOut": "ANALOG OUTPUTS",
+      "current": "CURRENT",
+      "voltage": "VOLTAGE",
+      "preset": "PRESETS",
+      "breaker": "BREAKER",
+      "analogIn": "ANALOG INPUTS"
+    },
+    "buttons": {
+      "clearCables": "Clear Cables",
+      "closeCb": "I CLOSE CB",
+      "borneGuide": "📖 Terminal Guide"
+    },
+    "hints": {
+      "promptStart": "Click any terminal to start a connection — double-click a cable or terminal to disconnect",
+      "selectedFromClickDest": "\"{tid}\" selected — click destination",
+      "originPrompt": "Origin: {tid} · Click valid destination (orange). ESC cancels.",
+      "cablesConnected": "{count} cables connected · click a phase to open/close the switch",
+      "connRemoved": "Connection removed",
+      "connsRemoved": "Connections removed",
+      "fcOn": "⚡ FC ON",
+      "fcOff": "FC off",
+      "fcDisabled": "Wire FC coil (TB15-TB16)",
+      "springNotLoaded": "Spring not loaded",
+      "cbAlreadyClosed": "Breaker already closed",
+      "closeBreaker": "Close breaker",
+      "switchClosed": "↑ CLOSED",
+      "switchOpen": "↓ OPEN"
+    },
     "info": {
       "defaultPrompt": "Click any terminal to see details...",
       "connRemoved": "1 connection removed",

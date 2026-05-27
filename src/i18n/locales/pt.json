@@ -743,6 +743,41 @@
     }
   },
   "campo": {
+    "sectionsUpper": {
+      "borneira": "RÉGUA DE BORNES",
+      "maleta": "MALETA DE TESTE",
+      "chave": "CHAVE DE AFERIÇÃO",
+      "rele": "RELÉ DE PROTEÇÃO",
+      "binaryOut": "SAÍDA BINÁRIA",
+      "binaryIn": "ENTRADA BINÁRIA",
+      "analogOut": "SAÍDAS ANALÓGICAS",
+      "current": "CORRENTE",
+      "voltage": "TENSÃO",
+      "preset": "PREDEFINIÇÕES",
+      "breaker": "DISJUNTOR",
+      "analogIn": "ENTRADAS ANALÓGICAS"
+    },
+    "buttons": {
+      "clearCables": "Limpar Cabos",
+      "closeCb": "I FECHAR CB",
+      "borneGuide": "📖 Guia de Bornes"
+    },
+    "hints": {
+      "promptStart": "Clique em qualquer terminal para iniciar uma conexão — duplo clique num cabo ou terminal para desconectar",
+      "selectedFromClickDest": "\"{tid}\" selecionado — clique no destino",
+      "originPrompt": "Origem: {tid} · Clique no destino válido (laranja). ESC cancela.",
+      "cablesConnected": "{count} cabos conectados · clique numa fase para abrir/fechar a chave",
+      "connRemoved": "Conexão removida",
+      "connsRemoved": "Conexões removidas",
+      "fcOn": "⚡ FC LIGADA",
+      "fcOff": "FC desligada",
+      "fcDisabled": "Ligue a bobina FC (TB15-TB16)",
+      "springNotLoaded": "Mola não carregada",
+      "cbAlreadyClosed": "Disjuntor já fechado",
+      "closeBreaker": "Fechar disjuntor",
+      "switchClosed": "↑ FECHADA",
+      "switchOpen": "↓ ABERTA"
+    },
     "info": {
       "defaultPrompt": "Clique em qualquer terminal para ver detalhes...",
       "connRemoved": "1 conexão removida",

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import BorneStatusPanel from "./BorneStatusPanel.jsx";
 import BorneGuideModal from "./BorneGuideModal.jsx";
 import { BORNE_DESCRIPTIONS } from "./BorneDescriptions.js";
+import { useTranslation } from "./i18n/useTranslation.js";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const SLOT_H=120,HANDLE_H=44,GAP=5,TOP_Y=GAP,BOT_Y=SLOT_H-HANDLE_H-GAP;
@@ -790,11 +791,12 @@ function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadWiring,trippedStageIds=[],relayProt={}}){
+  const { t } = useTranslation();
   const[switchSt,setSwitchSt]=useState(initSwitchState);
   const switchStRef=useRef(switchSt);
   const[connections,setConnections]=useState([]);
   const[pendingTid,setPendingTid]=useState(null);
-  const[infoMsg,setInfoMsg]=useState('Clique em qualquer terminal para iniciar uma conexão — duplo clique num cabo ou terminal para desconectar');
+  const[infoMsg,setInfoMsg]=useState(() => t('campo.hints.promptStart'));
   const[infoActive,setInfoActive]=useState(false);
   const[borneGuideOpen,setBorneGuideOpen]=useState(false);
   const connIdRef=useRef(0);
@@ -830,17 +832,17 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
   const tempInfo=useCallback((msg,ms=2500)=>{
     setInfoMsg(msg);setInfoActive(true);
-    setTimeout(()=>{setInfoMsg('Clique em qualquer terminal para iniciar uma conexão — duplo clique num cabo ou terminal para desconectar');setInfoActive(false);},ms);
+    setTimeout(()=>{setInfoMsg(t('campo.hints.promptStart'));setInfoActive(false);},ms);
   },[]);
 
   const onTClick=useCallback((tid)=>{
     setPendingTid(prev=>{
       if(!prev){
-        setInfoMsg(`"${tid}" selecionado — clique no destino`);setInfoActive(true);
+        setInfoMsg(t('campo.hints.selectedFromClickDest', { tid }));setInfoActive(true);
         return tid;
       }
       if(prev===tid){
-        setInfoMsg('Clique em qualquer terminal para iniciar uma conexão — duplo clique num cabo ou terminal para desconectar');setInfoActive(false);
+        setInfoMsg(t('campo.hints.promptStart'));setInfoActive(false);
         return null;
       }
       const from=prev,to=tid;
@@ -860,7 +862,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
   const onTDbl=useCallback((tid)=>{
     setPendingTid(null);
-    setConnections(c=>{const n=c.filter(x=>x.from!==tid&&x.to!==tid);if(n.length<c.length){tempInfo('Conexões removidas');}return n;});
+    setConnections(c=>{const n=c.filter(x=>x.from!==tid&&x.to!==tid);if(n.length<c.length){tempInfo(t('campo.hints.connsRemoved'));}return n;});
   },[tempInfo]);
 
   const onToggleGroup=useCallback((group)=>{
@@ -900,7 +902,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       hit.setAttribute('d',d);hit.setAttribute('fill','none');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','18');
       hit.style.pointerEvents='stroke';hit.style.cursor='pointer';
       const cid=conn.id;
-      hit.ondblclick=()=>{setConnections(c=>c.filter(x=>x.id!==cid));tempInfo('Conexão removida');};
+      hit.ondblclick=()=>{setConnections(c=>c.filter(x=>x.id!==cid));tempInfo(t('campo.hints.connRemoved'));};
       svg.appendChild(hit);
       // Cable layers
       [[darken(col,0.48),7],[col,5],['rgba(255,255,255,0.15)',2]].forEach(([stroke,sw])=>{
@@ -955,7 +957,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           onMouseEnter={(e)=>{e.target.style.boxShadow='0 8px 16px rgba(255, 180, 77, 0.4)';e.target.style.transform='translateY(-2px)'}}
           onMouseLeave={(e)=>{e.target.style.boxShadow='0 4px 12px rgba(255, 180, 77, 0.2)';e.target.style.transform='translateY(0)'}}
         >
-          📖 Guia de Bornes
+          {t('campo.buttons.borneGuide')}
         </button>
         <div style={{overflowY:'auto',maxHeight:'calc(100vh - 120px)'}}>
           <BorneStatusPanel
@@ -973,7 +975,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
         {/* RÉGUA DE BORNES */}
         <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
-          <div className="c-section-label">RÉGUA DE BORNES</div>
+          <div className="c-section-label">{t('campo.sectionsUpper.borneira')}</div>
           <div style={{display:'flex',alignItems:'flex-end',marginLeft:12}}>
             {Array.from({length:16},(_,i)=><BorneCable key={i+1} n={i+1} anilha={BORNE_ANILHAS[i]} side="top"/>)}
           </div>
@@ -988,20 +990,20 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
         {/* MALETA DE TESTE */}
         <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}>
-          <div className="c-section-label">MALETA DE TESTE</div>
+          <div className="c-section-label">{t('campo.sectionsUpper.maleta')}</div>
           <div className="maleta" style={{width:'100%'}}>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
             <div className="section-row" style={{marginBottom:8}}>
               <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                  <div className="section-title" style={{marginBottom:8}}>SAÍDA BINÁRIA</div>
+                  <div className="section-title" style={{marginBottom:8}}>{t('campo.sectionsUpper.binaryOut')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
                     {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                  <div className="section-title" style={{marginBottom:8}}>ENTRADA BINÁRIA</div>
+                  <div className="section-title" style={{marginBottom:8}}>{t('campo.sectionsUpper.binaryIn')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
                     {BI_PAIRS.map((p,i)=>(
                       <div key={p.label} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
@@ -1014,17 +1016,17 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
               </div>
             </div>
             <div className="section-row">
-              <div className="section-title">SAÍDAS ANALÓGICAS</div>
+              <div className="section-title">{t('campo.sectionsUpper.analogOut')}</div>
               <div style={{display:'flex',alignItems:'stretch',width:'100%'}}>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                  <div className="subsection-label">CORRENTE</div>
+                  <div className="subsection-label">{t('campo.sectionsUpper.current')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
                     {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
-                  <div className="subsection-label">TENSÃO</div>
+                  <div className="subsection-label">{t('campo.sectionsUpper.voltage')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
                     {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
@@ -1040,7 +1042,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
 
         {/* CHAVE DE AFERIÇÃO */}
         <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
-          <div className="c-section-label">CHAVE DE AFERIÇÃO</div>
+          <div className="c-section-label">{t('campo.sectionsUpper.chave')}</div>
           <div style={{display:'flex',alignItems:'flex-end',justifyContent:'center',gap:6,padding:'0 4px'}}>
             {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
               <div key={e.key} style={{width:42,display:'flex',justifyContent:'center'}}><CableSVG pole={e.pole} side="top"/></div>)}
@@ -1060,28 +1062,28 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       <div className="campo-sidebar">
         {/* DISJUNTOR — estado + comando de fechamento via bobina FC */}
         <div style={{width:'100%'}}>
-          <div className="c-section-label" style={{marginBottom:8}}>DISJUNTOR</div>
+          <div className="c-section-label" style={{marginBottom:8}}>{t('campo.sectionsUpper.breaker')}</div>
           <div className="bk-cmd-bar" style={{flexDirection:'column',gap:8}}>
             <div className={`bk-status-pill ${bkStatus?.state==='closed'?'on':'off'}`}>52a {bkStatus?.state==='closed'?'ON':'OFF'}</div>
             <div className={`bk-status-pill ${bkStatus?.state!=='closed'?'on':'off'}`}>52b {bkStatus?.state!=='closed'?'ON':'OFF'}</div>
             <div style={{fontSize:10,fontFamily:'monospace',color:'#555',letterSpacing:1,textAlign:'center'}}>
-              {closeCoilWired?'⚡ FC LIGADA':'FC desligada'}
+              {closeCoilWired ? t('campo.hints.fcOn') : t('campo.hints.fcOff')}
             </div>
             <button className="bk-close-campo"
               disabled={!closeCoilWired||bkStatus?.state==='closed'||!bkStatus?.spring}
-              title={!closeCoilWired?'Ligue a bobina FC (TB15-TB16)':!bkStatus?.spring?'Mola não carregada':bkStatus?.state==='closed'?'Disjuntor já fechado':'Fechar disjuntor'}
+              title={!closeCoilWired ? t('campo.hints.fcDisabled') : !bkStatus?.spring ? t('campo.hints.springNotLoaded') : bkStatus?.state==='closed' ? t('campo.hints.cbAlreadyClosed') : t('campo.hints.closeBreaker')}
               onClick={()=>onBkCommand?.('close')}>
-              I FECHAR CB
+              {t('campo.buttons.closeCb')}
             </button>
           </div>
         </div>
 
         {/* PREDEFINIÇÕES */}
         <div style={{width:'100%'}}>
-          <div className="c-section-label" style={{marginBottom:8}}>PREDEFINIÇÕES</div>
+          <div className="c-section-label" style={{marginBottom:8}}>{t('campo.sectionsUpper.preset')}</div>
           <div className="preset-bar" style={{flexDirection:'column'}}>
             {WIRING_PRESETS.map(p=><button key={p.id} className="preset-btn" onClick={()=>applyPreset(p)} style={{width:'100%'}}>{p.label}</button>)}
-            <button className="preset-btn clear" onClick={()=>setConnections([])} style={{width:'100%'}}>Limpar Cabos</button>
+            <button className="preset-btn clear" onClick={()=>setConnections([])} style={{width:'100%'}}>{t('campo.buttons.clearCables')}</button>
           </div>
         </div>
       </div>
