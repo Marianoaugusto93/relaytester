@@ -254,7 +254,19 @@
             "body": "Formato ASCII, 960 amostras/s, 8 canais analógicos: IA, IB, IC, IGS, VA, VB, VC, VN. O evento de trip está ancorado no ponto de pré-trigger de 500 ms."
           }
         ]
+      },
+      "scenarios": {
+        "label": "Cenários"
       }
+    },
+    "scenarios": {
+      "3ph-symmetrical": { "name": "Falta 3φ Simétrica" },
+      "1lg-fault": { "name": "Falta Fase-Terra" },
+      "1ll-fault": { "name": "Falta Fase-Fase" },
+      "inrush-transient": { "name": "Transitório de Inserção" },
+      "undervoltage-27": { "name": "Subtensão 27" },
+      "underfreq-81u": { "name": "Subfrequência 81U" },
+      "keyConcepts": "Conceitos-Chave"
     }
   },
   "tutorial": {

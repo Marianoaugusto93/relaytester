@@ -254,7 +254,19 @@
             "body": "ASCII format, 960 samples/s, 8 analog channels: IA, IB, IC, IGS, VA, VB, VC, VN. The trip event is anchored at the 500 ms pre-trigger point."
           }
         ]
+      },
+      "scenarios": {
+        "label": "Scenarios"
       }
+    },
+    "scenarios": {
+      "3ph-symmetrical": { "name": "3-Phase Symmetrical Fault" },
+      "1lg-fault": { "name": "Line-to-Ground Fault" },
+      "1ll-fault": { "name": "Line-to-Line Fault" },
+      "inrush-transient": { "name": "Motor Inrush Transient" },
+      "undervoltage-27": { "name": "Undervoltage 27" },
+      "underfreq-81u": { "name": "Underfrequency 81U" },
+      "keyConcepts": "Key Concepts"
     }
   },
   "tutorial": {

@@ -254,7 +254,19 @@
             "body": "Formato ASCII, 960 muestras/s, 8 canales analógicos: IA, IB, IC, IGS, VA, VB, VC, VN. El evento de disparo está anclado en el punto de pre-trigger de 500 ms."
           }
         ]
+      },
+      "scenarios": {
+        "label": "Escenarios"
       }
+    },
+    "scenarios": {
+      "3ph-symmetrical": { "name": "Falta Trifásica Simétrica" },
+      "1lg-fault": { "name": "Falta Fase-Tierra" },
+      "1ll-fault": { "name": "Falta Fase-Fase" },
+      "inrush-transient": { "name": "Transitorio de Arranque" },
+      "undervoltage-27": { "name": "Subtensión 27" },
+      "underfreq-81u": { "name": "Subfrecuencia 81U" },
+      "keyConcepts": "Conceptos Clave"
     }
   },
   "tutorial": {
