@@ -389,6 +389,50 @@ Before deploying to production:
 
 **Status**: ✅ Closed — English-only version restored and verified working
 
+---
+
+## Appendix B: Cloudflare Deployment Fixes (2026-05-28)
+
+**Issue**: Build failed on Cloudflare with error "error occurred while updating repository submodules"
+
+**Root Causes Identified**:
+1. **Invalid script references**: Newton-Raphson HTML referenced non-existent files with `.download` extension
+   - `./files/header.js.download` → didn't exist
+   - `./files/ticker.js.download` → didn't exist
+   - Actual files: `header.js`, `ticker.js`
+
+2. **Git submodule misconfiguration**: 
+   - `ProtecView/` directory was being tracked as submodule
+   - No `.gitmodules` configuration file
+   - Caused Cloudflare to fail during submodule initialization
+   - `Newton-Rapson/` directory (local copy) also interfering
+
+**Fixes Applied**:
+1. **Commit 1310778**: Fixed script file references
+   - Removed `.download` extension from script src attributes
+   - Files now correctly reference `./files/header.js` and `./files/ticker.js`
+
+2. **Commit cdf62d2**: Removed problematic directories from git tracking
+   - Ran `git rm --cached` on ProtecView/ and Newton-Rapson/
+   - Added both directories to `.gitignore`
+   - Updated `.gitignore` to exclude local development folders:
+     - `ProtecView/`
+     - `Newton-Rapson/`
+     - `src/estudos/`
+     - Screenshot PNG files
+
+**Production Setup**:
+- Newton-Raphson simulator served from `public/newton-rapson/powerflow.html` (correct location)
+- All dependencies (header.js, ticker.js) correctly referenced
+- No submodule conflicts during Cloudflare build
+
+**Build Status**: ✅ All green
+- Local build: 4.72s, 457.69 kB (117.50 kB gzip)
+- No errors or warnings
+- Ready for production deployment
+
+**Deployment Status**: ✅ Verified working on Cloudflare
+
 ### Phase 6: Advanced Features
 **Status**: ✅ COMPLETE (v2.6)
 
