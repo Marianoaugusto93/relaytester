@@ -3,7 +3,8 @@
     "campo": "Field",
     "rele": "Relay",
     "painel": "Panel",
-    "online": "Online"
+    "online": "Online",
+    "estudos": "Studies"
   },
   "topbar": {
     "subtitle": "INTEGRAL PROTECTION ENGINEERING PLATFORM"
@@ -859,5 +860,88 @@
     "buttons": {
       "save": "Save Scenario"
     }
+  },
+  "editorToolbar": {
+    "buttons": {
+      "save": "💾 Save",
+      "saveAs": "💾 Save As",
+      "export": "📥 Export",
+      "import": "📤 Import",
+      "reset": "🔄 Reset",
+      "sendToRelay": "▶️ Send to Relay"
+    },
+    "tooltips": {
+      "save": "Save scenario",
+      "saveAs": "Save as new scenario",
+      "export": "Export as JSON",
+      "import": "Import from JSON file",
+      "reset": "Clear form",
+      "sendToRelay": "Publish scenario to bus",
+      "errorPrefix": "Error:"
+    },
+    "toasts": {
+      "saved": "Scenario saved",
+      "storageFull": "Storage full (max 50)",
+      "exported": "Scenario exported",
+      "imported": "Scenario imported successfully",
+      "sentToRelay": "Scenario sent to relay"
+    },
+    "labels": {
+      "errors": "error(s)"
+    }
+  },
+  "vse": {
+    "title": "Visual Scenario Editor",
+    "sections": {
+      "phasors": "Phasors",
+      "protection": "Protection Functions",
+      "preview": "Preview"
+    },
+    "buttons": {
+      "save": "Save",
+      "export": "Export",
+      "import": "Import",
+      "reset": "Reset",
+      "sendToRelay": "Send to Relay",
+      "loadSaved": "Load Saved",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "saved": "Scenario saved",
+      "saveFailed": "Save failed (storage full?)",
+      "exported": "Exported",
+      "imported": "Imported successfully",
+      "importFailed": "Error reading file",
+      "invalidFile": "Invalid scenario file",
+      "loaded": "Scenario loaded",
+      "reset": "Editor reset",
+      "sentToRelay": "Sent to Relay via ArtifactBus"
+    },
+    "validation": {
+      "ok": "Scenario valid",
+      "fix": "Fix errors before saving"
+    },
+    "fields": {
+      "name": "Scenario Name *",
+      "namePlaceholder": "e.g. Three-Phase Fault 5 A",
+      "description": "Description",
+      "descPlaceholder": "Learning objective or notes..."
+    },
+    "activeFns": "Active Functions",
+    "noFns": "No active functions",
+    "savedScenarios": "Saved Scenarios",
+    "noSaved": "No saved scenarios."
+  },
+  "graph": {
+    "title": "R-X & TCC Visualization",
+    "subtitle": "R-X plane with Mho/Quad zones and TCC curves with coordination detection",
+    "tabs": {
+      "rxPlane": "R-X Plane",
+      "tccOverlay": "TCC Overlay"
+    },
+    "demoData": "Demo data",
+    "scenarioSource": "Scenario",
+    "operatingPoint": "Operating point",
+    "hint": "Use the Visual Scenario Editor and click \"Send to Relay\" to visualize scenario data here."
   }
 }

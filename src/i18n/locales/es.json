@@ -3,7 +3,8 @@
     "campo": "Campo",
     "rele": "Relé",
     "painel": "Panel",
-    "online": "En línea"
+    "online": "En línea",
+    "estudos": "Estudios"
   },
   "topbar": {
     "subtitle": "PLATAFORMA INTEGRAL DE INGENIERÍA DE PROTECCIÓN"
@@ -859,5 +860,88 @@
     "buttons": {
       "save": "Guardar Escenario"
     }
+  },
+  "editorToolbar": {
+    "buttons": {
+      "save": "💾 Guardar",
+      "saveAs": "💾 Guardar Como",
+      "export": "📥 Exportar",
+      "import": "📤 Importar",
+      "reset": "🔄 Restablecer",
+      "sendToRelay": "▶️ Enviar al Relé"
+    },
+    "tooltips": {
+      "save": "Guardar escenario",
+      "saveAs": "Guardar como nuevo escenario",
+      "export": "Exportar como JSON",
+      "import": "Importar desde archivo JSON",
+      "reset": "Limpiar formulario",
+      "sendToRelay": "Publicar escenario en el bus",
+      "errorPrefix": "Error:"
+    },
+    "toasts": {
+      "saved": "Escenario guardado",
+      "storageFull": "Almacenamiento lleno (máx 50)",
+      "exported": "Escenario exportado",
+      "imported": "Escenario importado correctamente",
+      "sentToRelay": "Escenario enviado al relé"
+    },
+    "labels": {
+      "errors": "error(es)"
+    }
+  },
+  "vse": {
+    "title": "Editor Visual de Escenarios",
+    "sections": {
+      "phasors": "Fasores",
+      "protection": "Funciones de Protección",
+      "preview": "Vista Previa"
+    },
+    "buttons": {
+      "save": "Guardar",
+      "export": "Exportar",
+      "import": "Importar",
+      "reset": "Resetear",
+      "sendToRelay": "Enviar al Relé",
+      "loadSaved": "Cargar Guardado",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "saved": "Escenario guardado",
+      "saveFailed": "Error al guardar (¿almacenamiento lleno?)",
+      "exported": "Exportado",
+      "imported": "Importado con éxito",
+      "importFailed": "Error al leer el archivo",
+      "invalidFile": "Archivo de escenario inválido",
+      "loaded": "Escenario cargado",
+      "reset": "Editor reiniciado",
+      "sentToRelay": "Enviado al Relé vía ArtifactBus"
+    },
+    "validation": {
+      "ok": "Escenario válido",
+      "fix": "Corrija los errores antes de guardar"
+    },
+    "fields": {
+      "name": "Nombre del Escenario *",
+      "namePlaceholder": "ej.: Falla Trifásica 5 A",
+      "description": "Descripción",
+      "descPlaceholder": "Objetivo de aprendizaje o notas..."
+    },
+    "activeFns": "Funciones Activas",
+    "noFns": "Sin funciones activas",
+    "savedScenarios": "Escenarios Guardados",
+    "noSaved": "Sin escenarios guardados."
+  },
+  "graph": {
+    "title": "Visualización R-X & TCC",
+    "subtitle": "Plano R-X con zonas Mho/Quad y curvas TCC con detección de coordinación",
+    "tabs": {
+      "rxPlane": "Plano R-X",
+      "tccOverlay": "Superposición TCC"
+    },
+    "demoData": "Datos de demostración",
+    "scenarioSource": "Escenario",
+    "operatingPoint": "Punto operativo",
+    "hint": "Use el Editor Visual de Escenarios y haga clic en \"Enviar al Relé\" para visualizar los datos del escenario aquí."
   }
 }

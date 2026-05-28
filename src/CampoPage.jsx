@@ -763,7 +763,7 @@ function BorneOpening({n,side,pending,onTClick,onTDbl}){
 
 function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
   const t=BORNE_TYPE[n];
-  const desc=BORNE_DESCRIPTIONS[n];
+  const desc=BORNE_DESCRIPTIONS?.[n];
   const tooltip=desc?`${desc.label} - ${desc.desc}`:null;
   return(
     <div className={`borne-module${isFirst?' first':''}${isLast?' last':''}${t?` t-${t}`:''}`} title={tooltip}>

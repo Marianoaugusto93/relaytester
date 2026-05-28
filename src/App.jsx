@@ -12,6 +12,7 @@ import { buildSaveContent, parseSaveFile } from "./fileIO.js";
 import { S } from "./appStyles.js";
 import { Tgl, IB } from "./widgets.jsx";
 import { HelpProvider, useHelp } from "./HelpContext.jsx";
+import { useArtifactBus } from "./estudos/context/ArtifactBus.jsx";
 const HelpModal = lazy(() => import("./HelpModal.jsx"));
 const Tutorial = lazy(() => import("./Tutorial.jsx"));
 import { LanguageProvider } from "./i18n/LanguageContext.jsx";
@@ -24,6 +25,10 @@ import SettingsPanel from "./SettingsPanel.jsx";
 import RelePage from "./RelePage.jsx";
 import TestsPage from "./TestsPage.jsx";
 const WaveformDisplay = lazy(() => import("./WaveformDisplay.jsx"));
+const EstudosPage = lazy(() => import("./estudos/EstudosPage.jsx"));
+import { BayProvider } from "./estudos/context/BayContext.jsx";
+import { ArtifactBusProvider } from "./estudos/context/ArtifactBus.jsx";
+import { AnalysisIntegrationProvider } from "./estudos/context/AnalysisIntegration.jsx";
 import use27Monitor from "./use27Monitor.js";
 import useSimulation from "./useSimulation.js";
 import { analytics } from "./analytics.js";
@@ -31,6 +36,7 @@ const AnalyticsDashboard = lazy(() => import("./AnalyticsDashboard.jsx"));
 
 function AppInner(){
   const{t}=useTranslation();
+  const bus=useArtifactBus();
   // ── State ──────────────────────────────────────────────────────────────────
   const[page,setPage]=useState(1);
   const[p,setP]=useState(defaultPhasors);const[sys,setSys]=useState(defaultSystem);
@@ -116,6 +122,24 @@ function AppInner(){
 
   // ── Page view analytics ────────────────────────────────────────────────────
   useEffect(()=>{ analytics.recordPageView(mainTab); },[mainTab]);
+
+  // ── ArtifactBus listener: Estudos → Relé presets ──────────────────────────
+  useEffect(()=>{
+    const unsub=bus.subscribe('artifact.sendToRele',(payload)=>{
+      if(payload?.protections){
+        setRelayProt(prev=>{
+          let updated={...prev};
+          Object.keys(payload.protections).forEach(fn=>{
+            updated[fn]={...prev[fn],...payload.protections[fn]};
+          });
+          return updated;
+        });
+        setMainTab('relay');
+        setEvts(ev=>[{time:nowShort(),icon:'⚡',text:'Preset enviado de Estudos',dt:''},...ev.slice(0,20)]);
+      }
+    });
+    return unsub;
+  },[bus]);
 
   // ── Breaker callback ───────────────────────────────────────────────────────
   /**
@@ -410,7 +434,7 @@ function AppInner(){
     <div className="topbar">
       <div className="tb-l"><div className="tb-ico"><svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="9" fill="#181b22"/><circle cx="18" cy="18" r="13" fill="none" stroke="#f97316" strokeWidth="1.8"/><circle cx="18" cy="18" r="9.5" fill="#0e1015"/><line x1="18" y1="5" x2="18" y2="8" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="18" y1="28" x2="18" y2="31" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="5" y1="18" x2="8" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="28" y1="18" x2="31" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 18 Q12.5 13 15 18 Q17.5 23 20 18" fill="none" stroke="#f3f4f6" strokeWidth="1.5" strokeLinecap="round"/><path d="M20 18 L22 14 L24 22 L26 16" fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div><div className="tb-t">RelayLab <span>360</span></div><div className="tb-s">{t("topbar.subtitle")}</div></div></div>
       <div className="tb-r">
-        <div className="nav-pills"><button data-tutorial-target="nav-campo" className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>{t("nav.campo")}</button><button data-tutorial-target="nav-relay" className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>{t("nav.rele")}</button><button data-tutorial-target="nav-panel" className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>{t("nav.painel")}{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button><button className={`nav-pill ${page===3?"on":""}`} onClick={()=>setPage(3)}>Testes</button></div>
+        <div className="nav-pills"><button data-tutorial-target="nav-campo" className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>{t("nav.campo")}</button><button data-tutorial-target="nav-relay" className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>{t("nav.rele")}</button><button data-tutorial-target="nav-panel" className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>{t("nav.painel")}{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button><button className={`nav-pill ${page===3?"on":""}`} onClick={()=>setPage(3)}>Testes</button><button className={`nav-pill new ${page===4?"on":""}`} onClick={()=>setPage(4)}>{t("nav.estudos")}</button></div>
         {/* Layout toggle removed - keeping legacy layout only */}
         <div className="tb-status"><div className="tb-dot"/>{t("nav.online")}</div>
         <LanguageSelector/>
@@ -458,6 +482,9 @@ function AppInner(){
 
       {/* TESTES */}
       <div className="slide-pg"><TestsPage prot={prot} relayProt={relayProt} sys={sys} rtc={rtc} rtp={rtp} runSim={runSim} stopSim={stopSim} setP={setP} setPf={setPf} setEvts={setEvts} setPfEnabled={setPfEnabled} setPfDuration={setPfDuration} tripHistory={tripHistory}/></div>
+
+      {/* ESTUDOS */}
+      <div className="slide-pg"><Suspense fallback={null}><EstudosPage mainTab={mainTab}/></Suspense></div>
     </div></div>
   </div>
   {wfModalOpen&&<div className="wf-overlay" onClick={()=>{setWfModalOpen(false);setWfSelected(null);}}>
@@ -496,5 +523,5 @@ function AppInner(){
 }
 
 export default function App(){
-  return(<LanguageProvider><HelpProvider><AppInner/></HelpProvider></LanguageProvider>);
+  return(<LanguageProvider><HelpProvider><BayProvider><ArtifactBusProvider><AnalysisIntegrationProvider><AppInner/></AnalysisIntegrationProvider></ArtifactBusProvider></BayProvider></HelpProvider></LanguageProvider>);
 }

@@ -157,7 +157,7 @@ export default function BorneGuideModal({ open, onClose }) {
               </p>
 
               {[1, 3, 5, 7].map((n) => {
-                const desc = BORNE_DESCRIPTIONS[n];
+                const desc = BORNE_DESCRIPTIONS?.[n];
                 return (
                   <div key={n} style={{
                     background: "var(--card2)",

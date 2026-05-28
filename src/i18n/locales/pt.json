@@ -3,7 +3,8 @@
     "campo": "Campo",
     "rele": "Relé",
     "painel": "Painel",
-    "online": "Online"
+    "online": "Online",
+    "estudos": "Estudos"
   },
   "topbar": {
     "subtitle": "INTEGRAL PROTECTION ENGINEERING PLATFORM"
@@ -859,5 +860,88 @@
     "buttons": {
       "save": "Salvar Cenário"
     }
+  },
+  "editorToolbar": {
+    "buttons": {
+      "save": "💾 Salvar",
+      "saveAs": "💾 Salvar Como",
+      "export": "📥 Exportar",
+      "import": "📤 Importar",
+      "reset": "🔄 Resetar",
+      "sendToRelay": "▶️ Enviar ao Relé"
+    },
+    "tooltips": {
+      "save": "Salvar cenário",
+      "saveAs": "Salvar como novo cenário",
+      "export": "Exportar como JSON",
+      "import": "Importar de arquivo JSON",
+      "reset": "Limpar formulário",
+      "sendToRelay": "Publicar cenário no barramento",
+      "errorPrefix": "Erro:"
+    },
+    "toasts": {
+      "saved": "Cenário salvo",
+      "storageFull": "Armazenamento cheio (máx 50)",
+      "exported": "Cenário exportado",
+      "imported": "Cenário importado com sucesso",
+      "sentToRelay": "Cenário enviado ao relé"
+    },
+    "labels": {
+      "errors": "erro(s)"
+    }
+  },
+  "vse": {
+    "title": "Editor Visual de Cenários",
+    "sections": {
+      "phasors": "Fasores",
+      "protection": "Funções de Proteção",
+      "preview": "Pré-visualização"
+    },
+    "buttons": {
+      "save": "Salvar",
+      "export": "Exportar",
+      "import": "Importar",
+      "reset": "Resetar",
+      "sendToRelay": "Enviar ao Relé",
+      "loadSaved": "Carregar Salvo",
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "saved": "Cenário salvo",
+      "saveFailed": "Falha ao salvar (armazenamento cheio?)",
+      "exported": "Exportado",
+      "imported": "Importado com sucesso",
+      "importFailed": "Erro ao ler o arquivo",
+      "invalidFile": "Arquivo de cenário inválido",
+      "loaded": "Cenário carregado",
+      "reset": "Editor resetado",
+      "sentToRelay": "Enviado ao Relé via ArtifactBus"
+    },
+    "validation": {
+      "ok": "Cenário válido",
+      "fix": "Corrija os erros antes de salvar"
+    },
+    "fields": {
+      "name": "Nome do Cenário *",
+      "namePlaceholder": "ex.: Falta Trifásica 5 A",
+      "description": "Descrição",
+      "descPlaceholder": "Objetivo de aprendizagem ou notas..."
+    },
+    "activeFns": "Funções Ativas",
+    "noFns": "Nenhuma função ativa",
+    "savedScenarios": "Cenários Salvos",
+    "noSaved": "Nenhum cenário salvo."
+  },
+  "graph": {
+    "title": "Visualização R-X & TCC",
+    "subtitle": "Plano R-X com zonas Mho/Quad e curvas TCC com detecção de coordenação",
+    "tabs": {
+      "rxPlane": "Plano R-X",
+      "tccOverlay": "Sobreposição TCC"
+    },
+    "demoData": "Dados de demonstração",
+    "scenarioSource": "Cenário",
+    "operatingPoint": "Ponto operativo",
+    "hint": "Use o Editor Visual de Cenários e clique em \"Enviar ao Relé\" para visualizar os dados do cenário aqui."
   }
 }

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "./i18n/useTranslation.js";
 import { mainTabs } from "./defaults.js";
 import InjectionBand from "./relay/InjectionBand.jsx";
 import MeasuresPanel from "./relay/MeasuresPanel.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
+import { useArtifactBus } from "./estudos/context/ArtifactBus.jsx";
 
 export default function RelePage({
   // phasors
@@ -36,7 +37,21 @@ export default function RelePage({
   onOpenAnalytics,
 }) {
   const { t } = useTranslation();
+  const bus = useArtifactBus();
   const [activeReleTab, setActiveReleTab] = useState("relay");
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    const unsub = bus.subscribe("artifact.sendToRele", (payload) => {
+      setToast({
+        message: "Preset enviado de Estudos · " + (payload.faultType || "Falta"),
+        timeout: 3000,
+      });
+      const tid = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(tid);
+    });
+    return unsub;
+  }, [bus]);
 
   // Map tab IDs to labels for the top tabs row
   const releTabs = mainTabs;
@@ -147,9 +162,46 @@ export default function RelePage({
         </div>
 
       </div>
+
+      {/* Toast notification for Estudos preset */}
+      {toast && (
+        <div style={toastStyles.root}>
+          <div style={toastStyles.message}>
+            <span style={toastStyles.icon}>⚡</span>
+            {toast.message}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const toastStyles = {
+  root: {
+    position: "fixed",
+    bottom: 20,
+    left: "50%",
+    transform: "translateX(-50%)",
+    zIndex: 3000,
+    animation: "slideUp .3s ease-out",
+  },
+  message: {
+    padding: "10px 16px",
+    background: "rgba(14,165,233,0.9)",
+    color: "#fff",
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 600,
+    fontFamily: "var(--fm)",
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+  },
+  icon: {
+    fontSize: 14,
+  },
+};
 
 // ── Vertical function rail (110px) shown only in Relay Settings tab ────────────
 const FUNC_LABELS = {

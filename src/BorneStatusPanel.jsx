@@ -16,7 +16,7 @@ export default function BorneStatusPanel({
 
     // Saídas Binárias (BO3-BO6)
     // BO3 ativa se algum stage de sobrecorrente fase A dispara (50, 51)
-    active[1] = active[2] = trippedStageIds.some(s => s.startsWith("50") || s.startsWith("51")) && !s.startsWith("50N") && !s.startsWith("51N");
+    active[1] = active[2] = trippedStageIds.some(s => (s.startsWith("50") || s.startsWith("51")) && !s.startsWith("50N") && !s.startsWith("51N"));
     active[3] = active[4] = trippedStageIds.some(s => s.startsWith("50N") || s.startsWith("51N"));
     active[5] = active[6] = trippedStageIds.some(s => s.startsWith("47"));
     active[7] = active[8] = trippedStageIds.some(s => s.startsWith("81U"));

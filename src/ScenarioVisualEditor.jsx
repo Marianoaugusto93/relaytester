@@ -3,6 +3,7 @@ import { useTranslation } from "./i18n/useTranslation.js";
 import { saveCustomScenario } from "./scenarios/customScenarios.js";
 import { calcTheoreticalTripTime, calc51NTheoreticalTripTime, get50TheoreticalTime, get50NTheoreticalTime, toRect, fromRect } from "./protection.js";
 import { defaultProtections } from "./defaults.js";
+import { CURVE_OPTIONS } from "./estudos/constants/curves.js";
 
 // Protection functions available in the editor
 const EDITOR_FUNCTIONS = [
@@ -18,17 +19,7 @@ const EDITOR_FUNCTIONS = [
   { id: "81",    label: "81",    name: "Sub / Sobrefrequência" },
 ];
 
-const CURVE_OPTIONS = [
-  "IEC - Standard Inverse",
-  "IEC - Very Inverse",
-  "IEC - Extremely Inverse",
-  "IEC - Long-Time Inverse",
-  "US - Inverse",
-  "US - Very Inverse",
-  "US - Extremely Inverse",
-  "IEEE - Moderately Inverse",
-  "Tempo Definido",
-];
+export const CURVE_OPTIONS_LEGACY = CURVE_OPTIONS;
 
 // Compute zero-sequence current magnitude from three phasors
 function computeI0(currents) {

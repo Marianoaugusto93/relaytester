@@ -86,6 +86,26 @@ export const TOOLS = [
     available: true,
     sprint: 1,
   },
+  {
+    id: "scenario-builder",
+    name: "Editor Visual de Cenários",
+    category: "Cenários",
+    complexity: 2,
+    icon: "edit",
+    description: "Criar e validar cenários de falta com diagrama fasorial interativo",
+    available: true,
+    sprint: 10,
+  },
+  {
+    id: "graph-viz",
+    name: "Visualização R-X & TCC",
+    category: "Coordenação",
+    complexity: 3,
+    icon: "chart",
+    description: "Plano R-X com zonas Mho/Quad e curvas TCC com detecção de coordenação",
+    available: true,
+    sprint: 10,
+  },
 ];
 
 /**
