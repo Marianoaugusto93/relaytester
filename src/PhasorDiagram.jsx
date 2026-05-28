@@ -101,11 +101,11 @@ export default function PhasorDiagram({onClose,p,pf,pfMode,setPfMode,phasorVis,s
               </div>
               {(balI==="balanced"?["Ia"]:["Ia","Ib","Ic"]).map(k=>{const d=pfMode==="prefault"?pf.currents[k]:p.currents[k];return(
                 <div key={k} className="pd-row">
-                  <div className="pd-chk" style={{background:phasorVis[k]?COLORS[k]:"transparent",borderColor:COLORS[k]}} onClick={()=>setPhasorVis(v=>({...v,[k]:!v[k]}))}>{phasorVis[k]?"✓":""}</div>
+                  <div className="pd-chk" style={{background:phasorVis[k]?COLORS[k]:"transparent",borderColor:COLORS[k]}} onClick={()=>setPhasorVis(v=>({...v,[k]:!v[k]}))} role="checkbox" aria-checked={phasorVis[k]?"true":"false"} tabIndex={0} onKeyDown={(e)=>{if(e.key===" "||e.key==="Enter"){setPhasorVis(v=>({...v,[k]:!v[k]}));e.preventDefault()}}} aria-label={`${k} visibility toggle`}></div>
                   <span className="pd-lbl" style={{color:COLORS[k]}}>{k}{balI==="balanced"?" (ref)":""}</span>
-                  <input type="number" className="pd-inp" value={d.mag} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("currents",k,"mag",v):uP("currents",k,"mag",v)}}/>
+                  <input type="number" className="pd-inp" aria-label={`${k} magnitude in amperes`} value={d.mag} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("currents",k,"mag",v):uP("currents",k,"mag",v)}}/>
                   <span className="pd-u">A</span>
-                  <input type="number" className="pd-inp pd-ang" value={d.ang} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("currents",k,"ang",v):uP("currents",k,"ang",v)}}/>
+                  <input type="number" className="pd-inp pd-ang" aria-label={`${k} angle in degrees`} value={d.ang} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("currents",k,"ang",v):uP("currents",k,"ang",v)}}/>
                   <span className="pd-u">°</span>
                 </div>)})}
               {balI==="balanced"&&["Ib","Ic"].map(k=>{const d=pfMode==="prefault"?pf.currents[k]:p.currents[k];return(
@@ -125,11 +125,11 @@ export default function PhasorDiagram({onClose,p,pf,pfMode,setPfMode,phasorVis,s
               </div>
               {(balV==="balanced"?["Va"]:["Va","Vb","Vc"]).map(k=>{const d=pfMode==="prefault"?pf.voltages[k]:p.voltages[k];return(
                 <div key={k} className="pd-row">
-                  <div className="pd-chk" style={{background:phasorVis[k]?COLORS[k]:"transparent",borderColor:COLORS[k]}} onClick={()=>setPhasorVis(v=>({...v,[k]:!v[k]}))}>{phasorVis[k]?"✓":""}</div>
+                  <div className="pd-chk" style={{background:phasorVis[k]?COLORS[k]:"transparent",borderColor:COLORS[k]}} onClick={()=>setPhasorVis(v=>({...v,[k]:!v[k]}))} role="checkbox" aria-checked={phasorVis[k]?"true":"false"} tabIndex={0} onKeyDown={(e)=>{if(e.key===" "||e.key==="Enter"){setPhasorVis(v=>({...v,[k]:!v[k]}));e.preventDefault()}}} aria-label={`${k} visibility toggle`}></div>
                   <span className="pd-lbl" style={{color:COLORS[k]}}>{k}{balV==="balanced"?" (ref)":""}</span>
-                  <input type="number" className="pd-inp" value={d.mag} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("voltages",k,"mag",v):uP("voltages",k,"mag",v)}}/>
+                  <input type="number" className="pd-inp" aria-label={`${k} magnitude in volts`} value={d.mag} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("voltages",k,"mag",v):uP("voltages",k,"mag",v)}}/>
                   <span className="pd-u">V</span>
-                  <input type="number" className="pd-inp pd-ang" value={d.ang} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("voltages",k,"ang",v):uP("voltages",k,"ang",v)}}/>
+                  <input type="number" className="pd-inp pd-ang" aria-label={`${k} angle in degrees`} value={d.ang} onChange={e=>{const v=parseFloat(e.target.value)||0;pfMode==="prefault"?uPf("voltages",k,"ang",v):uP("voltages",k,"ang",v)}}/>
                   <span className="pd-u">°</span>
                 </div>)})}
               {balV==="balanced"&&["Vb","Vc"].map(k=>{const d=pfMode==="prefault"?pf.voltages[k]:p.voltages[k];return(

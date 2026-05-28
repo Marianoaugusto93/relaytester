@@ -114,29 +114,29 @@ export default function CustomScenarioBuilder({ prot, outMatrix, inMatrix, apply
         <div className="cs-form" role="dialog" aria-modal="true" aria-labelledby="csb-title" onKeyDown={handleKeyDown}>
           <div id="csb-title" style={{fontSize:13,fontWeight:700,marginBottom:12,color:"var(--tx)"}}>{editId ? t("customScenarios.updateBtn") : t("customScenarios.saveBtn")}</div>
           <div className="cs-field">
-            <label>{t("customScenarios.nameLabel")}</label>
-            <input className="cs-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("customScenarios.namePlaceholder")} maxLength={60} />
+            <label htmlFor="cs-name">{t("customScenarios.nameLabel")}</label>
+            <input id="cs-name" className="cs-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("customScenarios.namePlaceholder")} maxLength={60} />
           </div>
           <div className="cs-field">
-            <label>{t("customScenarios.descLabel")}</label>
-            <textarea className="cs-textarea" value={desc} onChange={e => setDesc(e.target.value)} placeholder={t("customScenarios.descPlaceholder")} rows={2} />
+            <label htmlFor="cs-desc">{t("customScenarios.descLabel")}</label>
+            <textarea id="cs-desc" className="cs-textarea" value={desc} onChange={e => setDesc(e.target.value)} placeholder={t("customScenarios.descPlaceholder")} rows={2} />
           </div>
           <div className="cs-field">
-            <label>{t("customScenarios.diffLabel")}</label>
-            <div className="cs-diff">
+            <label id="cs-diff-label">{t("customScenarios.diffLabel")}</label>
+            <div className="cs-diff" role="group" aria-labelledby="cs-diff-label">
               {["Beginner", "Intermediate", "Advanced"].map(d => (
-                <button key={d} className={`cs-diff-btn ${diffClass(d)} ${diff === d ? "on" : ""}`} onClick={() => setDiff(d)}>{d}</button>
+                <button key={d} className={`cs-diff-btn ${diffClass(d)} ${diff === d ? "on" : ""}`} onClick={() => setDiff(d)} aria-pressed={diff === d}>{d}</button>
               ))}
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
             <div className="cs-field">
-              <label>{t("customScenarios.expTripLabel")}</label>
-              <input className="cs-input" value={expTrip} onChange={e => setExpTrip(e.target.value)} placeholder={t("customScenarios.expTripPlaceholder")} />
+              <label htmlFor="cs-trip">{t("customScenarios.expTripLabel")}</label>
+              <input id="cs-trip" className="cs-input" value={expTrip} onChange={e => setExpTrip(e.target.value)} placeholder={t("customScenarios.expTripPlaceholder")} />
             </div>
             <div className="cs-field">
-              <label>{t("customScenarios.expTimeLabel")}</label>
-              <input className="cs-input" type="number" step="0.01" min="0" value={expTime} onChange={e => setExpTime(e.target.value)} placeholder={t("customScenarios.expTimePlaceholder")} />
+              <label htmlFor="cs-time">{t("customScenarios.expTimeLabel")}</label>
+              <input id="cs-time" className="cs-input" type="number" step="0.01" min="0" value={expTime} onChange={e => setExpTime(e.target.value)} placeholder={t("customScenarios.expTimePlaceholder")} />
             </div>
           </div>
           <div className="cs-snapshot">

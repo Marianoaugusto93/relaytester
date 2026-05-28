@@ -54,10 +54,11 @@ export default function SavePresetModal({ onSave, onCancel, cables }) {
         <h3 id="spm-title" style={{ margin: "0 0 16px 0", color: "#fff" }}>Salvar como Preset</h3>
 
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
+          <label htmlFor="spm-name" style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
             Nome *
           </label>
           <input
+            id="spm-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -76,10 +77,11 @@ export default function SavePresetModal({ onSave, onCancel, cables }) {
         </div>
 
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
+          <label htmlFor="spm-desc" style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
             Descrição
           </label>
           <textarea
+            id="spm-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Descrição opcional do preset"
@@ -99,10 +101,11 @@ export default function SavePresetModal({ onSave, onCancel, cables }) {
         </div>
 
         <div style={{ marginBottom: "12px" }}>
-          <label style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
+          <label htmlFor="spm-tags" style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>
             Tags (separadas por vírgula)
           </label>
           <input
+            id="spm-tags"
             type="text"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
