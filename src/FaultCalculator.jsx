@@ -66,8 +66,9 @@ export default function FaultCalculator({sys,onApply,onClose}){
   const res=useMemo(()=>{try{return calcFaultPhasors({type,Vf,Z1r,Z1i,Z0r,Z0i,Rf})}catch{return null}},[type,Vf,Z1r,Z1i,Z0r,Z0i,Rf]);
   const preFaultP={currents:{Ia:{mag:0,ang:0},Ib:{mag:0,ang:-120},Ic:{mag:0,ang:120}},voltages:{Va:{mag:Vf,ang:0},Vb:{mag:Vf,ang:-120},Vc:{mag:Vf,ang:120}}};
   const fmtC=(v,u)=><span style={{color:"var(--orange)",fontFamily:"var(--fm)",fontSize:11}}>{v} {u}</span>;
-  return(<div className="wf-overlay" onClick={onClose}><div className="wf-modal" style={{width:500,maxWidth:"96vw"}} onClick={e=>e.stopPropagation()}>
-    <div className="wf-title" style={{fontSize:15,letterSpacing:1,textAlign:"left",color:"var(--lav)"}}>⚡ Calculador de Falta</div>
+  const handleKeyDown=(e)=>{if(e.key==="Escape")onClose()};
+  return(<div className="wf-overlay" onClick={onClose}><div className="wf-modal" style={{width:500,maxWidth:"96vw"}} onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="fc-title" onKeyDown={handleKeyDown}>
+    <div id="fc-title" className="wf-title" style={{fontSize:15,letterSpacing:1,textAlign:"left",color:"var(--lav)"}}>⚡ Calculador de Falta</div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
       <div><div style={{fontSize:9,color:"var(--tx3)",marginBottom:4,fontWeight:700,letterSpacing:1}}>TIPO DE FALTA</div>
         <div style={{display:"flex",flexWrap:"wrap",gap:4}}>{FC_TYPES.map(t=><button key={t} onClick={()=>setType(t)} style={{padding:"4px 8px",borderRadius:6,border:`1px solid ${t===type?"var(--lav)":"var(--bdr)"}`,background:t===type?"rgba(196,181,253,.15)":"var(--card2)",color:t===type?"var(--lav)":"var(--tx3)",fontSize:10,fontWeight:700,cursor:"pointer"}}>{t}</button>)}</div>

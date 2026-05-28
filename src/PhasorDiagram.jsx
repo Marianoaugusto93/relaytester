@@ -63,9 +63,9 @@ export default function PhasorDiagram({onClose,p,pf,pfMode,setPfMode,phasorVis,s
 
   return(
     <div className="pd-overlay" onClick={onClose}>
-      <div className="pd-modal" onClick={e=>e.stopPropagation()}>
+      <div className="pd-modal" onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="pd-title" onKeyDown={(e)=>{if(e.key==="Escape")onClose()}}>
         <div className="pd-header">
-          <div className="pd-title">Phasor Diagram</div>
+          <div id="pd-title" className="pd-title">Phasor Diagram</div>
           <div className="pd-mode">{pfMode==="prefault"?"PRE-FAULT":"FAULT"}</div>
           <button className="pd-close" onClick={onClose}>✕</button>
         </div>
