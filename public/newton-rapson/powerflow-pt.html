@@ -529,9 +529,9 @@
                 </div>
             </div>
         </div><div class="container">
-  <h1>Simulador de Fluxo de Potência <span style="font-size:13px; font-weight:400; color:#6e6e73;">v1.0</span></h1>
+  <h1>Power Flow Simulator <span style="font-size:13px; font-weight:400; color:#6e6e73;">v1.0</span></h1>
   <div class="model-name-row" style="margin-bottom:6px;">
-    <input type="text" id="model-name" value="8-bus Newton-Raphson power flow" placeholder="Modelo sem título — click here to name it" style="font-size:18px; font-weight:500; color:#1d1d1f; border:none; background:transparent;
+    <input type="text" id="model-name" value="8-bus Newton-Raphson power flow" placeholder="Untitled model — click here to name it" style="font-size:18px; font-weight:500; color:#1d1d1f; border:none; background:transparent;
              padding:2px 6px; width:100%; max-width:680px; border-radius:4px;
              font-family:inherit; transition: background 0.3s, box-shadow 0.3s;" title="Name of this model — appears on exported animations and in saved JSON">
   </div>
@@ -541,22 +541,22 @@
 
     <div class="panel">
       <div id="toolbar" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #e5e5ea;">
-        <strong style="font-size:12px; color:#6e6e73; margin-right:4px;">Ferramenta:</strong>
+        <strong style="font-size:12px; color:#6e6e73; margin-right:4px;">Tool:</strong>
         <button class="tool active" data-tool="select">Select / move</button>
         <button class="tool" data-tool="pan" title="Drag to pan the canvas (or hold Space and drag)">Pan</button>
         <button class="tool" data-tool="bus">Adicionar Barra</button>
-        <button class="tool" data-tool="gen">Adicionar Gerador</button>
+        <button class="tool" data-tool="gen">Add generator</button>
         <button class="tool" data-tool="line">Adicionar Linha</button>
         <button class="tool" data-tool="xfmr">Adicionar Transformador</button>
         <button class="tool" data-tool="pst" title="Add a phase-shifting transformer. Click two buses to connect them; a default phase shift of 5° is applied (edit in the Transformers table afterward).">Adicionar Transformador com Deslocamento de Fase</button>
-        <button class="tool" data-tool="load" title="Click a bus to add a load to it (or update its existing load value via prompt).">Adicionar Carga</button>
-        <button class="tool" data-tool="cap" title="Click a bus to add a shunt capacitor to it (or update its existing value via prompt).">Adicionar Capacitor</button>
-        <button class="tool" data-tool="reactor" title="Click a bus to add a shunt reactor to it (or update its existing value via prompt).">Adicionar Reator</button>
-        <button class="tool" data-tool="delete">Deletar</button>
+        <button class="tool" data-tool="load" title="Click a bus to add a load to it (or update its existing load value via prompt).">Add Load</button>
+        <button class="tool" data-tool="cap" title="Click a bus to add a shunt capacitor to it (or update its existing value via prompt).">Add Shunt Cap</button>
+        <button class="tool" data-tool="reactor" title="Click a bus to add a shunt reactor to it (or update its existing value via prompt).">Add Shunt Reactor</button>
+        <button class="tool" data-tool="delete">Excluir</button>
         <span style="flex:1;"></span>
         <button id="btn-newmodel" title="Start with an empty canvas">Novo Modelo</button>
-        <button id="btn-loaddemo8" title="Load the small 8-bus demo (slack + PV gen, three transformers, one PST, parallel transmission, mixed loads)">8 Demo 8-barras</button>
-        <button id="btn-loaddemo40" title="Load the larger 40-bus demo (three regions at 345/138/13.8 kV, multiple generators, inter-area PST, voltage support)">40 Demo 8-barras</button>
+        <button id="btn-loaddemo8" title="Load the small 8-bus demo (slack + PV gen, three transformers, one PST, parallel transmission, mixed loads)">Demo com 8 Barras</button>
+        <button id="btn-loaddemo40" title="Load the larger 40-bus demo (three regions at 345/138/13.8 kV, multiple generators, inter-area PST, voltage support)">40 Bus Demo</button>
         <button id="btn-savejson">Salvar JSON</button>
         <button id="btn-loadjson">Carregar JSON</button>
         <button id="btn-sharelink" title="Generate a shareable URL with the model state encoded in the link">Compartilhar Link</button>
@@ -565,7 +565,7 @@
       </div>
       <div id="tool-hint" style="font-size:12px; color:#6e6e73; margin-bottom:6px;">Drag any bus or label to reposition it. Click a transformer to select it, then press R to rotate it. Right-click a bus to edit its type. Use the wheel to zoom; use the Pan tool or hold Space and drag to pan the canvas. After clicking the diagram, arrow keys pan (or nudge a selected bus); +/− zoom; 0 resets; F fits.</div>
       <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; font-size:12px;">
-        <span style="color:#6e6e73;">Visualização:</span>
+        <span style="color:#6e6e73;">View:</span>
         <button class="tool" id="btn-zoomin" title="Zoom in (or wheel up)" style="padding:2px 8px;">+</button>
         <button class="tool" id="btn-zoomout" title="Zoom out (or wheel down)" style="padding:2px 8px;">−</button>
         <button class="tool" id="btn-zoomfit" title="Fit to content" style="padding:2px 8px;">Fit</button>
@@ -579,18 +579,18 @@
            Buttons share class="tool" and data-tool with the normal toolbar so
            setTool() keeps active-state in sync across both toolbars automatically. -->
       <div id="fs-toolbar">
-        <strong style="font-size:12px; color:#6e6e73; margin-right:4px; white-space:nowrap;">Ferramenta:</strong>
+        <strong style="font-size:12px; color:#6e6e73; margin-right:4px; white-space:nowrap;">Tool:</strong>
         <button class="tool active" data-tool="select">Select / move</button>
         <button class="tool" data-tool="pan" title="Drag to pan the canvas (or hold Space and drag)">Pan</button>
         <button class="tool" data-tool="bus">Adicionar Barra</button>
-        <button class="tool" data-tool="gen">Adicionar Gerador</button>
+        <button class="tool" data-tool="gen">Add generator</button>
         <button class="tool" data-tool="line">Adicionar Linha</button>
         <button class="tool" data-tool="xfmr">Adicionar Transformador</button>
         <button class="tool" data-tool="pst" title="Add a phase-shifting transformer — click from-bus then to-bus; default phase shift 5°">Add PST</button>
-        <button class="tool" data-tool="load" title="Click a bus to add a load to it (or update its existing load value via prompt).">Adicionar Carga</button>
-        <button class="tool" data-tool="cap" title="Click a bus to add a shunt capacitor to it (or update its existing value via prompt).">Adicionar Capacitor</button>
-        <button class="tool" data-tool="reactor" title="Click a bus to add a shunt reactor to it (or update its existing value via prompt).">Adicionar Reator</button>
-        <button class="tool" data-tool="delete">Deletar</button>
+        <button class="tool" data-tool="load" title="Click a bus to add a load to it (or update its existing load value via prompt).">Add Load</button>
+        <button class="tool" data-tool="cap" title="Click a bus to add a shunt capacitor to it (or update its existing value via prompt).">Add Shunt Cap</button>
+        <button class="tool" data-tool="reactor" title="Click a bus to add a shunt reactor to it (or update its existing value via prompt).">Add Shunt Reactor</button>
+        <button class="tool" data-tool="delete">Excluir</button>
       </div>
       <svg id="diagram" viewBox="-28.195207639669462 20.712590313281225 947.8260869565219 541.6149068322981" tabindex="0"><defs>
     <marker id="arrP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -606,7 +606,7 @@
         <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;"><input type="radio" name="dispmode" value="current"> Current (A)</label>
         <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;"><input type="radio" name="dispmode" value="loading"> Loading (% of rating)</label>
         <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;"><input type="radio" name="dispmode" value="voltage"> Mapa de Calor de Tensão</label>
-        <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;"><input type="radio" name="dispmode" value="angle"> Bus angle heatmap</label>
+        <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer;"><input type="radio" name="dispmode" value="angle"> Mapa de Calor de Ângulo</label>
       </div>
       <div id="label-toggle-panel">
         <span class="toggle-title">Show / Hide Diagram Labels
@@ -851,21 +851,21 @@
                 <tr><td><strong>Select / move</strong></td><td>Default tool. Click to select elements, drag to reposition buses/labels.</td></tr>
                 <tr><td><strong>Pan</strong></td><td>Drag anywhere to scroll the canvas. Same as holding Space.</td></tr>
                 <tr><td><strong>Adicionar Barra</strong></td><td>Click in empty diagram space to create a new PQ bus.</td></tr>
-                <tr><td><strong>Adicionar Gerador</strong></td><td>Click in empty space to create a new PV bus with a generator.</td></tr>
+                <tr><td><strong>Add generator</strong></td><td>Click in empty space to create a new PV bus with a generator.</td></tr>
                 <tr><td><strong>Adicionar Linha</strong></td><td>Click a from-bus, then click a to-bus to connect them with a transmission line.</td></tr>
                 <tr><td><strong>Adicionar Transformador</strong></td><td>Click a from-bus, then click a to-bus to add a transformer between them.</td></tr>
                 <tr><td><strong>Adicionar Transformador com Deslocamento de Fase</strong></td><td>Click two buses to connect them with a PST (default 5° shift applied).</td></tr>
-                <tr><td><strong>Adicionar Carga</strong></td><td>Click a bus to attach a load (prompted for MW and MVAR values).</td></tr>
-                <tr><td><strong>Adicionar Capacitor</strong></td><td>Click a bus to attach a capacitor bank (prompted for MVAR).</td></tr>
-                <tr><td><strong>Adicionar Reator</strong></td><td>Click a bus to attach a reactor (prompted for MVAR).</td></tr>
-                <tr><td><strong>Deletar</strong></td><td>Click any element to remove it. Buses, branches, loads, caps, reactors, generators — all deletable. Prompts for confirmation.</td></tr>
+                <tr><td><strong>Add Load</strong></td><td>Click a bus to attach a load (prompted for MW and MVAR values).</td></tr>
+                <tr><td><strong>Add Shunt Cap</strong></td><td>Click a bus to attach a capacitor bank (prompted for MVAR).</td></tr>
+                <tr><td><strong>Add Shunt Reactor</strong></td><td>Click a bus to attach a reactor (prompted for MVAR).</td></tr>
+                <tr><td><strong>Excluir</strong></td><td>Click any element to remove it. Buses, branches, loads, caps, reactors, generators — all deletable. Prompts for confirmation.</td></tr>
               </tbody>
             </table>
             <h4>Model management buttons (right side of toolbar)</h4>
             <ul>
               <li><strong>Novo Modelo</strong> — clears everything and starts with a blank canvas.</li>
-              <li><strong>8 Demo 8-barras</strong> — loads a small system (slack + PV gen, three transformers, parallel transmission, mixed loads).</li>
-              <li><strong>40 Demo 8-barras</strong> — loads a three-region grid at 345/138/13.8 kV with multiple generators, a PST, and distributed reactive support.</li>
+              <li><strong>Demo com 8 Barras</strong> — loads a small system (slack + PV gen, three transformers, parallel transmission, mixed loads).</li>
+              <li><strong>40 Bus Demo</strong> — loads a three-region grid at 345/138/13.8 kV with multiple generators, a PST, and distributed reactive support.</li>
               <li><strong>Salvar JSON</strong> — downloads the model as a .json file to your computer.</li>
               <li><strong>Carregar JSON</strong> — opens a previously saved .json model file.</li>
               <li><strong>Compartilhar Link</strong> — encodes the entire model into a URL hash; anyone clicking the URL sees your exact case.</li>
@@ -1096,7 +1096,7 @@
               <li><strong>Current (A)</strong> — branch labels show the current magnitude in amperes at each end of the branch, computed from |I| = |S| / V converted to amps using each bus's base kV (I_A = I_pu × S_base / [√3 × V_base_LL]). For a transmission line both ends carry essentially the same current; for a transformer the two ends differ by the turns ratio (HV side has lower amps, LV side has higher amps). This is the view a relay engineer or protection settings person works in — gear is rated and CT-tapped in amps, not MVA. Equipment thermal limits are fundamentally current limits; MVA is just a convenient nameplate at 1.0 pu voltage.</li>
               <li><strong>Loading (% of rating)</strong> — branches recolor by % of their MVA rating: green below 50%, light green 50–80%, amber 80–100%, red above 100%. Useful for spotting overloads at a glance. <em>Caveat:</em> equipment ratings are fundamentally current-based (thermal limits on conductor or winding heat dissipation), and the MVA rating is only equivalent to the current rating at 1.0 pu voltage. At depressed voltage the same nameplate MVA corresponds to a higher current — a transformer reading 100% MVA loading at 0.93 pu is actually carrying about 108% of its rated amps. For a true thermal check at low voltage, switch to the Current (A) display mode and compare against the equipment's nameplate amp rating.</li>
               <li><strong>Mapa de Calor de Tensão</strong> — bus rectangles recolor by |V| in pu. Diverging blue→white→red scale centered at 1.0 pu. The two halves are scaled independently so the worst-low bus always saturates blue and the worst-high bus always saturates red. Legend at bottom-left of the diagram.</li>
-              <li><strong>Bus angle heatmap</strong> — bus rectangles recolor by θ in degrees. Diverging purple→white→orange centered at 0° (slack reference). Same independent-half scaling.</li>
+              <li><strong>Mapa de Calor de Ângulo</strong> — bus rectangles recolor by θ in degrees. Diverging purple→white→orange centered at 0° (slack reference). Same independent-half scaling.</li>
             </ul>
           </div>
         </details>
@@ -6121,8 +6121,8 @@ function attachDiagramHandlers() {
         const hasSlack = buses.some(bb => bb.type === 'slack');
         const defaultChoice = hasSlack ? 'pv' : 'slack';
         const promptMsg = hasSlack
-          ? `Adicionar Gerador to B${id}: enter "slack", "pv", or "pq".\n(A slack bus already exists — choosing slack will demote the current one to PV.)`
-          : `Adicionar Gerador to B${id}: enter "slack", "pv", or "pq".\n(No slack bus yet — slack is recommended.)`;
+          ? `Add generator to B${id}: enter "slack", "pv", or "pq".\n(A slack bus already exists — choosing slack will demote the current one to PV.)`
+          : `Add generator to B${id}: enter "slack", "pv", or "pq".\n(No slack bus yet — slack is recommended.)`;
         const choice = (prompt(promptMsg, defaultChoice) || '').toLowerCase().trim();
         if (choice !== 'slack' && choice !== 'pv' && choice !== 'pq') return;
         if (choice === 'slack' && hasSlack) {
@@ -6226,7 +6226,7 @@ function attachDiagramHandlers() {
         runSolve();
       }
     }
-    // Deletar mode: no mousedown action — all deletion is handled by svg.onclick
+    // Excluir mode: no mousedown action — all deletion is handled by svg.onclick
     // below. Critically, we must NOT call evt.preventDefault() here: per the
     // W3C Pointer Events spec (implemented by Chromium/Chrome), cancelling the
     // default action of pointerdown/mousedown suppresses the subsequent click
@@ -6372,7 +6372,7 @@ function attachDiagramHandlers() {
     }
     if (branchHit && branchHit.dataset.bridx != null) {
       const idx = parseInt(branchHit.dataset.bridx, 10);
-      if (branches[idx] && confirm(`Deletar branch ${branches[idx].name}?`)) deleteBranch(idx);
+      if (branches[idx] && confirm(`Excluir branch ${branches[idx].name}?`)) deleteBranch(idx);
       return;
     }
     if (labelHit) {
@@ -6388,18 +6388,18 @@ function attachDiagramHandlers() {
       }
       if (kind === 'bus') {
         const busid = parseInt(id, 10);
-        if (confirm(`Deletar B${busid} and all branches connected to it?`)) deleteBus(busid);
+        if (confirm(`Excluir B${busid} and all branches connected to it?`)) deleteBus(busid);
         return;
       }
       if (kind === 'branch') {
         const idx = branches.findIndex(b => b.name === id);
-        if (idx >= 0 && confirm(`Deletar branch ${branches[idx].name}?`)) deleteBranch(idx);
+        if (idx >= 0 && confirm(`Excluir branch ${branches[idx].name}?`)) deleteBranch(idx);
         return;
       }
     }
     if (busHit && busHit.dataset.busid) {
       const id = parseInt(busHit.dataset.busid, 10);
-      if (confirm(`Deletar B${id} and all branches connected to it?`)) deleteBus(id);
+      if (confirm(`Excluir B${id} and all branches connected to it?`)) deleteBus(id);
       return;
     }
     // If we got here, the user clicked somewhere that isn't a deletable element.
@@ -6408,10 +6408,10 @@ function attachDiagramHandlers() {
     if (status) {
       const prevText = status.textContent;
       const prevClass = status.className;
-      status.textContent = 'Deletar: click directly on a bus, branch, load/cap/reactor icon, or label.';
+      status.textContent = 'Excluir: click directly on a bus, branch, load/cap/reactor icon, or label.';
       status.className = 'status warn';
       setTimeout(() => {
-        if (status.textContent.startsWith('Deletar: click')) {
+        if (status.textContent.startsWith('Excluir: click')) {
           status.textContent = prevText;
           status.className = prevClass;
         }
