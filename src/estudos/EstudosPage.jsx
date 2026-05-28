@@ -8,7 +8,6 @@ import DistributionTool from "./tools/DistributionTool.jsx";
 import DistanceTool from "./tools/DistanceTool.jsx";
 import DifferentialInrushTool from "./tools/DifferentialInrushTool.jsx";
 import AmpacityCTSaturationTool from "./tools/AmpacityCTSaturationTool.jsx";
-import PowerFlowTool from "./tools/PowerFlowTool.jsx";
 import VisualScenarioBuilder from "./components/VisualScenarioBuilder.jsx";
 import GraphVizContainer from "./components/GraphVizContainer.jsx";
 import SearchPalette from "./components/SearchPalette.jsx";
@@ -94,10 +93,9 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
                 {selectedTool.id === "distance" && <DistanceTool />}
                 {selectedTool.id === "differential-inrush" && <DifferentialInrushTool />}
                 {selectedTool.id === "ampacity-ct" && <AmpacityCTSaturationTool />}
-                {selectedTool.id === "power-flow" && <PowerFlowTool />}
                 {selectedTool.id === "scenario-builder" && <VisualScenarioBuilder />}
                 {selectedTool.id === "graph-viz" && <GraphVizContainer />}
-                {!["symm-components", "fault-calc", "tcc", "distribution", "distance", "differential-inrush", "ampacity-ct", "power-flow", "scenario-builder", "graph-viz"].includes(selectedTool.id) && (
+                {!["symm-components", "fault-calc", "tcc", "distribution", "distance", "differential-inrush", "ampacity-ct", "scenario-builder", "graph-viz"].includes(selectedTool.id) && (
                   <div style={styles.comingSoon}>
                     <div style={styles.comingSoonIcon}>🚀</div>
                     <div style={styles.comingSoonText}>{selectedTool.name}</div>

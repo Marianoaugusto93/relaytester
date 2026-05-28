@@ -77,16 +77,6 @@ export const TOOLS = [
     sprint: 4,
   },
   {
-    id: "power-flow",
-    name: "Fluxo de Potência NR",
-    category: "Sistema",
-    complexity: 2,
-    icon: "power",
-    description: "Simulador Newton-Raphson AC — sistema 8-barras interativo",
-    available: true,
-    sprint: 1,
-  },
-  {
     id: "scenario-builder",
     name: "Editor Visual de Cenários",
     category: "Cenários",
