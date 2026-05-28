@@ -114,7 +114,7 @@ export default function CampoCanvas({
                 role="switch"
                 aria-checked={isUp}
                 aria-label={`${row.label} — ${statusText}`}
-                style={{ cursor: 'pointer', outline: 'none' }}
+                style={{ cursor: 'pointer' }}
               >
                 <rect
                   x={SLIDER_X - SLIDER_W / 2}
@@ -317,7 +317,7 @@ export default function CampoCanvas({
                 aria-label={`Terminal ${term.label}${isOrigin ? ' — selecionado como origem' : connValid ? ' — destino disponível' : sameNode ? ' — mesmo nó elétrico' : ''}`}
                 aria-pressed={isOrigin}
                 aria-disabled={cursor === 'not-allowed'}
-                style={{ cursor, outline: 'none' }}
+                style={{ cursor }}
               >
                 <circle
                   cx={term.x}

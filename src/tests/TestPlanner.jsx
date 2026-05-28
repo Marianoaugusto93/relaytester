@@ -284,7 +284,7 @@ export default function TestPlanner({ campaign, test, onTestChange, onStartRun, 
                   onChange={e => handleConfig(key, parseFloat(e.target.value) || 0)}
                   style={{ background: 'var(--card3)', border: '1px solid var(--bdr)',
                     color: 'var(--cyan)', padding: '8px 10px', borderRadius: 6,
-                    fontSize: 14, fontFamily: 'var(--fm)', outline: 'none', width: '100%' }} />
+                    fontSize: 14, fontFamily: 'var(--fm)', width: '100%' }} />
               </div>
             ))}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -296,7 +296,7 @@ export default function TestPlanner({ campaign, test, onTestChange, onStartRun, 
                 onChange={e => handleConfig('defaultSpacing', e.target.value)}
                 style={{ background: 'var(--card3)', border: '1px solid var(--bdr)',
                   color: 'var(--tx)', padding: '8px 10px', borderRadius: 6, fontSize: 14,
-                  fontFamily: 'var(--fi)', outline: 'none', width: '100%' }}>
+                  fontFamily: 'var(--fi)', width: '100%' }}>
                 <option value="log">Logarítmico</option>
                 <option value="linear">Linear</option>
               </select>
