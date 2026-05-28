@@ -15,3 +15,10 @@ _docs-archive/
 !.dev.vars.example
 .env*
 !.env.example
+
+# Local development folders (not part of deploy)
+ProtecView/
+Newton-Rapson/
+src/estudos/
+*.png
+Screenshot_*.png
