@@ -10,7 +10,7 @@
  * Publishes to ArtifactBus topic "artifact.sendToRele" on Send to Relay (protections + phasors).
  */
 
-import { useReducer, useCallback, useMemo, useState, useRef, memo } from "react";
+import { useReducer, useCallback, useMemo, useState, useRef, memo, useEffect } from "react";
 import PhasorWheel from "./PhasorWheel.jsx";
 import ProtectionConfigurator from "./ProtectionConfigurator.jsx";
 import RXPlane from "./RXPlane.jsx";
@@ -19,6 +19,8 @@ import { validateScenario } from "../engine/scenarioValidator.js";
 import { normalizeScenario } from "../engine/scenarioValidator.js";
 import { saveCustomScenario, exportScenarioAsJson, importScenarioFromFile, getAllCustomScenarios } from "../../scenarios/customScenarios.js";
 import { useArtifactBus } from "../context/ArtifactBus.jsx";
+import { recordScenarioUsage, recordAction, recordError } from "../utils/analyticsEngine.js";
+import { loadAnalytics, saveAnalytics } from "../utils/analyticsStorage.js";
 
 // ---------------------------------------------------------------------------
 // Default state
@@ -372,7 +374,12 @@ export default function VisualScenarioBuilder() {
   const [state, dispatch] = useReducer(reducer, undefined, makeDefaultScenario);
   const [toast, setToast] = useState(null); // { message, type }
   const toastTimer = useRef(null);
+  const [analytics, setAnalytics] = useState(() => loadAnalytics());
   const bus = useArtifactBus();
+
+  useEffect(() => {
+    saveAnalytics(analytics);
+  }, [analytics]);
 
   const showToast = useCallback((message, type = "success") => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -413,20 +420,26 @@ export default function VisualScenarioBuilder() {
   }, []);
 
   const handleSave = useCallback(() => {
-    if (!validation.ok) return;
+    if (!validation.ok) {
+      setAnalytics(a => recordError(a, "validation_failed"));
+      return;
+    }
     const normalized = normalizeScenario(state);
     const ok = saveCustomScenario(normalized);
     if (ok) {
       showToast("Cenário salvo");
+      setAnalytics(a => recordAction(a, "save"));
       dispatch({ type: "LOAD", payload: normalized });
     } else {
       showToast("Falha ao salvar (armazenamento cheio?)", "error");
+      setAnalytics(a => recordError(a, "save_failed"));
     }
   }, [state, validation.ok, showToast]);
 
   const handleExport = useCallback(() => {
     exportScenarioAsJson(normalizeScenario(state));
     showToast("Exportado");
+    setAnalytics(a => recordAction(a, "export"));
   }, [state, showToast]);
 
   const handleImport = useCallback(async (e) => {
@@ -438,12 +451,15 @@ export default function VisualScenarioBuilder() {
       const scenario = Array.isArray(obj) ? obj[0] : obj;
       if (!scenario || typeof scenario !== "object") {
         showToast("Arquivo de cenário inválido", "error");
+        setAnalytics(a => recordError(a, "import_invalid"));
         return;
       }
       dispatch({ type: "LOAD", payload: scenario });
       showToast("Importado com sucesso");
+      setAnalytics(a => recordAction(a, "import"));
     } catch {
       showToast("Erro ao ler o arquivo", "error");
+      setAnalytics(a => recordError(a, "import_error"));
     }
   }, [showToast]);
 
@@ -455,6 +471,7 @@ export default function VisualScenarioBuilder() {
   const handleReset = useCallback(() => {
     dispatch({ type: "RESET" });
     showToast("Editor resetado");
+    setAnalytics(a => recordAction(a, "reset"));
   }, [showToast]);
 
   const handleSendToRelay = useCallback(() => {
@@ -464,6 +481,13 @@ export default function VisualScenarioBuilder() {
       phasors: normalized.phasors,
     });
     showToast("Cenário enviado ao Relé");
+    setAnalytics(a => {
+      let updated = recordAction(a, "send_to_relay");
+      if (normalized.id) {
+        updated = recordScenarioUsage(updated, normalized.id, 0);
+      }
+      return updated;
+    });
   }, [state, bus, showToast]);
 
   return (

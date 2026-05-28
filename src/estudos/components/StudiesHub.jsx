@@ -5,12 +5,21 @@
  * Available tools are clickable; coming-soon tools show Sprint number.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toolsByCategory } from "../catalog.js";
+import { loadAnalytics, clearStoredAnalytics } from "../utils/analyticsStorage.js";
+import AnalyticsDashboard from "./AnalyticsDashboard.jsx";
 
 export default function StudiesHub({ onSelectTool }) {
   const categoryMap = useMemo(() => toolsByCategory(), []);
   const categories = Object.keys(categoryMap).sort();
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState(() => loadAnalytics());
+
+  const handleClearAnalytics = () => {
+    clearStoredAnalytics();
+    setAnalytics(loadAnalytics());
+  };
 
   return (
     <div style={styles.root}>
@@ -22,6 +31,13 @@ export default function StudiesHub({ onSelectTool }) {
             Análise de Proteção Elétrica — 8 ferramentas
           </div>
         </div>
+        <button
+          style={styles.analyticsBtn}
+          onClick={() => setShowAnalytics(true)}
+          title="Ver Analytics de Uso"
+        >
+          📊 Analytics
+        </button>
       </div>
 
       {/* Grid by category */}
@@ -41,6 +57,29 @@ export default function StudiesHub({ onSelectTool }) {
           </div>
         ))}
       </div>
+
+      {/* Analytics Modal */}
+      {showAnalytics && (
+        <div style={styles.modalOverlay} onClick={() => setShowAnalytics(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Analytics de Uso</h2>
+              <button
+                style={styles.modalClose}
+                onClick={() => setShowAnalytics(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={styles.modalBody}>
+              <AnalyticsDashboard
+                analytics={analytics}
+                onClear={handleClearAnalytics}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -121,9 +160,13 @@ const styles = {
     overflow: "hidden",
   },
   header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     padding: "20px 24px",
     borderBottom: "1px solid var(--bdr)",
     flexShrink: 0,
+    gap: 16,
   },
   title: {
     fontSize: 18,
@@ -139,6 +182,19 @@ const styles = {
     fontWeight: 500,
     marginTop: 4,
     fontFamily: "var(--fm)",
+  },
+  analyticsBtn: {
+    padding: "8px 14px",
+    border: "1px solid var(--bdr)",
+    borderRadius: 6,
+    background: "var(--card2)",
+    color: "var(--tx2)",
+    fontSize: 11,
+    fontWeight: 600,
+    fontFamily: "var(--fh)",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    transition: "all .15s",
   },
   content: {
     flex: 1,
@@ -225,5 +281,61 @@ const styles = {
     fontFamily: "var(--fh)",
     textAlign: "center",
     border: "1px solid rgba(107,114,128,0.25)",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modalContent: {
+    background: "var(--bg)",
+    border: "1px solid var(--bdr)",
+    borderRadius: 12,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+    maxWidth: 900,
+    width: "90vw",
+    maxHeight: "85vh",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "20px 24px",
+    borderBottom: "1px solid var(--bdr)",
+    flexShrink: 0,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 800,
+    fontFamily: "var(--fh)",
+    color: "var(--tx)",
+    margin: 0,
+  },
+  modalClose: {
+    background: "transparent",
+    border: "none",
+    color: "var(--tx3)",
+    fontSize: 24,
+    cursor: "pointer",
+    padding: 0,
+    width: 32,
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalBody: {
+    flex: 1,
+    overflow: "auto",
   },
 };
