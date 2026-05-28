@@ -1,8 +1,14 @@
-export default function CableList({ cables, expanded, onToggle, onRemove, onClearAll }) {
+export default function CableList({ cables, expanded, onRemove, onClearAll, onToggle }) {
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      onToggle();
+      e.preventDefault();
+    }
+  };
   return (
     <div className="cam-card">
       <div className="cam-cable-list">
-        <div className="cam-cable-accordion-header" onClick={onToggle}>
+        <div className="cam-cable-accordion-header" onClick={onToggle} role="button" tabIndex={0} onKeyDown={handleKeyDown} aria-expanded={expanded} aria-label="Cabos accordion">
           <span>{expanded ? '▼' : '▶'}</span>
           <span>Cabos ({cables.length})</span>
         </div>

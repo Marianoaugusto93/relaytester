@@ -7,6 +7,13 @@ export default function Lever({
     if (onToggle) onToggle(id, newState);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      handleClick();
+      e.preventDefault();
+    }
+  };
+
   const isOpen = state === 'open';
   const isCurrent = kind === 'I';
 
@@ -19,7 +26,7 @@ export default function Lever({
       <div className="lever-tag">{tag}</div>
 
       {/* Knife-area SVG */}
-      <div className="knife-area" onClick={handleClick}>
+      <div className="knife-area" onClick={handleClick} role="button" tabIndex={0} onKeyDown={handleKeyDown} aria-label={`Lever ${tag} ${isOpen ? 'open' : 'closed'}`}>
         <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg">
           {/* Background */}
           <rect width="70" height="70" fill="transparent" />

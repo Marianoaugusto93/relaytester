@@ -8,6 +8,8 @@ export default function BorneGuideModal({ open, onClose }) {
 
   if (!open) return null;
 
+  const handleKeyDown=(e)=>{if(e.key==="Escape")onClose()};
+
   const tabStyle = (isActive) => ({
     padding: "10px 16px",
     background: isActive ? "var(--orange)" : "var(--card2)",
@@ -41,7 +43,7 @@ export default function BorneGuideModal({ open, onClose }) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden"
-      }} onClick={(e) => e.stopPropagation()}>
+      }} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="bgm-title" onKeyDown={handleKeyDown}>
 
         {/* Header */}
         <div style={{
@@ -52,7 +54,7 @@ export default function BorneGuideModal({ open, onClose }) {
           borderBottom: "1px solid var(--bdr)",
           background: "linear-gradient(90deg, var(--card2) 0%, var(--card) 100%)"
         }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--tx)", fontFamily: "var(--fh)", letterSpacing: 1, textTransform: "uppercase" }}>
+          <div id="bgm-title" style={{ fontSize: 14, fontWeight: 800, color: "var(--tx)", fontFamily: "var(--fh)", letterSpacing: 1, textTransform: "uppercase" }}>
             📖 {t("guide.title")}
           </div>
           <button onClick={onClose} style={{

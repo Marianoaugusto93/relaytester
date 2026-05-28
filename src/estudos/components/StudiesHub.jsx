@@ -61,9 +61,9 @@ export default function StudiesHub({ onSelectTool }) {
       {/* Analytics Modal */}
       {showAnalytics && (
         <div style={styles.modalOverlay} onClick={() => setShowAnalytics(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="analytics-title" onKeyDown={(e)=>{if(e.key==="Escape")setShowAnalytics(false)}}>
             <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Analytics de Uso</h2>
+              <h2 id="analytics-title" style={styles.modalTitle}>Analytics de Uso</h2>
               <button
                 style={styles.modalClose}
                 onClick={() => setShowAnalytics(false)}
@@ -85,6 +85,12 @@ export default function StudiesHub({ onSelectTool }) {
 }
 
 function ToolCard({ tool, onSelect }) {
+  const handleKeyDown = (e) => {
+    if (tool.available && (e.key === 'Enter' || e.key === ' ')) {
+      onSelect();
+      e.preventDefault();
+    }
+  };
   return (
     <div
       style={{
@@ -94,6 +100,7 @@ function ToolCard({ tool, onSelect }) {
           : { opacity: 0.6, cursor: "default" }),
       }}
       onClick={() => tool.available && onSelect()}
+      onKeyDown={handleKeyDown}
       onMouseEnter={(e) => {
         if (tool.available) {
           e.currentTarget.style.transform = "translateY(-2px)";
@@ -104,6 +111,10 @@ function ToolCard({ tool, onSelect }) {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
       }}
+      role="button"
+      tabIndex={tool.available ? 0 : -1}
+      aria-disabled={!tool.available}
+      aria-label={tool.name}
     >
       {/* Icon placeholder */}
       <div style={styles.iconBox}>

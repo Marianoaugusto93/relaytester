@@ -334,6 +334,7 @@ function GraphContainer({ fns, patch, phasors }) {
 function LoadScenarioPanel({ onLoad }) {
   const [open, setOpen] = useState(false);
   const saved = useMemo(() => getAllCustomScenarios(), [open]);
+  const handleKeyDown=(e)=>{if(e.key==="Escape")setOpen(false)};
 
   if (!open) {
     return (
@@ -344,9 +345,9 @@ function LoadScenarioPanel({ onLoad }) {
   }
 
   return (
-    <div style={S.loadPanel}>
+    <div style={S.loadPanel} role="dialog" aria-modal="true" aria-labelledby="lsp-title" onKeyDown={handleKeyDown}>
       <div style={S.loadPanelHeader}>
-        <span style={S.loadPanelTitle}>Cenários Salvos</span>
+        <span id="lsp-title" style={S.loadPanelTitle}>Cenários Salvos</span>
         <button style={S.loadPanelClose} onClick={() => setOpen(false)}>×</button>
       </div>
       {saved.length === 0 && (

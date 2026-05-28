@@ -7,6 +7,8 @@ export default function SavePresetModal({ onSave, onCancel, cables }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleKeyDown=(e)=>{if(e.key==="Escape")onCancel()};
+
   const handleSave = async () => {
     if (!name.trim()) {
       setError("Nome do preset é obrigatório");
@@ -48,8 +50,8 @@ export default function SavePresetModal({ onSave, onCancel, cables }) {
         padding: "24px",
         maxWidth: "400px",
         width: "90%",
-      }}>
-        <h3 style={{ margin: "0 0 16px 0", color: "#fff" }}>Salvar como Preset</h3>
+      }} role="dialog" aria-modal="true" aria-labelledby="spm-title" onKeyDown={handleKeyDown}>
+        <h3 id="spm-title" style={{ margin: "0 0 16px 0", color: "#fff" }}>Salvar como Preset</h3>
 
         <div style={{ marginBottom: "12px" }}>
           <label style={{ display: "block", fontSize: "12px", color: "#aaa", marginBottom: "4px" }}>

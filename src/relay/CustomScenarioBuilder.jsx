@@ -100,6 +100,7 @@ export default function CustomScenarioBuilder({ prot, outMatrix, inMatrix, apply
   };
 
   const enabledFns = protOrder.filter(fid => prot[fid]?.enabled);
+  const handleKeyDown=(e)=>{if(e.key==="Escape"){clearForm();setOpen(false);}};
 
   return (
     <section className="cs-section" aria-label={t("customScenarios.title")}>
@@ -110,7 +111,8 @@ export default function CustomScenarioBuilder({ prot, outMatrix, inMatrix, apply
       )}
 
       {open && (
-        <div className="cs-form">
+        <div className="cs-form" role="dialog" aria-modal="true" aria-labelledby="csb-title" onKeyDown={handleKeyDown}>
+          <div id="csb-title" style={{fontSize:13,fontWeight:700,marginBottom:12,color:"var(--tx)"}}>{editId ? t("customScenarios.updateBtn") : t("customScenarios.saveBtn")}</div>
           <div className="cs-field">
             <label>{t("customScenarios.nameLabel")}</label>
             <input className="cs-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("customScenarios.namePlaceholder")} maxLength={60} />
