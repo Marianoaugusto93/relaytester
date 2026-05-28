@@ -276,6 +276,8 @@ export function useTCCPlot(curveDefs = [], showCoordination = false) {
   const capped = curveDefs.length > MAX_CURVES;
   const safeDefs = curveDefs.slice(0, MAX_CURVES);
 
+  const defsSignature = safeDefs.map(d => `${d.id}:${d.curveType}:${d.pickup}:${d.timeDial}`).join('|');
+
   const axis = useMemo(() => buildAxisData(), []);
 
   const { paths, datasets } = useMemo(() => {
@@ -288,8 +290,7 @@ export function useTCCPlot(curveDefs = [], showCoordination = false) {
       paths[key] = generateCurvePath(def.pickup, def.timeDial, def.curveType, 80);
     }
     return { paths, datasets };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(safeDefs)]);
+  }, [defsSignature]);
 
   const intersections = useMemo(() => {
     if (!showCoordination || safeDefs.length < 2) return [];
@@ -306,8 +307,7 @@ export function useTCCPlot(curveDefs = [], showCoordination = false) {
       }
     }
     return result;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showCoordination, JSON.stringify(safeDefs), datasets]);
+  }, [showCoordination, defsSignature]);
 
   return { paths, datasets, intersections, axis, capped };
 }

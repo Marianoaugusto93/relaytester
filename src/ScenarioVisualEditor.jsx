@@ -19,8 +19,6 @@ const EDITOR_FUNCTIONS = [
   { id: "81",    label: "81",    name: "Sub / Sobrefrequência" },
 ];
 
-export const CURVE_OPTIONS_LEGACY = CURVE_OPTIONS;
-
 // Compute zero-sequence current magnitude from three phasors
 function computeI0(currents) {
   const sum = ["Ia", "Ib", "Ic"].reduce(
