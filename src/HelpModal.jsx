@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useHelp } from "./HelpContext.jsx";
 import { useTranslation } from "./i18n/useTranslation.js";
 import { useLanguage } from "./i18n/LanguageContext.jsx";
+import { SCENARIO_HELP, getDifficultyColor } from "./estudos/constants/scenarioHelpContent.js";
 
 const TOPIC_IDS = [
   "getting-started",
@@ -10,6 +11,7 @@ const TOPIC_IDS = [
   "protection-settings",
   "relay-outputs",
   "comtrade-export",
+  "scenarios",
 ];
 
 const EXPANDABLE = new Set(["protection-settings", "relay-outputs"]);
@@ -118,7 +120,27 @@ export default function HelpModal() {
             ))}
           </nav>
           <div className="help-content" role="region" aria-label={topicLabel(localTopic)}>
-            {isExpandable ? (
+            {localTopic === "scenarios" ? (
+              <div style={styles.scenariosGrid}>
+                {Object.entries(SCENARIO_HELP).map(([scenarioId, help]) => (
+                  <div key={scenarioId} style={styles.scenarioCard}>
+                    <div style={styles.scenarioHeader}>
+                      <div style={styles.scenarioTitle}>{t(`help.scenarios.${scenarioId}.name`)}</div>
+                      <div style={{ ...styles.difficultyBadge, color: `var(${getDifficultyColor(help.difficulty)})` }}>
+                        {help.difficulty}
+                      </div>
+                    </div>
+                    <div style={styles.scenarioObjective}>{help.learningObjective}</div>
+                    <div style={styles.conceptsLabel}>{t("help.scenarios.keyConcepts")}</div>
+                    <ul style={styles.conceptsList}>
+                      {help.keyConcepts.map((concept, i) => (
+                        <li key={i}>{concept}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : isExpandable ? (
               <div className="help-section-card" aria-expanded={isExpanded ? "true" : "false"}>
                 <div
                   className="help-section-header"
@@ -158,3 +180,59 @@ export default function HelpModal() {
     </div>
   );
 }
+
+const styles = {
+  scenariosGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 12,
+    padding: "12px 0",
+  },
+  scenarioCard: {
+    padding: 12,
+    borderRadius: 8,
+    border: "1px solid var(--bdr)",
+    background: "var(--card2)",
+  },
+  scenarioHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    gap: 8,
+  },
+  scenarioTitle: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "var(--tx)",
+    fontFamily: "var(--fh)",
+  },
+  difficultyBadge: {
+    fontSize: 11,
+    fontWeight: 700,
+    fontFamily: "var(--fh)",
+    whiteSpace: "nowrap",
+  },
+  scenarioObjective: {
+    fontSize: 12,
+    color: "var(--tx2)",
+    marginBottom: 10,
+    lineHeight: 1.4,
+  },
+  conceptsLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "var(--tx3)",
+    fontFamily: "var(--fh)",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  conceptsList: {
+    fontSize: 11,
+    color: "var(--tx2)",
+    lineHeight: 1.5,
+    paddingLeft: 18,
+    margin: 0,
+  },
+};
