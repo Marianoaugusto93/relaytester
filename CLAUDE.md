@@ -347,10 +347,47 @@ Before deploying to production:
 - [ ] Backup strategy documented
 
 **Current Status**: ✅ PRODUCTION READY — Phase 9 Testing Complete
-**Build Size**: 429.02 kB (112.11 kB gzip)
+**Build Size**: 457.69 kB (117.50 kB gzip)
 **Bundle Quality**: ✅ Verified
 **Code Quality**: ✅ Verified (deslop pass completed)
 **Testing Status**: ✅ Phase 9 Complete (0 critical bugs)
+
+---
+
+## Appendix A: Newton-Raphson Portuguese Translation Attempt (Abandoned)
+
+**Timeline**: 2026-05-28
+
+**Context**: User requested evaluation of adding Portuguese (PT-BR) version of Newton-Raphson Power Flow Simulator as an alternative to the English version.
+
+**Approach Attempted**: 
+1. Evaluated "Opção A" (hardcoded fork) vs "Opção B" (i18n library)
+2. Created `powerflow-pt.html` by copying English version
+3. Applied sed-based global string replacements (20+ translation pairs)
+4. Added language toggle UI to `SimuladorNRPage.jsx` with localStorage persistence
+5. Implemented dynamic iframe src switching based on selected language
+
+**Issue Discovered**:
+- Portuguese version broke: calculations and animations non-functional
+- Root cause: sed global replacements affected JavaScript strings used in solver algorithm
+- Example: Replaced "slack" text in HTML but also modified JavaScript code that referenced these strings
+
+**Resolution**:
+- Reverted to English-only version (commits 7394a1e → 440925a)
+- Removed language toggle and localStorage logic from SimuladorNRPage.jsx
+- Deleted `powerflow-pt.html` file entirely
+- Component now simplified to serve only `/newton-rapson/powerflow.html`
+
+**Lesson Learned**:
+- Standalone HTML simulators with embedded JavaScript cannot be safely translated via global string replacement
+- Proper i18n would require:
+  - Refactoring JavaScript to externalize all UI strings
+  - Creating separate language JSON files
+  - Rebuilding the simulator or using a proper i18n library
+  - Full regression testing of all calculations
+- For now: English-only version is stable and functional; PT translation deemed not worth the effort
+
+**Status**: ✅ Closed — English-only version restored and verified working
 
 ### Phase 6: Advanced Features
 **Status**: ✅ COMPLETE (v2.6)
