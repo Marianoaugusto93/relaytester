@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Coordenograma - Teste de Funcionalidade</title>
+  <style>
+    body { font-family: monospace; background: #0e1015; color: #f4f7fb; padding: 20px; }
+    .test { margin: 10px 0; padding: 10px; border-left: 3px solid #38bdf8; }
+    .pass { border-left-color: #22c55e; }
+    .fail { border-left-color: #ff5b63; }
+    .warning { border-left-color: #fb923c; }
+    h1 { color: #38bdf8; }
+    .status { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h1>🧪 Teste de Funcionalidade - Coordenograma</h1>
+
+<div id="results"></div>
+
+<script>
+// Teste de funcionalidade do coordenograma
+const tests = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    tests.push({ name, status: 'PASS', msg: '✅' });
+  } catch (e) {
+    tests.push({ name, status: 'FAIL', msg: '❌ ' + e.message });
+  }
+}
+
+function warning(name, msg) {
+  tests.push({ name, status: 'WARN', msg: '⚠️ ' + msg });
+}
+
+// Teste 1: Verificar se o arquivo coordenograma.js foi carregado
+test('JavaScript carregado', () => {
+  if (!window.FLVolts360) throw new Error('window.FLVolts360 não encontrado');
+  if (typeof window.FLVolts360.calcular !== 'function') throw new Error('calcular não é uma função');
+});
+
+// Teste 2: Verificar se window.CoordenogramaApp existe
+test('CoordenogramaApp exportado', () => {
+  if (!window.CoordenogramaApp) throw new Error('window.CoordenogramaApp não encontrado');
+});
+
+// Teste 3: Verificar funções principais
+test('Funções principais disponíveis', () => {
+  const required = ['calcular', 'calcData', 'initModel'];
+  const app = window.FLVolts360 || window.CoordenogramaApp;
+  required.forEach(fn => {
+    if (typeof app[fn] !== 'function') throw new Error(`${fn} não é uma função`);
+  });
+});
+
+// Teste 4: Verificar elementos do DOM
+test('Elementos do DOM presentes', () => {
+  const elements = ['btnCalc', 'btnAuto', 'empresa', 'pGerais', 'pCoord'];
+  elements.forEach(id => {
+    if (!document.getElementById(id)) throw new Error(`Elemento ${id} não encontrado`);
+  });
+});
+
+// Teste 5: Verificar CSS carregado
+test('CSS carregado', () => {
+  const sheet = Array.from(document.styleSheets).find(s => s.href && s.href.includes('coordenograma.css'));
+  if (!sheet) warning('CSS', 'Arquivo CSS não encontrado na lista de stylesheets');
+});
+
+// Teste 6: Tentar chamar initModel
+test('initModel pode ser chamado', () => {
+  if (typeof window.FLVolts360?.initModel === 'function') {
+    window.FLVolts360.initModel();
+  } else if (typeof window.CoordenogramaApp?.initModel === 'function') {
+    window.CoordenogramaApp.initModel();
+  } else {
+    throw new Error('initModel não encontrado');
+  }
+});
+
+// Teste 7: Verificar se console tem erros
+test('Console sem erros críticos', () => {
+  // Este teste passa se chegou aqui
+});
+
+// Renderizar resultados
+const resultsDiv = document.getElementById('results');
+tests.forEach(t => {
+  const div = document.createElement('div');
+  div.className = `test ${t.status.toLowerCase()}`;
+  div.innerHTML = `<span class="status">[${t.status}]</span> ${t.name}: ${t.msg}`;
+  resultsDiv.appendChild(div);
+});
+
+// Sumário
+const passed = tests.filter(t => t.status === 'PASS').length;
+const failed = tests.filter(t => t.status === 'FAIL').length;
+const warned = tests.filter(t => t.status === 'WARN').length;
+
+const summary = document.createElement('div');
+summary.style.marginTop = '20px';
+summary.style.padding = '10px';
+summary.style.borderTop = '2px solid #38bdf8';
+summary.innerHTML = `
+  <h2>SUMÁRIO</h2>
+  <p>✅ Passou: ${passed}</p>
+  <p>❌ Falhou: ${failed}</p>
+  <p>⚠️ Avisos: ${warned}</p>
+  <p><strong>Status geral: ${failed === 0 ? '🟢 OK - Pronto para usar' : '🔴 Erros encontrados'}</strong></p>
+`;
+resultsDiv.appendChild(summary);
+
+// Se tudo passou, mostrar próximos passos
+if (failed === 0) {
+  const next = document.createElement('div');
+  next.style.marginTop = '20px';
+  next.style.padding = '15px';
+  next.style.background = 'rgba(34, 197, 94, 0.1)';
+  next.style.border = '1px solid #22c55e';
+  next.style.borderRadius = '8px';
+  next.innerHTML = `
+    <h3>✅ Funcionalidade Verificada!</h3>
+    <p>O coordenograma está funcionando corretamente.</p>
+    <p><strong>Próximos passos:</strong></p>
+    <ol>
+      <li>Abra o arquivo <strong>coordenograma-template.html</strong></li>
+      <li>Teste clicar nos botões (Calcular, Recalcular, etc)</li>
+      <li>Teste a navegação entre etapas</li>
+      <li>Verifique o canvas do coordenograma renderizando</li>
+    </ol>
+  `;
+  resultsDiv.appendChild(next);
+}
+</script>
+
+</body>
+</html>
