@@ -18,7 +18,7 @@ export default function SimuladorNRPage() {
           background: 'var(--bg)'
         }}
         title="Newton-Raphson Power Flow Simulator"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-presentation"
       />
     </div>
   );
