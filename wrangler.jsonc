@@ -8,6 +8,16 @@
   "assets": {
     "not_found_handling": "single-page-application"
   },
+  "routes": [
+    {
+      "pattern": "/coordenograma/*",
+      "custom_domain": false
+    },
+    {
+      "pattern": "/newton-rapson/*",
+      "custom_domain": false
+    }
+  ],
   "compatibility_flags": [
     "nodejs_compat"
   ]
