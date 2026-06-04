@@ -26,7 +26,6 @@ import RelePage from "./RelePage.jsx";
 import TestsPage from "./TestsPage.jsx";
 import SimuladorNRPage from "./SimuladorNRPage.jsx";
 import CoordenogramaPage from "./CoordenogramaPage.jsx";
-import VisualScenarioBuilder from "./VisualScenarioBuilder.jsx";
 const WaveformDisplay = lazy(() => import("./WaveformDisplay.jsx"));
 const EstudosPage = lazy(() => import("./estudos/EstudosPage.jsx"));
 import { BayProvider } from "./estudos/context/BayContext.jsx";
@@ -66,7 +65,6 @@ function AppInner(){
   const[wfModalOpen,setWfModalOpen]=useState(false);const[wfSelected,setWfSelected]=useState(null);
   const[wfDisplayOpen,setWfDisplayOpen]=useState(false);
   const[analyticsOpen,setAnalyticsOpen]=useState(false);
-  const[vsBuilderOpen,setVsBuilderOpen]=useState(false);
   const[phasorDiagOpen,setPhasorDiagOpen]=useState(false);
   const[fcOpen,setFcOpen]=useState(false);
   const[phasorVis,setPhasorVis]=useState({Ia:true,Ib:true,Ic:true,Va:true,Vb:true,Vc:true,Vab:false,Vbc:false,Vca:false,I0:false,I1:false,I2:false,V0:false,V1:false,V2:false});
@@ -525,18 +523,6 @@ function AppInner(){
   {fcOpen&&<Suspense fallback={null}><FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/></Suspense>}
   {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><Suspense fallback={null}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></Suspense></div></div></div>}
   {analyticsOpen&&<Suspense fallback={null}><AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/></Suspense>}
-  <VisualScenarioBuilder
-    isOpen={vsBuilderOpen}
-    onClose={()=>setVsBuilderOpen(false)}
-    onSave={(scenario)=>{
-      const custom=JSON.parse(localStorage.getItem('customScenarios')||'[]');
-      scenario.id=Date.now().toString();
-      scenario.createdAt=new Date().toISOString();
-      custom.push(scenario);
-      localStorage.setItem('customScenarios',JSON.stringify(custom.slice(-50)));
-      setEvts(ev=>[{time:nowShort(),icon:'📝',text:`Scenario saved: ${scenario.name}`,dt:''},...ev.slice(0,20)]);
-    }}
-  />
   <Suspense fallback={null}><HelpModal/></Suspense>
   <Suspense fallback={null}><Tutorial show={tutorialOpen} onDismiss={closeTutorial}/></Suspense>
   </>);

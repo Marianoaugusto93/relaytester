@@ -865,9 +865,26 @@
       "name": "Scenario name",
       "objective": "Learning objective..."
     },
+    "functions": {
+      "51": "Time-OC Phase",
+      "50": "Inst. OC Phase",
+      "51N": "Time-OC Neutral",
+      "50N": "Inst. OC Neutral",
+      "67": "Directional Phase",
+      "67N": "Directional Neutral",
+      "27": "Undervoltage",
+      "59": "Overvoltage",
+      "47": "Neg-Seq Voltage",
+      "46": "Neg-Seq OC",
+      "81U": "Underfrequency",
+      "81O": "Overfrequency"
+    },
     "messages": {
       "nameRequired": "Name required",
-      "saved": "Scenario saved successfully!"
+      "stageRequired": "Enable at least one stage before saving",
+      "saved": "Scenario saved successfully!",
+      "saveFailed": "Save failed (storage full?)",
+      "noTrip": "No trip expected with current values"
     },
     "buttons": {
       "save": "Save Scenario"

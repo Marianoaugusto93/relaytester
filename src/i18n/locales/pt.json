@@ -865,9 +865,26 @@
       "name": "Nome do cenário",
       "objective": "Objetivo didático..."
     },
+    "functions": {
+      "51": "Sobrec. Temp. Fase",
+      "50": "Sobrec. Inst. Fase",
+      "51N": "Sobrec. Temp. Neutro",
+      "50N": "Sobrec. Inst. Neutro",
+      "67": "Direcional Fase",
+      "67N": "Direcional Neutro",
+      "27": "Subtensão",
+      "59": "Sobretensão",
+      "47": "Seq. Neg. Tensão",
+      "46": "Sobrec. Seq. Negativa",
+      "81U": "Subfrequência",
+      "81O": "Sobrefrequência"
+    },
     "messages": {
       "nameRequired": "Nome obrigatório",
-      "saved": "Cenário salvo com sucesso!"
+      "stageRequired": "Ative ao menos um estágio antes de salvar",
+      "saved": "Cenário salvo com sucesso!",
+      "saveFailed": "Erro ao salvar (armazenamento cheio?)",
+      "noTrip": "Nenhum trip esperado com os valores atuais"
     },
     "buttons": {
       "save": "Salvar Cenário"

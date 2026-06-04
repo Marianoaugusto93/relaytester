@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "./i18n/useTranslation.js";
 import { saveCustomScenario } from "./scenarios/customScenarios.js";
 import { calcTheoreticalTripTime, calc51NTheoreticalTripTime, get50TheoreticalTime, get50NTheoreticalTime, toRect, fromRect } from "./protection.js";
@@ -7,16 +7,18 @@ import { CURVE_OPTIONS } from "./estudos/constants/curves.js";
 
 // Protection functions available in the editor
 const EDITOR_FUNCTIONS = [
-  { id: "51",    label: "51",    name: "Sobrec. Temp. Fase" },
-  { id: "50",    label: "50",    name: "Sobrec. Inst. Fase" },
-  { id: "51N",   label: "51N",   name: "Sobrec. Temp. Neutro" },
-  { id: "50N",   label: "50N",   name: "Sobrec. Inst. Neutro" },
-  { id: "67",    label: "67",    name: "Direcional Fase" },
-  { id: "67N",   label: "67N",   name: "Direcional Neutro" },
-  { id: "27/59", label: "27/59", name: "Sub / Sobretensão" },
-  { id: "47",    label: "47",    name: "Seq. Neg. Tensão" },
-  { id: "46",    label: "46",    name: "Sobrec. Seq. Negativa" },
-  { id: "81",    label: "81",    name: "Sub / Sobrefrequência" },
+  { id: "51",  label: "51",  nameKey: "scenarioEditor.functions.51" },
+  { id: "50",  label: "50",  nameKey: "scenarioEditor.functions.50" },
+  { id: "51N", label: "51N", nameKey: "scenarioEditor.functions.51N" },
+  { id: "50N", label: "50N", nameKey: "scenarioEditor.functions.50N" },
+  { id: "67",  label: "67",  nameKey: "scenarioEditor.functions.67" },
+  { id: "67N", label: "67N", nameKey: "scenarioEditor.functions.67N" },
+  { id: "27",  label: "27",  nameKey: "scenarioEditor.functions.27" },
+  { id: "59",  label: "59",  nameKey: "scenarioEditor.functions.59" },
+  { id: "47",  label: "47",  nameKey: "scenarioEditor.functions.47" },
+  { id: "46",  label: "46",  nameKey: "scenarioEditor.functions.46" },
+  { id: "81U", label: "81U", nameKey: "scenarioEditor.functions.81U" },
+  { id: "81O", label: "81O", nameKey: "scenarioEditor.functions.81O" },
 ];
 
 // Compute zero-sequence current magnitude from three phasors
@@ -140,6 +142,7 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
 
   if (fn === "51") {
     const Ia = currents.Ia.mag;
+    if (!isFinite(Ia)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       const t = calcTheoreticalTripTime(st, Ia);
@@ -148,6 +151,7 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
   }
   if (fn === "50") {
     const Ia = currents.Ia.mag;
+    if (!isFinite(Ia)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       if (Ia >= st.pickup) {
@@ -158,6 +162,7 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
   }
   if (fn === "51N") {
     const I0 = computeI0(currents);
+    if (!isFinite(I0)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       const t = calc51NTheoreticalTripTime(st, I0);
@@ -166,6 +171,7 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
   }
   if (fn === "50N") {
     const I0 = computeI0(currents);
+    if (!isFinite(I0)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       if (I0 >= st.pickup) {
@@ -176,47 +182,71 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
   }
   if (fn === "46") {
     const I2 = computeI2(currents);
+    if (!isFinite(I2)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       if (I2 >= st.pickup) return { stageId: st.id, time: st.timeOp || 1.0 };
     }
   }
-  if (fn === "27/59") {
-    const Va = voltages.Va.mag / Vnom;
+  if (fn === "27") {
+    const Va = voltages.Va.mag;
+    if (!isFinite(Va) || !isFinite(Vnom) || Vnom === 0) return null;
+    const vpu = Va / Vnom;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
-      if (Va < st.pickup) return { stageId: st.id, time: st.timeOp || 1.0 };
+      if (vpu < st.pickup) return { stageId: st.id, time: st.timeOp || 1.0 };
+    }
+  }
+  if (fn === "59") {
+    const Va = voltages.Va.mag;
+    if (!isFinite(Va) || !isFinite(Vnom) || Vnom === 0) return null;
+    const vpu = Va / Vnom;
+    for (const st of stageSettings) {
+      if (!st.enabled) continue;
+      if (vpu > st.pickup) return { stageId: st.id, time: st.timeOp || 1.0 };
     }
   }
   if (fn === "47") {
     const Vab = voltages.Va.mag;
+    if (!isFinite(Vab) || !isFinite(Vnom)) return null;
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       if (Vab < st.pickup * Vnom) return { stageId: st.id, time: st.timeOp || 1.0 };
     }
   }
-  if (fn === "81") {
+  if (fn === "81U" || fn === "81O") {
     for (const st of stageSettings) {
       if (!st.enabled) continue;
       return { stageId: st.id, time: st.timeOp || 1.0 };
     }
   }
   if (fn === "67") {
-    const stage = stageSettings[0];
-    if (!stage?.enabled) return null;
-    if (currents.Ia.mag < stage.pickup) return null;
-    const mta = stage.mta ?? 0;
-    const relAng = ((currents.Ia.ang - mta + 360) % 360);
-    if (relAng > 90 && relAng < 270) return null;
-    return { stageId: stage.id, time: stage.timeDial ?? stage.timeOp ?? 0.1 };
+    // Guard against zero-voltage — 67 requires polarization voltage to determine direction
+    const vPol = Math.max(voltages.Va.mag, voltages.Vb.mag, voltages.Vc.mag);
+    if (vPol < 0.1) return "⚠ no polarization";
+    let fastest = null;
+    for (const stage of stageSettings) {
+      if (!stage.enabled) continue;
+      const Iamag = currents.Ia.mag;
+      if (!isFinite(Iamag) || Iamag < stage.pickup) continue;
+      const mta = stage.mta ?? 0;
+      const relAng = ((currents.Ia.ang - mta + 360) % 360);
+      if (relAng > 90 && relAng < 270) continue;
+      const t = stage.timeDial ?? stage.timeOp ?? 0.1;
+      if (!isFinite(t)) continue;
+      if (fastest === null || t < fastest.time) {
+        fastest = { stageId: stage.id, time: t };
+      }
+    }
+    return fastest;
   }
   if (fn === "67N") {
-    const stage = stageSettings[0];
-    if (!stage?.enabled) return null;
+    // Guard against zero-voltage — 67N requires 3V0 polarization
+    const vPol = Math.max(voltages.Va.mag, voltages.Vb.mag, voltages.Vc.mag);
+    if (vPol < 0.1) return "⚠ no polarization";
     const I0mag = computeI0(currents);
-    if (I0mag < stage.pickup) return null;
-    const mta = stage.mta ?? 0;
-    const I0ang = (() => {
+    if (!isFinite(I0mag)) return null;
+    const I0angCalc = (() => {
       const sum = ["Ia", "Ib", "Ic"].reduce(
         (acc, k) => {
           const r = toRect(currents[k].mag, currents[k].ang);
@@ -226,9 +256,20 @@ function computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys) 
       );
       return fromRect(sum.re, sum.im).ang;
     })();
-    const relAng = ((I0ang - mta + 360) % 360);
-    if (relAng > 90 && relAng < 270) return null;
-    return { stageId: stage.id, time: stage.timeDial ?? stage.timeOp ?? 0.1 };
+    let fastest = null;
+    for (const stage of stageSettings) {
+      if (!stage.enabled) continue;
+      if (I0mag < stage.pickup) continue;
+      const mta = stage.mta ?? 0;
+      const relAng = ((I0angCalc - mta + 360) % 360);
+      if (relAng > 90 && relAng < 270) continue;
+      const t = stage.timeDial ?? stage.timeOp ?? 0.1;
+      if (!isFinite(t)) continue;
+      if (fastest === null || t < fastest.time) {
+        fastest = { stageId: stage.id, time: t };
+      }
+    }
+    return fastest;
   }
   return null;
 }
@@ -279,6 +320,11 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
   // Selected protection function
   const [selectedFn, setSelectedFn] = useState("51");
 
+  // Per-function draft cache: preserves user edits when switching functions
+  const [stageDrafts, setStageDrafts] = useState(
+    () => Object.fromEntries(EDITOR_FUNCTIONS.map(f => [f.id, null]))
+  );
+
   // Phasor state: currents and voltages
   const [currents, setCurrents] = useState({
     Ia: { mag: 5.0, ang: 0 },
@@ -299,20 +345,52 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
   const [msg, setMsg] = useState(null);
 
+  // Focus management: return focus to opener on unmount
+  const openerRef = useRef(document.activeElement);
+  useEffect(() => {
+    return () => {
+      if (openerRef.current && typeof openerRef.current.focus === "function") {
+        openerRef.current.focus();
+      }
+    };
+  }, []);
+
   const showMsg = (text, ok = true) => {
     setMsg({ text, ok });
     setTimeout(() => setMsg(null), 2500);
   };
 
-  // When function changes, reset stage settings to defaults for that function
+  // When function changes, save current draft then restore draft for new function (or load defaults)
   const handleFnChange = (fid) => {
+    // Save current stages as draft before switching away
+    if (selectedFn) {
+      setStageDrafts(d => ({ ...d, [selectedFn]: stageSettings }));
+    }
+
     setSelectedFn(fid);
-    const fnDef = defaultProtections[fid];
+    // Backward compat: old "81" ID routes to 81U; old "27/59" routes to 27
+    const resolvedFid = fid === "81" ? "81U" : fid === "27/59" ? "27" : fid;
+    const fnKey = (resolvedFid === "81U" || resolvedFid === "81O") ? "81"
+              : (resolvedFid === "27" || resolvedFid === "59") ? "27/59"
+              : resolvedFid;
+    const fnDef = defaultProtections[fnKey];
+
+    // Restore draft for the new function if one exists
+    const existingDraft = stageDrafts[fid];
+    if (existingDraft && existingDraft.length > 0) {
+      setStageSettings(existingDraft);
+      return;
+    }
+
     if (!fnDef) { setStageSettings([]); return; }
-    if (fid === "27/59") {
+    if (resolvedFid === "27") {
       setStageSettings((fnDef.stages27 || []).map((s, i) => ({ ...s, enabled: i === 0 })));
-    } else if (fid === "81") {
+    } else if (resolvedFid === "59") {
+      setStageSettings((fnDef.stages59 || fnDef.stages27 || []).map((s, i) => ({ ...s, enabled: i === 0 })));
+    } else if (resolvedFid === "81U") {
       setStageSettings((fnDef.stages81u || []).map((s, i) => ({ ...s, enabled: i === 0 })));
+    } else if (resolvedFid === "81O") {
+      setStageSettings((fnDef.stages81o || []).map((s, i) => ({ ...s, enabled: i === 0 })));
     } else if (fid === "32") {
       setStageSettings((fnDef.stages32r || []).map((s, i) => ({ ...s, enabled: i === 0 })));
     } else if (fnDef.stages) {
@@ -331,11 +409,15 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
   };
 
   const updateCurrent = (phase, field, value) => {
-    setCurrents(prev => ({ ...prev, [phase]: { ...prev[phase], [field]: value } }));
+    const num = parseFloat(value);
+    if (!isFinite(num)) return;
+    setCurrents(prev => ({ ...prev, [phase]: { ...prev[phase], [field]: num } }));
   };
 
   const updateVoltage = (phase, field, value) => {
-    setVoltages(prev => ({ ...prev, [phase]: { ...prev[phase], [field]: value } }));
+    const num = parseFloat(value);
+    if (!isFinite(num)) return;
+    setVoltages(prev => ({ ...prev, [phase]: { ...prev[phase], [field]: num } }));
   };
 
   // Preview calculation
@@ -343,28 +425,43 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
     return computePreviewTrip(currents, voltages, selectedFn, stageSettings, sys);
   }, [currents, voltages, selectedFn, stageSettings, sys]);
 
+  // Save button enabled only when name is filled AND at least one stage is enabled
+  const canSave = name.trim().length > 0 && stageSettings.some(s => s.enabled);
+
   const handleSave = () => {
-    if (!name.trim()) { showMsg(t("scenarioEditor.messages.nameRequired"), false); return; }
+    if (!canSave) {
+      if (!name.trim()) { showMsg(t("scenarioEditor.messages.nameRequired"), false); return; }
+      showMsg(t("scenarioEditor.messages.stageRequired"), false);
+      return;
+    }
 
     // Build scenario object matching the format applyTestPreset expects
     const id = `visual_${Date.now()}`;
-    const fnInfo = EDITOR_FUNCTIONS.find(f => f.id === selectedFn);
-    const labelName = selectedFn;
 
     // Build fns and stages structures
     const fns = [selectedFn];
     let stages = {};
     const fnDef = defaultProtections[selectedFn];
 
-    if (selectedFn === "27/59") {
-      stages["27/59"] = {
+    if (selectedFn === "27") {
+      stages["27"] = {
         s27: stageSettings.map((s, i) => s.enabled ? i : null).filter(i => i !== null),
         s59: [],
       };
-    } else if (selectedFn === "81") {
-      stages["81"] = {
+    } else if (selectedFn === "59") {
+      stages["59"] = {
+        s27: [],
+        s59: stageSettings.map((s, i) => s.enabled ? i : null).filter(i => i !== null),
+      };
+    } else if (selectedFn === "81U") {
+      stages["81U"] = {
         s81u: stageSettings.map((s, i) => s.enabled ? i : null).filter(i => i !== null),
         s81o: [],
+      };
+    } else if (selectedFn === "81O") {
+      stages["81O"] = {
+        s81u: [],
+        s81o: stageSettings.map((s, i) => s.enabled ? i : null).filter(i => i !== null),
       };
     } else if (fnDef?.stages) {
       stages[selectedFn] = stageSettings.map((s, i) => s.enabled ? i : null).filter(i => i !== null);
@@ -372,7 +469,8 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
 
     // Build patch with the edited stage values
     const patch = {};
-    if (selectedFn !== "27/59" && selectedFn !== "81" && fnDef?.stages) {
+    const patchableFns = ["51", "50", "51N", "50N", "67", "67N", "46", "47"];
+    if (patchableFns.includes(selectedFn) && fnDef?.stages) {
       patch[selectedFn] = {
         stages: stageSettings.map(s => ({
           pickup: s.pickup,
@@ -400,25 +498,30 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
       patch,
       out: {},
       inp: {},
-      expectedTrip: preview ? `${preview.stageId}` : undefined,
-      expectedTime: preview ? parseFloat(preview.time.toFixed(3)) : undefined,
+      expectedTrip: (preview && typeof preview === "object") ? `${preview.stageId}` : undefined,
+      expectedTime: (preview && typeof preview === "object") ? parseFloat(preview.time.toFixed(3)) : undefined,
     };
 
     const ok = saveCustomScenario(scenario);
     if (ok) {
+      // Clear draft for the saved function
+      setStageDrafts(d => ({ ...d, [selectedFn]: null }));
       showMsg(t("scenarioEditor.messages.saved"));
       if (onSave) onSave(scenario);
       setTimeout(() => onClose && onClose(), 800);
     } else {
-      showMsg("Erro ao salvar", false);
+      showMsg(t("scenarioEditor.messages.saveFailed"), false);
     }
   };
 
   const handleReset = () => {
     setName("");
     setDesc("");
+    // Clear all drafts so reset gives a truly clean slate
+    setStageDrafts(Object.fromEntries(EDITOR_FUNCTIONS.map(f => [f.id, null])));
     setSelectedFn("51");
-    handleFnChange("51");
+    const fn51 = defaultProtections["51"];
+    setStageSettings(fn51.stages.map((s, i) => ({ ...s, enabled: i === 0 })));
     setCurrents({ Ia: { mag: 5.0, ang: 0 }, Ib: { mag: 5.0, ang: -120 }, Ic: { mag: 5.0, ang: 120 } });
     setVoltages({ Va: { mag: 66.4, ang: 0 }, Vb: { mag: 66.4, ang: -120 }, Vc: { mag: 66.4, ang: 120 } });
   };
@@ -429,8 +532,8 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
     const fn = selectedFn;
     const hasCurve = ["51", "51N", "67", "67N"].includes(fn);
     const isInstant = ["50", "50N"].includes(fn);
-    const isVolt = ["27/59", "47"].includes(fn);
-    const isFreq = fn === "81";
+    const isVolt = ["27", "59", "47"].includes(fn);
+    const isFreq = fn === "81U" || fn === "81O";
     const isCurrent = ["46"].includes(fn);
 
     return (
@@ -550,10 +653,21 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
   };
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", gap: 0,
-      height: "100%", overflow: "hidden",
-    }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="vse-title"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onClose && onClose();
+        }
+      }}
+      style={{
+        display: "flex", flexDirection: "column", gap: 0,
+        height: "100%", overflow: "hidden",
+      }}
+    >
       {/* Scrollable body */}
       <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
 
@@ -573,8 +687,14 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <SectionHead label={t("scenarioEditor.sections.identification")} color="var(--orange)" />
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>{t("scenarioEditor.labels.scenarioName")} *</label>
+            <label
+              htmlFor="vse-name"
+              style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}
+            >
+              {t("scenarioEditor.labels.scenarioName")} *
+            </label>
             <input
+              id="vse-name"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder={t("scenarioEditor.placeholders.name")}
@@ -587,8 +707,14 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
             />
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <label style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}>{t("scenarioEditor.labels.scenarioDesc")}</label>
+            <label
+              htmlFor="vse-desc"
+              style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase" }}
+            >
+              {t("scenarioEditor.labels.scenarioDesc")}
+            </label>
             <textarea
+              id="vse-desc"
               value={desc}
               onChange={e => setDesc(e.target.value)}
               placeholder={t("scenarioEditor.placeholders.objective")}
@@ -606,12 +732,12 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
         {/* Function selector */}
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <SectionHead label={t("scenarioEditor.sections.protectionFn")} color="var(--lav)" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 4 }}>
             {EDITOR_FUNCTIONS.map(f => (
               <button
                 key={f.id}
                 onClick={() => handleFnChange(f.id)}
-                title={f.name}
+                title={t(f.nameKey)}
                 style={{
                   padding: "6px 4px",
                   background: selectedFn === f.id ? "var(--orange-dim)" : "var(--card2)",
@@ -627,7 +753,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
             ))}
           </div>
           <div style={{ fontSize: 10, color: "var(--tx3)", textAlign: "center", fontStyle: "italic" }}>
-            {EDITOR_FUNCTIONS.find(f => f.id === selectedFn)?.name}
+            {(() => { const f = EDITOR_FUNCTIONS.find(f => f.id === selectedFn); return f ? t(f.nameKey) : null; })()}
           </div>
         </div>
 
@@ -686,7 +812,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
                     min="-360"
                     max="360"
                     value={currents[key].ang}
-                    onChange={e => updateCurrent(key, "ang", parseFloat(e.target.value) || 0)}
+                    onChange={e => updateCurrent(key, "ang", e.target.value)}
                     style={{
                       background: "var(--card2)", border: "1px solid var(--bdr)",
                       color: "var(--warm)", padding: "4px 6px", borderRadius: 6,
@@ -732,7 +858,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
                     min="-360"
                     max="360"
                     value={voltages[key].ang}
-                    onChange={e => updateVoltage(key, "ang", parseFloat(e.target.value) || 0)}
+                    onChange={e => updateVoltage(key, "ang", e.target.value)}
                     style={{
                       background: "var(--card2)", border: "1px solid var(--bdr)",
                       color: "var(--warm)", padding: "4px 6px", borderRadius: 6,
@@ -763,7 +889,11 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
           <div style={{ fontSize: 9, fontWeight: 700, color: "var(--tx3)", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 6, fontFamily: "var(--fm)" }}>
             Preview de Trip
           </div>
-          {preview ? (
+          {typeof preview === "string" ? (
+            <div style={{ fontSize: 11, color: "var(--warm)", fontStyle: "italic" }}>
+              {preview}
+            </div>
+          ) : preview ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{
                 background: "var(--green-dim)", color: "var(--green)",
@@ -780,7 +910,7 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
             </div>
           ) : (
             <div style={{ fontSize: 11, color: "var(--tx3)", fontStyle: "italic" }}>
-              Nenhum trip esperado com os valores atuais
+              {t("scenarioEditor.messages.noTrip")}
             </div>
           )}
         </div>
@@ -794,12 +924,17 @@ export default function ScenarioVisualEditor({ onClose, onSave, sys }) {
       }}>
         <button
           onClick={handleSave}
+          disabled={!canSave}
           style={{
             flex: 1, padding: "8px 0",
-            background: "var(--orange-dim)", border: "1px solid rgba(249,115,22,.3)",
-            borderRadius: 8, color: "var(--orange)", fontSize: 11, fontWeight: 700,
-            fontFamily: "var(--fh)", cursor: "pointer", letterSpacing: "0.5px",
-            textTransform: "uppercase", transition: "all .15s",
+            background: canSave ? "var(--orange-dim)" : "var(--card2)",
+            border: canSave ? "1px solid rgba(249,115,22,.3)" : "1px solid var(--bdr)",
+            borderRadius: 8,
+            color: canSave ? "var(--orange)" : "var(--tx3)",
+            fontSize: 11, fontWeight: 700,
+            fontFamily: "var(--fh)", cursor: canSave ? "pointer" : "not-allowed",
+            letterSpacing: "0.5px", textTransform: "uppercase", transition: "all .15s",
+            opacity: canSave ? 1 : 0.5,
           }}
         >
           {t("scenarioEditor.buttons.save")}

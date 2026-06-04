@@ -865,9 +865,26 @@
       "name": "Nombre del escenario",
       "objective": "Objetivo didáctico..."
     },
+    "functions": {
+      "51": "Sobrec. Temp. Fase",
+      "50": "Sobrec. Inst. Fase",
+      "51N": "Sobrec. Temp. Neutro",
+      "50N": "Sobrec. Inst. Neutro",
+      "67": "Direccional Fase",
+      "67N": "Direccional Neutro",
+      "27": "Subtensión",
+      "59": "Sobretensión",
+      "47": "Seq. Neg. Tensión",
+      "46": "Sobrec. Seq. Negativa",
+      "81U": "Subfrecuencia",
+      "81O": "Sobrefrecuencia"
+    },
     "messages": {
       "nameRequired": "Nombre requerido",
-      "saved": "¡Escenario guardado con éxito!"
+      "stageRequired": "Habilite al menos una etapa antes de guardar",
+      "saved": "¡Escenario guardado con éxito!",
+      "saveFailed": "Error al guardar (¿almacenamiento lleno?)",
+      "noTrip": "No se espera disparo con los valores actuales"
     },
     "buttons": {
       "save": "Guardar Escenario"
