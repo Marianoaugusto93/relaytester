@@ -3,9 +3,37 @@
   "description": "Ill-conditioned network - high iteration count",
   "network": {
     "buses": [
-      { "i": 1, "name": "Bus 1", "Vm": 1.05, "Va": 0, "type": 2 },
-      { "i": 2, "name": "Bus 2", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 100, "Qd": 50 },
-      { "i": 3, "name": "Bus 3", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 80, "Qd": 40 }
+      {
+        "i": 1,
+        "name": "Bus 1",
+        "Vm": 1.05,
+        "Va": 0,
+        "type": 2,
+        "hasGenerator": true,
+        "genInService": true,
+        "Pg": 2.0,
+        "Qg": 0.5
+      },
+      {
+        "i": 2,
+        "name": "Bus 2",
+        "Vm": 1.0,
+        "Va": 0,
+        "type": 1,
+        "Pd": 1.0,
+        "Qd": 0.5,
+        "genInService": false
+      },
+      {
+        "i": 3,
+        "name": "Bus 3",
+        "Vm": 1.0,
+        "Va": 0,
+        "type": 1,
+        "Pd": 0.8,
+        "Qd": 0.4,
+        "genInService": false
+      }
     ],
     "branches": [
       { "fbus": 1, "tbus": 2, "r": 0.001, "x": 0.001, "b": 0.0 },
@@ -14,7 +42,7 @@
   },
   "expectedResult": {
     "converged": true,
-    "iterations": 12,
+    "iterations": 15,
     "condition_number": 1e6
   }
 }

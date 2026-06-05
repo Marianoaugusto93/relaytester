@@ -1,0 +1,103 @@
+16:50:04.534
+Executing user build command: npm run build
+16:50:04.938
+16:50:04.938
+> relaytester-pro@1.5.0 build
+16:50:04.939
+> vite build
+16:50:04.941
+16:50:07.312
+vite v6.4.2 building for production...
+16:50:07.405
+transforming...
+16:50:10.988
+✓ 151 modules transformed.
+16:50:11.451
+rendering chunks...
+16:50:11.732
+computing gzip size...
+16:50:12.801
+dist/.assetsignore                              0.02 kB
+16:50:12.802
+dist/index.html                                 0.54 kB │ gzip:   0.33 kB
+16:50:12.802
+dist/wrangler.json                              1.32 kB │ gzip:   0.66 kB
+16:50:12.802
+dist/assets/curves-D-Hkwy1c.js                  0.23 kB │ gzip:   0.14 kB
+16:50:12.802
+dist/assets/Tutorial-CHsleOG-.js                3.52 kB │ gzip:   1.40 kB
+16:50:12.802
+dist/assets/AnalyticsDashboard-DD9OW_xz.js      6.79 kB │ gzip:   2.42 kB
+16:50:12.802
+dist/assets/HelpModal-B_bPA-6-.js               6.88 kB │ gzip:   2.72 kB
+16:50:12.802
+dist/assets/FaultCalculator-EEN6qM-k.js         7.09 kB │ gzip:   2.40 kB
+16:50:12.802
+dist/assets/PhasorDiagram-Rrp5GZCS.js          13.17 kB │ gzip:   3.40 kB
+16:50:12.802
+dist/assets/WaveformDisplay-j_2SIrhT.js        18.13 kB │ gzip:   5.53 kB
+16:50:12.803
+dist/assets/ScenarioVisualEditor-o6iTRhXh.js   21.75 kB │ gzip:   5.83 kB
+16:50:12.803
+dist/assets/jszip-r3BnWVCA.js                  97.11 kB │ gzip:  30.10 kB
+16:50:12.803
+dist/assets/react-BRY8hXab.js                 141.86 kB │ gzip:  45.52 kB
+16:50:12.805
+dist/assets/EstudosPage-Cfy_3-Jm.js           149.97 kB │ gzip:  38.55 kB
+16:50:12.805
+dist/assets/index-Bc88c2TL.js                 459.53 kB │ gzip: 117.99 kB
+16:50:12.809
+✓ built in 5.46s
+16:50:12.919
+Success: Build command completed
+16:50:13.049
+Executing user deploy command: npx wrangler deploy
+16:50:15.006
+16:50:15.007
+ ⛅️ wrangler 4.93.0
+16:50:15.007
+───────────────────
+16:50:15.009
+Using redirected Wrangler configuration.
+16:50:15.009
+ - Configuration being used: "dist/wrangler.json"
+16:50:15.009
+ - Original user's configuration: "wrangler.jsonc"
+16:50:15.009
+ - Deploy configuration file: ".wrangler/deploy/config.json"
+16:50:16.197
+▲ [WARNING] Warning: The following routes will attempt to serve Assets on a configured path:
+16:50:16.198
+16:50:16.198
+    • /coordenograma/* (Will match assets: dist/coordenograma/*)
+16:50:16.198
+    • /newton-rapson/* (Will match assets: dist/newton-rapson/*)
+16:50:16.198
+16:50:16.198
+16:50:16.735
+🌀 Building list of assets...
+16:50:16.737
+✨ Read 31 files from the assets directory /opt/buildhome/repo/dist
+16:50:16.773
+🌀 Starting asset upload...
+16:50:18.404
+No updated asset files to upload. Proceeding with deployment...
+16:50:18.409
+Total Upload: 0.31 KiB / gzip: 0.22 KiB
+16:50:20.601
+Uploaded relaytester (4.40 sec)
+16:50:21.052
+16:50:21.053
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+16:50:21.081
+16:50:21.082
+✘ [ERROR] Could not find zone for `coordenograma`. Make sure the domain is set up to be proxied by Cloudflare.
+16:50:21.083
+16:50:21.083
+  For more details, refer to https://developers.cloudflare.com/workers/configuration/routing/routes/#set-up-a-route
+16:50:21.089
+16:50:21.089
+16:50:21.118
+🪵  Logs were written to "/opt/buildhome/.config/.wrangler/logs/wrangler-2026-06-04_19-50-14_606.log"
+16:50:21.498
+Failed: error occurred while running deploy command

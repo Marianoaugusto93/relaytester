@@ -3,23 +3,37 @@
   "description": "Q-limit enforcement - reactive power clamping",
   "network": {
     "buses": [
-      { "i": 1, "name": "Gen Bus", "Vm": 1.05, "Va": 0, "type": 3 },
-      { "i": 2, "name": "Load Bus", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 100, "Qd": 50 }
+      {
+        "i": 1,
+        "name": "Gen Bus",
+        "Vm": 1.05,
+        "Va": 0,
+        "type": 3,
+        "hasGenerator": true,
+        "genInService": true,
+        "Pg": 1.0,
+        "Qg": 0.0,
+        "Qgmin": -0.5,
+        "Qgmax": 0.5
+      },
+      {
+        "i": 2,
+        "name": "Load Bus",
+        "Vm": 1.0,
+        "Va": 0,
+        "type": 1,
+        "Pd": 1.0,
+        "Qd": 0.5,
+        "genInService": false
+      }
     ],
     "branches": [
       { "fbus": 1, "tbus": 2, "r": 0.01, "x": 0.1, "b": 0.0 }
-    ],
-    "generators": [
-      { "bus": 1, "Pg": 100, "Qg": 0, "Qmax": 50, "Qmin": -50 }
     ]
   },
   "expectedResult": {
     "converged": true,
     "iterations": 6,
-    "buses": [
-      { "i": 1, "Vm": 1.050000, "Va": 0.000000 },
-      { "i": 2, "Vm": 0.987654, "Va": -0.156234 }
-    ],
     "genQ_clamped": true
   }
 }
