@@ -70,18 +70,24 @@
 
     <div class="layout">
       <div>
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 12px; color: #6e6e73; margin-right: 8px;">Scenario:</label>
-          <select id="scenario-select" style="padding: 6px; border-radius: 6px; border: 1px solid #d2d2d7;">
-            <option value="">-- Demo Network --</option>
-            <option value="3ph">3-Phase Fault</option>
-            <option value="lg">L-G Fault</option>
-            <option value="ll">L-L Fault</option>
-            <option value="inrush">Inrush Transient</option>
-            <option value="undervolt">Undervoltage</option>
-            <option value="underfreq">Underfrequency</option>
-            <option value="directional">Directional</option>
-          </select>
+        <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <label style="font-size: 12px; color: #6e6e73; margin-right: 8px;">Scenario:</label>
+            <select id="scenario-select" style="padding: 6px; border-radius: 6px; border: 1px solid #d2d2d7; width: 100%;">
+              <option value="">-- Demo Network --</option>
+              <option value="3ph">3-Phase Fault</option>
+              <option value="lg">L-G Fault</option>
+              <option value="ll">L-L Fault</option>
+              <option value="inrush">Inrush Transient</option>
+              <option value="undervolt">Undervoltage</option>
+              <option value="underfreq">Underfrequency</option>
+              <option value="directional">Directional</option>
+            </select>
+          </div>
+          <div style="flex: 0 0 auto;">
+            <label style="font-size: 12px; color: #6e6e73; display: block; margin-bottom: 4px;">Load Network:</label>
+            <input type="file" id="network-file" accept=".json" style="font-size: 11px; padding: 4px;">
+          </div>
         </div>
         <div id="diagram-fs-container">
           <svg id="diagram"></svg>
@@ -491,6 +497,31 @@
       solveNetwork();
     }
 
+    // Load network from JSON file
+    function loadNetworkFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const networkData = deserializeNetwork(JSON.stringify(data));
+          buses = networkData.buses || [];
+          branches = networkData.branches || [];
+          baseLoads = data.baseLoads || [];
+
+          renderControls(buses, branches, BASE_MVA);
+          renderTransformerControls();
+          renderDiagram();
+          renderTables();
+          updateLabels();
+          solveNetwork();
+          updateStatusDisplay(`✓ Network loaded: ${buses.length} buses`, 'ok');
+        } catch (error) {
+          updateStatusDisplay(`✗ Error loading network: ${error.message}`, 'bad');
+        }
+      };
+      reader.readAsText(file);
+    }
+
     // Wire event listeners — Task 6
     function wireEventListeners() {
       // Create action buttons in first panel
@@ -563,6 +594,16 @@ A
       if (scenarioSelect) {
         scenarioSelect.addEventListener('change', (e) => {
           loadScenario(e.target.value);
+        });
+      }
+
+      // Wire network file loader
+      const networkFile = document.getElementById('network-file');
+      if (networkFile) {
+        networkFile.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files[0]) {
+            loadNetworkFile(e.target.files[0]);
+          }
         });
       }
 
