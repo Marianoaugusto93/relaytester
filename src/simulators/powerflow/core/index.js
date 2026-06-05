@@ -6,4 +6,28 @@
  * - postMessage bridge for iframe isolation (Phase 4)
  */
 
+// Phase 2: Solver core
 export { buildYbus, solveLinear, solvePowerFlow } from './solver.js';
+
+// Phase 3: Persistence and visualization
+export {
+  serializeNetwork,
+  deserializeNetwork,
+  validateRoundTrip,
+} from './persistence.js';
+
+export {
+  voltageHeatmapColor,
+  angleHeatmapColor,
+  formatAmps,
+} from './heatmap.js';
+
+export {
+  bboxForText,
+  bboxOverlap,
+  bboxCollisionCount,
+  pickBestPosition,
+  getLabelOffset,
+  setLabelOffset,
+  clearAllLabelOffsets,
+} from './labels.js';
