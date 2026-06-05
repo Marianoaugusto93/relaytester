@@ -40,3 +40,16 @@ export {
   SolverBridgeClient,
   SolverBridgeServer,
 } from './bridge.js';
+
+// Phase 5: Controls and diagnostics
+export {
+  renderControls,
+  applyControls,
+  onCellEdit,
+} from './controls.js';
+
+export {
+  tracePvCurve,
+  renderPvCurveSvg,
+  runConvergenceDiagnostics,
+} from './diagnostics.js';
