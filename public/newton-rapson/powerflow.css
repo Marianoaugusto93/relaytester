@@ -1,0 +1,392 @@
+/* ================================================================== */
+/* Newton-Raphson Power Flow Simulator — dark-theme stylesheet         */
+/* Extracted from powerflow-refactored.html block #1 (lines 10-317)    */
+/* Token mapping: light Apple theme → dark RelayLab theme              */
+/* ================================================================== */
+
+/* ----- Section 1: Design tokens + neutralization rules ----- */
+:root {
+  --pf-bg: #0e1015;
+  --pf-text: #e5e7eb;
+  --pf-text-secondary: #9ca3af;
+  --pf-card: #1a1d23;
+  --pf-border: #2a2f3a;
+  --pf-surface-alt: #14171c;
+  --pf-border-soft: #252932;
+  --pf-surface-code: #1f232b;
+  --pf-surface-docs: #12151a;
+  --pf-surface-hover: #22262e;
+  --pf-accent: #3b82f6;
+  --pf-accent-hover: #60a5fa;
+  --pf-success: #22c55e;
+  --pf-success-bg: rgba(34, 197, 94, 0.15);
+  --pf-success-text: #86efac;
+  --pf-error-bg: rgba(239, 68, 68, 0.18);
+  --pf-error-text: #fca5a5;
+  --pf-warn-bg: rgba(245, 158, 11, 0.18);
+  --pf-warn-text: #fcd34d;
+  --pf-diag-bg: #1f1517;
+  --pf-diag-border: #3a2226;
+  --pf-diag-good-bg: #15201a;
+  --pf-diag-good-border: #1f3a26;
+  --pf-diag-row-border: #3a2226;
+  --pf-diag-th: #9ca3af;
+  --pf-name-warn-bg: #2a230f;
+  --pf-name-warn-accent: #facc15;
+  --pf-selected-branch: #fb923c;
+  --pf-delete: #ef4444;
+  --pf-placeholder: #6b7280;
+  --pf-disabled-text: #6b7280;
+  --pf-disabled-bg: #191b20;
+}
+
+/* Suppress NERX header/ticker overlays injected by header.js/ticker.js */
+.header-container { display: none !important; }
+.ticker-overlay   { display: none !important; }
+body              { padding-top: 20px !important; }
+
+/* ----- Section 2: Base & typography (lines 12-23) ----- */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--pf-bg);
+  color: var(--pf-text);
+}
+h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+h2 { font-size: 16px; font-weight: 500; margin: 16px 0 8px; }
+.subtitle { color: var(--pf-text-secondary); font-size: 13px; margin-bottom: 16px; }
+
+/* ----- Section 3: Layout panels (lines 24-35) ----- */
+.container { max-width: 1400px; margin: 0 auto; }
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 20px;
+}
+.panel {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+/* ----- Section 4: Diagram & SVG (lines 36-38) ----- */
+svg { width: 100%; height: auto; display: block; }
+#diagram:focus { outline: 2px solid rgba(59, 130, 246, 0.5); outline-offset: -1px; }
+#diagram:focus-visible { outline: 2px solid rgba(59, 130, 246, 0.5); outline-offset: -1px; }
+
+/* ----- Section 5: Tables (lines 39-44) ----- */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--pf-border-soft); }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--pf-text-secondary); background: var(--pf-surface-alt); }
+td input.cell { width: 60px; padding: 2px 4px; border: 1px solid var(--pf-border); border-radius: 4px; font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+td input.cell:focus { outline: 2px solid var(--pf-accent); outline-offset: -2px; }
+
+/* ----- Section 6: Controls & rows (lines 45-54) ----- */
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.control-row label { flex: 0 0 200px; color: var(--pf-text-secondary); font-size: 12px; }
+.control-row input[type=range] { flex: 1; min-width: 80px; }
+.control-row .val { flex: 0 0 56px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+/* ----- Section 7: Buttons (lines 55-65) ----- */
+button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--pf-border);
+  background: var(--pf-card);
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { background: var(--pf-surface-hover); }
+button.primary { background: var(--pf-accent); color: #fff; border-color: var(--pf-accent); }
+button.primary:hover { background: var(--pf-accent-hover); }
+
+/* ----- Section 8: Status badges (lines 66-69) ----- */
+.status { font-size: 12px; padding: 6px 10px; border-radius: 6px; margin-top: 8px; }
+.status.ok { background: var(--pf-success-bg); color: var(--pf-success-text); }
+.status.bad { background: var(--pf-error-bg); color: var(--pf-error-text); }
+.status.warn { background: var(--pf-warn-bg); color: var(--pf-warn-text); }
+
+/* ----- Section 9: Convergence diagnostic panel (lines 70-96) ----- */
+/* Convergence diagnostic panel — appears beneath the status bar after a
+   failed solve. Structured into "diag-block" cards. */
+#convergence-diagnostic { font-size: 12px; margin-top: 6px; }
+#convergence-diagnostic h3 { font-size: 13px; }
+#convergence-diagnostic .diag-block {
+  background: var(--pf-diag-bg);
+  border: 1px solid var(--pf-diag-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 6px 0;
+  line-height: 1.45;
+}
+#convergence-diagnostic .diag-block.diag-good {
+  background: var(--pf-diag-good-bg); border-color: var(--pf-diag-good-border);
+}
+#convergence-diagnostic table.diag-trace {
+  width: 100%; font-size: 11px; margin-top: 6px;
+  border-collapse: collapse;
+}
+#convergence-diagnostic table.diag-trace th,
+#convergence-diagnostic table.diag-trace td {
+  text-align: left; padding: 3px 6px;
+  border-bottom: 1px solid var(--pf-diag-row-border);
+}
+#convergence-diagnostic table.diag-trace th { font-weight: 600; color: var(--pf-diag-th); }
+#convergence-diagnostic .diag-ok { color: var(--pf-success-text); }
+#convergence-diagnostic .diag-bad { color: var(--pf-error-text); }
+
+/* ----- Section 10: Fullscreen mode (lines 97-135) ----- */
+/* Fullscreen styling — when the diagram-fs-container goes fullscreen, the
+   SVG should fill almost the entire viewport with the display-mode controls
+   across the top. This is what gets used for LinkedIn demos and live
+   presentations: clean, big, slider-free during the demo (set up sliders
+   before going fullscreen). */
+#diagram-fs-container:fullscreen {
+  background: var(--pf-surface-alt);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+}
+#diagram-fs-container:fullscreen #dispmode-controls {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  flex-wrap: wrap;
+}
+#diagram-fs-container:fullscreen #diagram {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+/* Vendor-prefixed equivalents — Safari uses :-webkit-full-screen, older
+   Firefox used :-moz-full-screen. The standardized :fullscreen lives above. */
+#diagram-fs-container:-webkit-full-screen {
+  background: var(--pf-surface-alt);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+}
+#diagram-fs-container:-webkit-full-screen #dispmode-controls {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+}
+#diagram-fs-container:-webkit-full-screen #diagram {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* ----- Section 11: Fullscreen toolbar (lines 136-173) ----- */
+/* Floating editor toolbar inside the fullscreen container.
+   Hidden in normal (non-fullscreen) view so it takes no space.
+   When the container enters fullscreen it appears as a compact strip
+   at the top of the flex column, above the SVG canvas.  The buttons
+   mirror the normal toolbar tool buttons and share the same .tool /
+   .active CSS classes, so active-state highlighting syncs automatically
+   via setTool() without any extra JS. */
+#fs-toolbar {
+  display: none;
+}
+#diagram-fs-container:fullscreen #fs-toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: rgba(26, 29, 35, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(42, 47, 58, 0.7);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+#diagram-fs-container:-webkit-full-screen #fs-toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: rgba(26, 29, 35, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(42, 47, 58, 0.7);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+/* ----- Section 12: Model-name input states (lines 174-188) ----- */
+/* Model-name input — shows a subtle hover/focus state since it has no
+   border by default. The "needs-name" class is briefly applied after
+   New model is clicked to make it obvious where to type. */
+#model-name:hover { background: var(--pf-surface-hover); }
+#model-name:focus { outline: none; background: var(--pf-card); box-shadow: 0 0 0 2px var(--pf-accent); }
+#model-name::placeholder { color: var(--pf-placeholder); font-style: italic; font-weight: 400; }
+#model-name.needs-name {
+  background: var(--pf-name-warn-bg);
+  box-shadow: 0 0 0 2px var(--pf-name-warn-accent);
+  animation: namePulse 1.4s ease-in-out 2;
+}
+@keyframes namePulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--pf-name-warn-accent); }
+  50%      { box-shadow: 0 0 0 5px rgba(250, 204, 21, 0.35); }
+}
+
+/* ----- Section 13: Legend & details (lines 189-203) ----- */
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--pf-text-secondary);
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 24px; height: 3px; border-radius: 2px; }
+.heatmap-legend { cursor: grab; }
+.heatmap-legend:active { cursor: grabbing; }
+details { margin: 8px 0; font-size: 13px; }
+summary { cursor: pointer; color: var(--pf-accent); padding: 4px 0; }
+details > div { padding: 8px 0; line-height: 1.5; color: var(--pf-text); }
+
+/* ----- Section 14: Docs section (lines 204-214) ----- */
+.docs { margin-top: 24px; padding: 20px 24px; background: var(--pf-surface-docs); border-radius: 12px; border: 1px solid var(--pf-border-soft); }
+.docs h2 { margin-top: 0; font-size: 18px; }
+.docs h3 { font-size: 14px; font-weight: 600; margin: 18px 0 6px 0; color: var(--pf-text); }
+.docs h4 { font-size: 13px; font-weight: 600; margin: 12px 0 4px 0; color: var(--pf-text); }
+.docs p, .docs li { font-size: 13px; line-height: 1.55; color: var(--pf-text); }
+.docs ul, .docs ol { padding-left: 22px; margin: 6px 0; }
+.docs code { background: var(--pf-surface-code); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+.docs .hint { color: var(--pf-text-secondary); font-style: italic; font-size: 12px; }
+.docs table { border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+.docs table th { background: var(--pf-surface-code); text-align: left; padding: 4px 8px; font-weight: 600; }
+.docs table td { padding: 4px 8px; border-top: 1px solid var(--pf-border-soft); vertical-align: top; }
+
+/* ----- Section 15: Group containers (lines 215-216) ----- */
+.group { padding: 8px 10px; background: var(--pf-surface-alt); border-radius: 6px; margin: 6px 0; }
+.group-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--pf-text-secondary); margin-bottom: 4px; }
+
+/* ----- Section 16: Recording overlay (lines 217-226) ----- */
+#rec-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); align-items: center; justify-content: center; z-index: 9999; }
+#rec-overlay.on { display: flex; }
+#rec-overlay > div { background: var(--pf-card); padding: 24px 28px; border-radius: 12px; min-width: 360px; max-width: 480px; }
+#rec-overlay h3 { margin: 0 0 8px; font-size: 15px; font-weight: 500; }
+#rec-overlay .sub { font-size: 12px; color: var(--pf-text-secondary); margin-bottom: 12px; }
+#rec-bar { height: 8px; background: var(--pf-border-soft); border-radius: 4px; overflow: hidden; margin: 6px 0 12px; }
+#rec-bar-fill { height: 100%; background: var(--pf-accent); width: 0%; transition: width 0.2s; }
+#rec-dl { display: none; margin-top: 8px; padding: 8px 14px; background: var(--pf-success); color: #fff; text-decoration: none; border-radius: 6px; font-size: 13px; }
+#rec-dl.on { display: inline-block; }
+#rec-close { margin-left: 8px; }
+
+/* ----- Section 17: Slack-bus modal (lines 227-236) ----- */
+#slack-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); align-items: center; justify-content: center; z-index: 9998; }
+#slack-modal.on { display: flex; }
+#slack-modal > div { background: var(--pf-card); padding: 22px 26px; border-radius: 12px; min-width: 380px; max-width: 520px; }
+#slack-modal h3 { margin: 0 0 8px; font-size: 16px; font-weight: 500; }
+#slack-modal p { margin: 0 0 12px; font-size: 13px; color: var(--pf-text-secondary); line-height: 1.45; }
+#slack-bus-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+#slack-bus-grid button { padding: 8px 14px; font-size: 13px; border-radius: 6px; border: 1px solid var(--pf-border); background: var(--pf-card); cursor: pointer; min-width: 88px; }
+#slack-bus-grid button:hover { background: var(--pf-surface-hover); border-color: var(--pf-accent); }
+#slack-bus-grid button.recommended { border-color: var(--pf-accent); box-shadow: 0 0 0 1px var(--pf-accent) inset; }
+#slack-bus-grid .recommend-label { font-size: 10px; color: var(--pf-accent); display: block; margin-top: 2px; }
+
+/* ----- Section 18: Tool buttons (lines 237-239) ----- */
+button.tool { padding: 4px 10px; font-size: 12px; border-radius: 6px; border: 1px solid var(--pf-border); background: var(--pf-card); cursor: pointer; }
+button.tool:hover { background: var(--pf-surface-hover); }
+button.tool.active { background: var(--pf-accent); color: #fff; border-color: var(--pf-accent); }
+
+/* ----- Section 19: Diagram cursor modes (lines 240-276) ----- */
+#diagram .bus-hit { cursor: move; }
+#diagram .bus-hit.cursor-add { cursor: crosshair; }
+#diagram .bus-hit.cursor-delete { cursor: not-allowed; }
+#diagram.cursor-add { cursor: crosshair; }
+#diagram.cursor-delete { cursor: not-allowed; }
+/* In delete mode: every hit element should show the not-allowed cursor as
+   a visual cue that the click will remove that element. The cursor-delete
+   class is on #diagram itself; cascade to all hit areas with !important so
+   it overrides the default move/pointer cursors on bus-hit and branch-hit. */
+#diagram.cursor-delete .bus-hit,
+#diagram.cursor-delete .branch-hit,
+#diagram.cursor-delete .elem-hit { cursor: not-allowed !important; }
+/* Visible hover cue in delete mode: any hovered hit element gets a red glow
+   so the user can see exactly what they're about to delete before clicking.
+   The hit elements are transparent fills, so we paint a red stroke on the
+   overlay shape itself. */
+#diagram.cursor-delete .bus-hit:hover { fill: rgba(239, 68, 68, 0.12) !important; stroke: var(--pf-delete); stroke-width: 2; }
+#diagram.cursor-delete .branch-hit:hover { stroke: rgba(239, 68, 68, 0.5) !important; }
+#diagram.cursor-delete .elem-hit:hover { fill: rgba(239, 68, 68, 0.18) !important; stroke: var(--pf-delete); stroke-width: 2; }
+/* Labels in delete mode: red text on hover so the user knows clicking the
+   label will delete the underlying element. */
+#diagram.cursor-delete .draggable-label { cursor: not-allowed !important; }
+#diagram.cursor-delete .draggable-label:hover text {
+  fill: var(--pf-delete) !important;
+  font-weight: 700;
+  text-decoration: line-through !important;
+  text-decoration-color: var(--pf-delete) !important;
+}
+#diagram.cursor-pan { cursor: grab; }
+#diagram.cursor-pan.cursor-panning { cursor: grabbing; }
+#diagram.cursor-pan * { cursor: grab !important; }
+#diagram.cursor-pan.cursor-panning * { cursor: grabbing !important; }
+#diagram .branch-hit { cursor: pointer; }
+#diagram .draggable-label { cursor: move; }
+#diagram .draggable-label.dragging text { fill: var(--pf-accent) !important; }
+#diagram .draggable-label.selected text { font-weight: 700; }
+#diagram .draggable-label:hover text { text-decoration: underline; text-decoration-color: rgba(59, 130, 246, 0.4); text-underline-offset: 2px; }
+
+/* ----- Section 20: Out-of-service rows (lines 277-278) ----- */
+table tr.out-of-service td { color: var(--pf-disabled-text); background: var(--pf-disabled-bg); }
+table tr.out-of-service input.cell { color: var(--pf-disabled-text); }
+
+/* ----- Section 21: Branch selection (line 279) ----- */
+#diagram .selected-for-branch { stroke: var(--pf-selected-branch) !important; stroke-width: 4 !important; }
+
+/* ----- Section 22: Label toggle panel (lines 280-317) ----- */
+/* Label visibility toggle panel */
+#label-toggle-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--pf-surface-alt);
+  border: 1px solid var(--pf-border-soft);
+  border-radius: 8px;
+  font-size: 12px;
+}
+#label-toggle-panel .toggle-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--pf-text-secondary);
+  font-weight: 600;
+  margin-right: 4px;
+  flex-basis: 100%;
+}
+#label-toggle-panel label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--pf-text);
+}
+#label-toggle-panel label:hover { color: var(--pf-accent); }
+#label-toggle-panel input[type="checkbox"] { margin: 0; cursor: pointer; }
+#label-toggle-panel .toggle-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--pf-border);
+  margin: 0 2px;
+}
