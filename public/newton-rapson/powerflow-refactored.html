@@ -61,12 +61,122 @@
       padding: 8px 10px;
       margin: 6px 0;
     }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal.active { display: flex; align-items: center; justify-content: center; }
+    .modal-content {
+      background-color: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #999;
+    }
+    .modal-section {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e5ea;
+    }
+    .modal-section h3 {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+    .modal-section p {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #666;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
+  <div id="help-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Help & Documentation</span>
+        <button class="modal-close" onclick="closeHelp()">×</button>
+      </div>
+
+      <div class="modal-section">
+        <h3>Getting Started</h3>
+        <p>1. Select a <strong>Scenario</strong> from the dropdown or load a custom network<br/>
+           2. Adjust <strong>Controls</strong>: generators, loads, and transformers<br/>
+           3. Click <strong>[▶ Solve]</strong> to run power flow calculation<br/>
+           4. View results in the tables below</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Scenarios</h3>
+        <p><strong>3-Phase Fault:</strong> Balanced three-phase fault<br/>
+           <strong>L-G Fault:</strong> Line-to-ground fault<br/>
+           <strong>L-L Fault:</strong> Line-to-line fault<br/>
+           <strong>Inrush:</strong> Transformer inrush transient<br/>
+           <strong>Undervoltage:</strong> Low voltage condition<br/>
+           <strong>Underfrequency:</strong> Low frequency event<br/>
+           <strong>Directional:</strong> Directional fault protection</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Controls & Actions</h3>
+        <p><strong>[▶ Solve]:</strong> Run power flow solver<br/>
+           <strong>[↺ Reset]:</strong> Reload demo network<br/>
+           <strong>[⬇ Export JSON]:</strong> Save network to file<br/>
+           <strong>[📊 COMTRADE]:</strong> Export relay test data<br/>
+           <strong>Load Network:</strong> Import network from JSON</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Result Tables</h3>
+        <p><strong>Bus Measurements:</strong> Voltage, angle, power at each bus<br/>
+           <strong>Generators:</strong> Active/reactive power dispatch<br/>
+           <strong>Loads:</strong> Load consumption by bus<br/>
+           <strong>Branch Flows:</strong> Power flowing in branches</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Tips</h3>
+        <p>• Move sliders to see real-time results<br/>
+           • Drag transformer taps to adjust voltage<br/>
+           • Use scenarios for quick testing<br/>
+           • Export for offline analysis</p>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
-    <h1>Newton-Raphson Power Flow Simulator</h1>
-    <div class="subtitle">🟢 Refactored Version (Phase 4+)</div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h1>Newton-Raphson Power Flow Simulator</h1>
+        <div class="subtitle">🟢 Refactored Version (Phase 7)</div>
+      </div>
+      <button onclick="openHelp()" style="padding: 8px 12px; background: #fff; border: 1px solid #d2d2d7; border-radius: 6px; cursor: pointer; font-size: 14px;">❓ Help</button>
+    </div>
 
     <div class="layout">
       <div>
@@ -663,6 +773,23 @@ A
         event.source.postMessage({ id, result });
       } catch (error) {
         event.source.postMessage({ id, error: error.message });
+      }
+    });
+
+    // Help modal functions
+    function openHelp() {
+      document.getElementById('help-modal').classList.add('active');
+    }
+
+    function closeHelp() {
+      document.getElementById('help-modal').classList.remove('active');
+    }
+
+    // Close modal on outside click
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('help-modal');
+      if (e.target === modal) {
+        closeHelp();
       }
     });
 
