@@ -1,0 +1,24 @@
+{
+  "name": "fixture-40bus-demo",
+  "description": "40-bus IEEE reference system - baseline convergence test",
+  "network": {
+    "buses": [
+      { "i": 1, "name": "Bus 1", "Vm": 1.05, "Va": 0, "type": 3, "Pd": 0, "Qd": 0 },
+      { "i": 2, "name": "Bus 2", "Vm": 1.025, "Va": -0.05, "type": 2, "Pd": 21.7, "Qd": 12.7 },
+      { "i": 3, "name": "Bus 3", "Vm": 1.01, "Va": -0.10, "type": 1, "Pd": 2.4, "Qd": 1.2 }
+    ],
+    "branches": [
+      { "fbus": 1, "tbus": 2, "r": 0.001, "x": 0.01, "b": 0.02, "rateA": 999 },
+      { "fbus": 2, "tbus": 3, "r": 0.0015, "x": 0.015, "b": 0.03, "rateA": 999 }
+    ]
+  },
+  "expectedResult": {
+    "converged": true,
+    "iterations": 4,
+    "buses": [
+      { "i": 1, "Vm": 1.050000, "Va": 0.000000, "P": 23.124, "Q": 13.891 },
+      { "i": 2, "Vm": 1.024999, "Va": -0.049876, "P": 21.700, "Q": 12.700 },
+      { "i": 3, "Vm": 1.009998, "Va": -0.099876, "P": 2.400, "Q": 1.200 }
+    ]
+  }
+}

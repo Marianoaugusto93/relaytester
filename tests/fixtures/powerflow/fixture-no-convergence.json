@@ -1,0 +1,18 @@
+{
+  "name": "fixture-no-convergence",
+  "description": "Non-converging case - graceful failure handling",
+  "network": {
+    "buses": [
+      { "i": 1, "name": "Bus 1", "Vm": 0.5, "Va": 0, "type": 2 },
+      { "i": 2, "name": "Bus 2", "Vm": 0.1, "Va": 0, "type": 1, "Pd": 1000, "Qd": 500 }
+    ],
+    "branches": [
+      { "fbus": 1, "tbus": 2, "r": 0.1, "x": 1.0, "b": 0.0 }
+    ]
+  },
+  "expectedResult": {
+    "converged": false,
+    "iterations": 20,
+    "error": "max_iterations_exceeded"
+  }
+}

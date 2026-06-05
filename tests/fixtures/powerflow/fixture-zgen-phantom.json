@@ -1,0 +1,21 @@
+{
+  "name": "fixture-zgen-phantom",
+  "description": "Zgen phantom bus handling - internal bus cleanup",
+  "network": {
+    "buses": [
+      { "i": 1, "name": "Bus 1", "Vm": 1.05, "Va": 0, "type": 2 },
+      { "i": 2, "name": "Bus 2", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 50, "Qd": 25 },
+      { "i": 999, "name": "Phantom", "Vm": 1.0, "Va": 0, "type": 4 }
+    ],
+    "branches": [
+      { "fbus": 1, "tbus": 2, "r": 0.01, "x": 0.1, "b": 0.0 },
+      { "fbus": 1, "tbus": 999, "r": 0.0, "x": 0.001, "b": 0.0 }
+    ]
+  },
+  "expectedResult": {
+    "converged": true,
+    "iterations": 3,
+    "buses_active": 2,
+    "phantom_removed": true
+  }
+}

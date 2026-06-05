@@ -1,0 +1,20 @@
+{
+  "name": "fixture-ill-conditioned",
+  "description": "Ill-conditioned network - high iteration count",
+  "network": {
+    "buses": [
+      { "i": 1, "name": "Bus 1", "Vm": 1.05, "Va": 0, "type": 2 },
+      { "i": 2, "name": "Bus 2", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 100, "Qd": 50 },
+      { "i": 3, "name": "Bus 3", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 80, "Qd": 40 }
+    ],
+    "branches": [
+      { "fbus": 1, "tbus": 2, "r": 0.001, "x": 0.001, "b": 0.0 },
+      { "fbus": 2, "tbus": 3, "r": 0.0005, "x": 0.0005, "b": 0.0 }
+    ]
+  },
+  "expectedResult": {
+    "converged": true,
+    "iterations": 12,
+    "condition_number": 1e6
+  }
+}

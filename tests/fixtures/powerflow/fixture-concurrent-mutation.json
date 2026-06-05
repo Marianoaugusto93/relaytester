@@ -1,0 +1,25 @@
+{
+  "name": "fixture-concurrent-mutation",
+  "description": "Concurrent input mutation - frozen input validation (Phase 4 pre-mortem)",
+  "network": {
+    "buses": [
+      { "i": 1, "name": "Bus 1", "Vm": 1.05, "Va": 0, "type": 2 },
+      { "i": 2, "name": "Bus 2", "Vm": 1.0, "Va": 0, "type": 1, "Pd": 50, "Qd": 25 }
+    ],
+    "branches": [
+      { "fbus": 1, "tbus": 2, "r": 0.01, "x": 0.1, "b": 0.0 }
+    ]
+  },
+  "mutation": {
+    "during_solve": true,
+    "target": "buses[2].Vm",
+    "change_from": 1.0,
+    "change_to": 0.9
+  },
+  "expectedResult": {
+    "converged": true,
+    "iterations": 4,
+    "input_frozen": true,
+    "mutation_rejected": true
+  }
+}
