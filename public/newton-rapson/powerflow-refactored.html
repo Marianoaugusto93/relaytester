@@ -364,6 +364,16 @@
     // Solve network — Task 5
     function solveNetwork() {
       try {
+        // Read transformer taps from controls
+        branches.forEach(br => {
+          if (br.kind === 'xfmr') {
+            const tapInput = document.getElementById(`tap-${br.from}-${br.to}`);
+            if (tapInput) {
+              br.tap = parseFloat(tapInput.value);
+            }
+          }
+        });
+
         applyControls(buses, branches, baseLoads, BASE_MVA);
         lastSolveResult = solvePowerFlow(buses, branches);
 
@@ -375,6 +385,7 @@
 
         renderDiagram();
         renderTables();
+        updateDiagnostics();
       } catch (error) {
         updateStatusDisplay(`✗ Error: ${error.message}`, 'bad');
         console.error('Solve error:', error);
@@ -388,6 +399,42 @@
         status.className = 'status ' + className;
         status.style.display = 'block';
       }
+    }
+
+    // Display convergence diagnostics
+    function updateDiagnostics() {
+      const diag = document.getElementById('convergence-diagnostic');
+      if (!diag || !lastSolveResult) return;
+
+      let html = '';
+      if (lastSolveResult.iterations !== undefined) {
+        html += `<div style="font-size: 11px; color: #6e6e73; margin-top: 8px;">
+          <strong>Convergence:</strong> ${lastSolveResult.iterations} iterations<br/>
+          <strong>Mismatch:</strong> ${(lastSolveResult.mismatch || 0).toExponential(2)} p.u.
+        </div>`;
+      }
+      diag.innerHTML = html;
+    }
+
+    // Add transformer controls to control panel
+    function renderTransformerControls() {
+      const ctrlGen = document.getElementById('ctrl-gens');
+      if (!ctrlGen || ctrlGen.innerHTML.includes('Transformer')) return;
+
+      let html = '<h3 style="font-size: 13px; margin-top: 12px; margin-bottom: 6px;">Transformers</h3>';
+      branches
+        .filter(b => b.kind === 'xfmr' && b.inService)
+        .forEach(br => {
+          const id = `tap-${br.from}-${br.to}`;
+          html += `
+            <div class="control-row">
+              <label for="${id}" class="control-row label">Tap ${br.from}→${br.to}:</label>
+              <input type="range" id="${id}" min="0.9" max="1.1" step="0.01" value="${br.tap || 1.0}">
+              <span class="val">${(br.tap || 1.0).toFixed(3)}</span>
+            </div>`;
+        });
+
+      ctrlGen.innerHTML += html;
     }
 
     // Scenario definitions
@@ -418,6 +465,7 @@
       baseLoads = [null, null, { Pl: 0.3, Ql: 0.15 }];
 
       renderControls(buses, branches, BASE_MVA);
+      renderTransformerControls();
       renderDiagram();
       renderTables();
       updateLabels();
@@ -526,13 +574,26 @@ A
         });
       }
 
-      // Wire generator/load sliders
+      // Wire generator/load/transformer sliders
       document.querySelectorAll('input[type=range]').forEach(el => {
         el.addEventListener('input', (e) => {
           updateLabels();
           solveNetwork();
         });
       });
+
+      // Update transformer slider displays
+      branches
+        .filter(b => b.kind === 'xfmr')
+        .forEach(br => {
+          const tapInput = document.getElementById(`tap-${br.from}-${br.to}`);
+          if (tapInput) {
+            tapInput.addEventListener('input', (e) => {
+              const val = document.querySelector(`span[data-tap="${br.from}-${br.to}"]`);
+              if (val) val.textContent = parseFloat(e.target.value).toFixed(3);
+            });
+          }
+        });
     }
 
     // Bridge Server: Listen for postMessage from React parent
