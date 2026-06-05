@@ -7,8 +7,8 @@
 /* ----- Section 1: Design tokens + neutralization rules ----- */
 :root {
   --pf-bg: #0e1015;
-  --pf-text: #f0f0f5;
-  --pf-text-secondary: #d1d5db;
+  --pf-text: #ffffff;
+  --pf-text-secondary: #e5e7eb;
   --pf-card: #1a1d23;
   --pf-border: #2a2f3a;
   --pf-surface-alt: #14171c;
