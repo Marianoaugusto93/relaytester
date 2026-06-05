@@ -7,8 +7,8 @@
 /* ----- Section 1: Design tokens + neutralization rules ----- */
 :root {
   --pf-bg: #0e1015;
-  --pf-text: #e5e7eb;
-  --pf-text-secondary: #9ca3af;
+  --pf-text: #f0f0f5;
+  --pf-text-secondary: #d1d5db;
   --pf-card: #1a1d23;
   --pf-border: #2a2f3a;
   --pf-surface-alt: #14171c;
@@ -30,13 +30,13 @@
   --pf-diag-good-bg: #15201a;
   --pf-diag-good-border: #1f3a26;
   --pf-diag-row-border: #3a2226;
-  --pf-diag-th: #9ca3af;
+  --pf-diag-th: #d1d5db;
   --pf-name-warn-bg: #2a230f;
   --pf-name-warn-accent: #facc15;
   --pf-selected-branch: #fb923c;
   --pf-delete: #ef4444;
-  --pf-placeholder: #6b7280;
-  --pf-disabled-text: #6b7280;
+  --pf-placeholder: #9ca3af;
+  --pf-disabled-text: #9ca3af;
   --pf-disabled-bg: #191b20;
 }
 
