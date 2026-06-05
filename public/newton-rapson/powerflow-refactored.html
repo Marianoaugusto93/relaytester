@@ -70,6 +70,19 @@
 
     <div class="layout">
       <div>
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 12px; color: #6e6e73; margin-right: 8px;">Scenario:</label>
+          <select id="scenario-select" style="padding: 6px; border-radius: 6px; border: 1px solid #d2d2d7;">
+            <option value="">-- Demo Network --</option>
+            <option value="3ph">3-Phase Fault</option>
+            <option value="lg">L-G Fault</option>
+            <option value="ll">L-L Fault</option>
+            <option value="inrush">Inrush Transient</option>
+            <option value="undervolt">Undervoltage</option>
+            <option value="underfreq">Underfrequency</option>
+            <option value="directional">Directional</option>
+          </select>
+        </div>
         <div id="diagram-fs-container">
           <svg id="diagram"></svg>
         </div>
@@ -173,7 +186,7 @@
           line.setAttribute('stroke-width', '2');
           svg.appendChild(line);
 
-          // Branch label
+          // Branch label with power flow (simplified)
           const midX = (x1 + x2) / 2;
           const midY = y1 - 20;
           const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -184,6 +197,14 @@
           text.setAttribute('fill', '#666');
           text.textContent = br.name;
           svg.appendChild(text);
+
+          // Arrow indicator for power flow direction
+          const arrowX = midX + (x2 > x1 ? 15 : -15);
+          const arrowY = centerY + 15;
+          const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          arrow.setAttribute('points', `${arrowX},${arrowY} ${arrowX - 5},${arrowY - 4} ${arrowX - 5},${arrowY + 4}`);
+          arrow.setAttribute('fill', '#666');
+          svg.appendChild(arrow);
         }
       });
 
@@ -369,6 +390,18 @@
       }
     }
 
+    // Scenario definitions
+    const scenarios = {
+      '': { name: 'Demo Network', buses: null, branches: null },
+      '3ph': { name: '3-Phase Fault', Ia: 5.0, Ib: 5.0, Ic: 5.0 },
+      'lg': { name: 'L-G Fault', Ia: 3.5, Ib: 0.3, Ic: 0.3 },
+      'll': { name: 'L-L Fault', Ia: 4.0, Ib: 4.0, Ic: 0.2 },
+      'inrush': { name: 'Inrush', Ia: 4.0, Ib: 4.0, Ic: 4.0, timeDial: 0.089 },
+      'undervolt': { name: 'Undervoltage', V: 46.5, Ia: 1.0, Ib: 1.0, Ic: 1.0 },
+      'underfreq': { name: 'Underfrequency', freq: 59.0, Ia: 1.5, Ib: 1.5, Ic: 1.5 },
+      'directional': { name: 'Directional', Ia: 3.0, Ib: 0.5, Ic: 0.5 }
+    };
+
     // Initialize demo network — Task 1
     function initializeDemo() {
       buses = [
@@ -392,6 +425,24 @@
       solveNetwork(); // Initial solve
     }
 
+    // Load scenario
+    function loadScenario(scenarioId) {
+      const scenario = scenarios[scenarioId];
+      if (!scenario) return;
+
+      initializeDemo();
+
+      // Apply scenario modifications if needed
+      if (scenarioId === '3ph') {
+        // 3-phase fault scenario
+        buses[0].Pl = 0.5;
+      } else if (scenarioId === 'undervolt') {
+        buses[0].Vset = 0.65;
+      }
+
+      solveNetwork();
+    }
+
     // Wire event listeners — Task 6
     function wireEventListeners() {
       // Create action buttons in first panel
@@ -412,7 +463,7 @@
         };
 
         const exportBtn = document.createElement('button');
-        exportBtn.textContent = '⬇ Export';
+        exportBtn.textContent = '⬇ Export JSON';
         exportBtn.onclick = () => {
           const json = serializeNetwork({ buses, branches });
           const blob = new Blob([json], { type: 'application/json' });
@@ -424,10 +475,47 @@
           URL.revokeObjectURL(url);
         };
 
+        const comtradeBtn = document.createElement('button');
+        comtradeBtn.textContent = '📊 COMTRADE';
+        comtradeBtn.onclick = () => {
+          if (!lastSolveResult) {
+            alert('Run Solve first to generate COMTRADE data');
+            return;
+          }
+          // Simple COMTRADE export (3 phases + timestamp)
+          const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+          const cfg = `1,${timestamp}
+1
+0,2000
+A
+1,Ia,A,1,0
+2,Ib,A,1,0
+3,Ic,A,1,0
+0
+0,0,0,0
+0`;
+          const blob = new Blob([cfg], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `fault-${new Date().toISOString().slice(0, 10)}.cfg`;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
         btnContainer.appendChild(solveBtn);
         btnContainer.appendChild(resetBtn);
         btnContainer.appendChild(exportBtn);
+        btnContainer.appendChild(comtradeBtn);
         firstPanel.appendChild(btnContainer);
+      }
+
+      // Wire scenario selector
+      const scenarioSelect = document.getElementById('scenario-select');
+      if (scenarioSelect) {
+        scenarioSelect.addEventListener('change', (e) => {
+          loadScenario(e.target.value);
+        });
       }
 
       const loadscale = document.getElementById('loadscale');
