@@ -97,8 +97,8 @@ export default function PowerFlowEmbedded({
   };
 
   const iframeUrl = version === 'old'
-    ? '/newton-rapson/powerflow.html?mode=legacy'
-    : '/newton-rapson/powerflow.html?mode=refactored';
+    ? '/newton-rapson/powerflow.html'
+    : '/newton-rapson/powerflow-refactored.html';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...style }}>
