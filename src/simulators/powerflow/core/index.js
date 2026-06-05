@@ -31,3 +31,12 @@ export {
   setLabelOffset,
   clearAllLabelOffsets,
 } from './labels.js';
+
+// Phase 4: postMessage bridge
+export {
+  createMessage,
+  createResult,
+  createError,
+  SolverBridgeClient,
+  SolverBridgeServer,
+} from './bridge.js';
