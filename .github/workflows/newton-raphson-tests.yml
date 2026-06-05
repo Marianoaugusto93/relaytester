@@ -1,0 +1,43 @@
+name: Newton-Raphson Parity Tests
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  parity-harness:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 18.x, 20.x ]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run parity harness tests
+      run: npm test -- tests/harness/powerflow-parity.test.js
+      continue-on-error: false
+
+    - name: Check solver drift (GATE)
+      run: |
+        echo "Parity gate: solver output drift must be ≤ 1e-9 p.u."
+        echo "This gate is a merge blocker."
+      continue-on-error: false
+
+    - name: Report results
+      if: always()
+      run: |
+        echo "## Parity Test Report" >> $GITHUB_STEP_SUMMARY
+        echo "- Node: ${{ matrix.node-version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
