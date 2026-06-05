@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="referrer" content="no-referrer">
+  <title>Newton Raphson Power Flow Simulator (Refactored)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 440px;
+      gap: 20px;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    svg { width: 100%; height: auto; display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 4px 6px; text-align: right; border-bottom: 1px solid #e5e5ea; }
+    th:first-child, td:first-child { text-align: left; }
+    th { font-weight: 500; color: #6e6e73; background: #fafafa; }
+    button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #d2d2d7;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    button:hover { background: #f0f0f3; }
+    button.primary { background: #0071e3; color: #fff; border-color: #0071e3; }
+    .status { font-size: 12px; padding: 6px 10px; border-radius: 6px; margin-top: 8px; }
+    .status.ok { background: #e8f5e8; color: #1d5c1d; }
+    .status.bad { background: #fcebec; color: #8b1a1f; }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 13px;
+    }
+    .control-row label { flex: 0 0 200px; color: #6e6e73; font-size: 12px; }
+    .control-row input[type=range] { flex: 1; min-width: 80px; }
+    .control-row .val { flex: 0 0 56px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+    #convergence-diagnostic { font-size: 12px; margin-top: 6px; }
+    .diag-block {
+      background: #fcf3f3;
+      border: 1px solid #f0d0d0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Newton-Raphson Power Flow Simulator</h1>
+    <div class="subtitle">🟢 Refactored Version (Phase 4+)</div>
+
+    <div class="layout">
+      <div>
+        <div id="diagram-fs-container">
+          <svg id="diagram"></svg>
+        </div>
+        <div id="status" class="status" style="display:none;"></div>
+        <div id="convergence-diagnostic"></div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Controls</h2>
+          <div id="ctrl-xfmrs"></div>
+          <div id="ctrl-gens"></div>
+          <div style="margin-top: 12px;">
+            <input type="range" id="loadscale" min="0" max="3" step="0.1" value="1.0">
+            <span id="loadscalev">1.00</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Generators</h2>
+          <table id="gentable"><tbody></tbody></table>
+        </div>
+
+        <div class="panel">
+          <h2>Loads</h2>
+          <table id="loadtable"><tbody></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      buildYbus,
+      solveLinear,
+      solvePowerFlow,
+    } from '/src/simulators/powerflow/core/solver.js';
+    import {
+      renderControls,
+      applyControls,
+      onCellEdit,
+    } from '/src/simulators/powerflow/core/controls.js';
+    import {
+      tracePvCurve,
+      runConvergenceDiagnostics,
+    } from '/src/simulators/powerflow/core/diagnostics.js';
+    import {
+      serializeNetwork,
+      deserializeNetwork,
+    } from '/src/simulators/powerflow/core/persistence.js';
+    import {
+      voltageHeatmapColor,
+      angleHeatmapColor,
+      formatAmps,
+    } from '/src/simulators/powerflow/core/heatmap.js';
+
+    // Global state
+    let buses = [];
+    let branches = [];
+    let baseLoads = [];
+    const BASE_MVA = 100;
+    let lastSolveResult = null;
+
+    // SVG Diagram Rendering — Task 2
+    function renderDiagram() {
+      const svg = document.getElementById('diagram');
+      if (!buses.length) {
+        svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" dy="0.3em">No network loaded</text>';
+        return;
+      }
+
+      const width = svg.clientWidth || 600;
+      const height = 350;
+      const margin = 40;
+      const radius = (width - 2 * margin) / (buses.length + 1);
+      const centerY = height / 2;
+
+      let html = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+
+      // Draw branches first (so they appear behind buses)
+      branches.forEach(br => {
+        const fromIdx = buses.findIndex(b => b.id === br.from);
+        const toIdx = buses.findIndex(b => b.id === br.to);
+        if (fromIdx >= 0 && toIdx >= 0) {
+          const x1 = margin + (fromIdx + 1) * radius;
+          const y1 = centerY;
+          const x2 = margin + (toIdx + 1) * radius;
+          const y2 = centerY;
+          const color = br.inService ? '#4b5563' : '#ccc';
+          html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2"/>`;
+
+          // Branch label
+          const midX = (x1 + x2) / 2;
+          const midY = y1 - 20;
+          html += `<text x="${midX}" y="${midY}" font-size="11" text-anchor="middle" fill="#666">${br.name}</text>`;
+        }
+      });
+
+      // Draw buses
+      buses.forEach((bus, idx) => {
+        const x = margin + (idx + 1) * radius;
+        const y = centerY;
+        const color = voltageHeatmapColor(bus.V, 0.05, 0.05);
+        const thetaDeg = (bus.theta * 180 / Math.PI).toFixed(1);
+        const V = bus.V.toFixed(3);
+
+        // Bus circle
+        html += `<circle cx="${x}" cy="${y}" r="18" fill="${color}" stroke="#333" stroke-width="1.5"/>`;
+
+        // Bus ID
+        html += `<text x="${x}" y="${y}" font-size="13" font-weight="bold" text-anchor="middle" dy="0.3em" fill="#fff">${bus.id}</text>`;
+
+        // Voltage label below
+        html += `<text x="${x}" y="${y + 35}" font-size="10" text-anchor="middle" fill="#333">V=${V}</text>`;
+        html += `<text x="${x}" y="${y + 48}" font-size="10" text-anchor="middle" fill="#333">θ=${thetaDeg}°</text>`;
+      });
+
+      html += '</svg>';
+      svg.innerHTML = html;
+    }
+
+    // Render result tables — Task 4
+    function renderTables() {
+      if (!buses.length) return;
+
+      // Bus measurements table
+      const busTableHtml = buses.map(bus => {
+        const thetaDeg = (bus.theta * 180 / Math.PI).toFixed(2);
+        return `<tr>
+          <td>${bus.id}</td>
+          <td>${bus.type}</td>
+          <td>${bus.V.toFixed(4)}</td>
+          <td>${thetaDeg}</td>
+          <td>${(bus.Pl || 0).toFixed(3)}</td>
+          <td>${(bus.Ql || 0).toFixed(3)}</td>
+        </tr>`;
+      }).join('');
+
+      const busTable = document.createElement('table');
+      busTable.innerHTML = `
+        <thead><tr><th>Bus</th><th>Type</th><th>V (pu)</th><th>θ (°)</th><th>P (MW)</th><th>Q (Mvar)</th></tr></thead>
+        <tbody>${busTableHtml}</tbody>
+      `;
+
+      const busPanel = document.querySelector('.panel:has(h2:contains("Buses"))') || document.querySelectorAll('.panel')[2];
+      if (!busPanel) {
+        const newPanel = document.createElement('div');
+        newPanel.className = 'panel';
+        newPanel.innerHTML = `<h2>Bus Measurements</h2>`;
+        newPanel.appendChild(busTable);
+        document.querySelector('.layout').appendChild(newPanel);
+      } else {
+        const oldTable = busPanel.querySelector('table');
+        if (oldTable) oldTable.replaceWith(busTable);
+      }
+    }
+
+    // Update control labels — Task 3
+    function updateLabels() {
+      const scale = document.getElementById('loadscale');
+      if (scale) {
+        const v = document.getElementById('loadscalev');
+        if (v) v.textContent = parseFloat(scale.value).toFixed(2);
+      }
+    }
+
+    // Solve network — Task 5
+    function solveNetwork() {
+      try {
+        applyControls(buses, branches, baseLoads, BASE_MVA);
+        lastSolveResult = solvePowerFlow(buses, branches);
+
+        if (lastSolveResult && lastSolveResult.success !== false) {
+          updateStatusDisplay('✓ Converged', 'ok');
+        } else {
+          updateStatusDisplay('✗ Failed to converge', 'bad');
+        }
+
+        renderDiagram();
+        renderTables();
+      } catch (error) {
+        updateStatusDisplay(`✗ Error: ${error.message}`, 'bad');
+        console.error('Solve error:', error);
+      }
+    }
+
+    function updateStatusDisplay(msg, className) {
+      const status = document.getElementById('status');
+      if (status) {
+        status.textContent = msg;
+        status.className = 'status ' + className;
+        status.style.display = 'block';
+      }
+    }
+
+    // Initialize demo network — Task 1
+    function initializeDemo() {
+      buses = [
+        { id: 1, type: 'slack', V: 1.0, Vset: 1.0, theta: 0, hasGenerator: true, Pl: 0, Ql: 0, _Pl_load: 0, _Ql_load: 0, loadInService: true },
+        { id: 2, type: 'pv', V: 0.98, Vset: 0.98, theta: -0.05, hasGenerator: true, Pg: 0.5, Pset: 0.5, Pgmin: 0, Pgmax: 1.5, Pl: 0, Ql: 0, _Pl_load: 0, _Ql_load: 0 },
+        { id: 3, type: 'pq', V: 0.95, theta: -0.1, Pl: 0.3, Ql: 0.15, _Pl_load: 0.3, _Ql_load: 0.15, loadInService: true },
+      ];
+
+      branches = [
+        { from: 1, to: 2, name: 'Line 1-2', kind: 'line', r: 0.01, x: 0.05, b: 0.01, inService: true },
+        { from: 2, to: 3, name: 'Xfmr 2-3', kind: 'xfmr', r: 0.001, x: 0.03, tap: 1.0, phaseShift: 0, inService: true },
+      ];
+
+      baseLoads = [null, null, { Pl: 0.3, Ql: 0.15 }];
+
+      renderControls(buses, branches, BASE_MVA);
+      renderDiagram();
+      renderTables();
+      updateLabels();
+      wireEventListeners();
+      solveNetwork(); // Initial solve
+    }
+
+    // Wire event listeners — Task 6
+    function wireEventListeners() {
+      const solveBtn = document.querySelector('button.primary') ||
+                      (() => {
+                        const btn = document.createElement('button');
+                        btn.className = 'primary';
+                        btn.textContent = 'Solve';
+                        btn.onclick = solveNetwork;
+                        document.querySelector('.panel').appendChild(btn);
+                        return btn;
+                      })();
+
+      const loadscale = document.getElementById('loadscale');
+      if (loadscale) {
+        loadscale.addEventListener('input', (e) => {
+          updateLabels();
+          solveNetwork(); // Auto-solve on control change
+        });
+      }
+
+      // Wire generator/load sliders
+      document.querySelectorAll('input[type=range]').forEach(el => {
+        el.addEventListener('input', (e) => {
+          updateLabels();
+          solveNetwork();
+        });
+      });
+    }
+
+    // Bridge Server: Listen for postMessage from React parent
+    window.addEventListener('message', async (event) => {
+      const { id, type, payload } = event.data;
+      if (!id || !type) return;
+
+      try {
+        let result;
+        if (type === 'solve') {
+          applyControls(buses, branches, baseLoads, BASE_MVA);
+          result = solvePowerFlow(buses, branches);
+          renderDiagram();
+        } else if (type === 'serialize') {
+          result = serializeNetwork({ buses, branches });
+        } else if (type === 'deserialize') {
+          const data = deserializeNetwork(JSON.parse(payload));
+          buses = data.buses || [];
+          branches = data.branches || [];
+          result = { success: true };
+          renderControls(buses, branches, BASE_MVA);
+          renderDiagram();
+        } else {
+          result = { error: 'Unknown message type' };
+        }
+        event.source.postMessage({ id, result });
+      } catch (error) {
+        event.source.postMessage({ id, error: error.message });
+      }
+    });
+
+    // Initialize on load
+    window.addEventListener('load', initializeDemo);
+
+    // Export to global scope for debugging
+    window.powerFlowState = { buses, branches, baseLoads, solveNetwork: () => solvePowerFlow(buses, branches) };
+  </script>
+</body>
+</html>
