@@ -1,26 +1,32 @@
-import { useState, useEffect } from "react";
+/**
+ * EstudosPage — Workbench-lite shell (v2)
+ *
+ * Layout (3-pane):
+ *   [LeftRail 280px] [Canvas flex] [RightDrawer 280px collapsible]
+ *
+ * Owns:
+ *  - selectedTool state (which tool is open in the canvas)
+ *  - favorites (persisted in localStorage estudos.favorites.v1)
+ *  - workflow & ansi filters (drive Hub filtering)
+ *  - rightDrawerOpen
+ *
+ * Renders selected tool via TOOL_REGISTRY (React.lazy + Suspense).
+ */
+
+import { Suspense, useEffect, useState } from "react";
 import { runParityTests } from "./engine/faults.js";
 import StudiesHub from "./components/StudiesHub.jsx";
-import SymmetricalComponentsTool from "./tools/SymmetricalComponentsTool.jsx";
-import FaultStudyTool from "./tools/FaultStudyTool.jsx";
-import TccTool from "./tools/TccTool.jsx";
-import DistributionTool from "./tools/DistributionTool.jsx";
-import DistanceTool from "./tools/DistanceTool.jsx";
-import DifferentialInrushTool from "./tools/DifferentialInrushTool.jsx";
-import AmpacityCTSaturationTool from "./tools/AmpacityCTSaturationTool.jsx";
-import VisualScenarioBuilder from "./components/VisualScenarioBuilder.jsx";
-import GraphVizContainer from "./components/GraphVizContainer.jsx";
 import SearchPalette from "./components/SearchPalette.jsx";
 import BayContextPanel from "./components/BayContextPanel.jsx";
+import LeftRail from "./components/LeftRail.jsx";
+import LoadingPlaceholder from "./components/LoadingPlaceholder.jsx";
+import AnimatedDrawer from "./components/AnimatedDrawer.jsx";
+import { TOOL_REGISTRY } from "./toolRegistry.js";
 
-const SUB_TABS = [
-  { id: "hub", label: "Hub" },
-];
+const FAVORITES_KEY = "estudos.favorites.v1";
 
 /**
- * EstudosPage — placeholder shell for the Estudos tab.
- * Receives mainTab/subTab navigation props from App.jsx.
- * Will host StudiesHub, FaultStudyTool, SymmetricalComponentsTool, etc. in Sprint 1+.
+ * EstudosPage — main entrypoint for the Estudos tab.
  * @param {Object} props
  * @param {string} props.mainTab - Active main tab id (unused here, forwarded to sub-tools)
  * @param {string} [props.subTab] - Active sub-tab id (controlled externally)
@@ -31,7 +37,33 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
   const [selectedTool, setSelectedTool] = useState(null); // null | { id, name }
   const [parityStatus, setParityStatus] = useState(null); // null | "pass" | "fail"
 
-  // Support both controlled (from App.jsx) and uncontrolled modes
+  // Favorites (persisted)
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Filters
+  const [workflowFilter, setWorkflowFilter] = useState([]);
+  const [ansiFilter, setAnsiFilter] = useState([]);
+
+  // Right drawer state
+  const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
+
+  // Persist favorites
+  useEffect(() => {
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+    } catch {
+      /* ignore quota */
+    }
+  }, [favorites]);
+
+  // Support both controlled (from App.jsx) and uncontrolled modes for sub-tab
   const subTab = subTabProp !== undefined ? subTabProp : localSubTab;
   const setSubTab = setSubTabProp !== undefined ? setSubTabProp : setLocalSubTab;
 
@@ -44,6 +76,18 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
     }
   }, []);
 
+  // ⌘B / Ctrl+B toggles the right drawer
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setRightDrawerOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const handleSelectTool = (tool) => {
     setSelectedTool(tool);
   };
@@ -51,6 +95,25 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
   const handleBackToHub = () => {
     setSelectedTool(null);
   };
+
+  const toggleFavorite = (id) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleArrayItem = (arr, item) =>
+    arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item];
+
+  const toggleWorkflow = (id) =>
+    setWorkflowFilter((prev) => toggleArrayItem(prev, id));
+
+  const toggleAnsi = (code) =>
+    setAnsiFilter((prev) => toggleArrayItem(prev, code));
+
+  const SelectedComponent = selectedTool
+    ? TOOL_REGISTRY[selectedTool.id]?.component
+    : null;
 
   return (
     <div style={styles.root}>
@@ -60,7 +123,9 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
           <div style={styles.bar} />
           <div>
             <div style={styles.title}>Estudos</div>
-            <div style={styles.subtitle}>Sprint 1: 2 ferramentas ativas</div>
+            <div style={styles.subtitle}>
+              Workbench · {Object.keys(TOOL_REGISTRY).length} ferramentas disponíveis
+            </div>
           </div>
           {parityStatus === "pass" && (
             <div style={styles.parityBadge}>Paridade ✓</div>
@@ -68,17 +133,43 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
           {parityStatus === "fail" && (
             <div style={{ ...styles.parityBadge, ...styles.parityBadgeFail }}>Paridade ✗</div>
           )}
+          {selectedTool && (
+            <div style={styles.breadcrumb}>
+              <span style={styles.crumbSep}>›</span>
+              <span style={styles.crumbCurrent}>{selectedTool.name}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main layout: content + sidebar */}
+      {/* Main layout: 3-pane Workbench */}
       <div style={styles.mainLayout}>
-        {/* Left content area */}
-        <div style={styles.content}>
+        {/* Left Rail */}
+        <LeftRail
+          onSelectTool={handleSelectTool}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          workflowFilter={workflowFilter}
+          onToggleWorkflow={toggleWorkflow}
+          ansiFilter={ansiFilter}
+          onToggleAnsi={toggleAnsi}
+        />
+
+        {/* Canvas */}
+        <div style={styles.canvas}>
           {!selectedTool ? (
             <>
-              <StudiesHub onSelectTool={handleSelectTool} />
-              <SearchPalette onSelectTool={handleSelectTool} />
+              <StudiesHub
+                onSelectTool={handleSelectTool}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+                workflow={workflowFilter}
+                ansiFilters={ansiFilter}
+              />
+              <SearchPalette
+                onSelectTool={handleSelectTool}
+                favorites={favorites}
+              />
             </>
           ) : (
             <div style={styles.toolContainer}>
@@ -86,16 +177,11 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
                 ← Voltar ao Hub
               </button>
               <div style={styles.toolContent}>
-                {selectedTool.id === "symm-components" && <SymmetricalComponentsTool />}
-                {selectedTool.id === "fault-calc" && <FaultStudyTool />}
-                {selectedTool.id === "tcc" && <TccTool />}
-                {selectedTool.id === "distribution" && <DistributionTool />}
-                {selectedTool.id === "distance" && <DistanceTool />}
-                {selectedTool.id === "differential-inrush" && <DifferentialInrushTool />}
-                {selectedTool.id === "ampacity-ct" && <AmpacityCTSaturationTool />}
-                {selectedTool.id === "scenario-builder" && <VisualScenarioBuilder />}
-                {selectedTool.id === "graph-viz" && <GraphVizContainer />}
-                {!["symm-components", "fault-calc", "tcc", "distribution", "distance", "differential-inrush", "ampacity-ct", "scenario-builder", "graph-viz"].includes(selectedTool.id) && (
+                {SelectedComponent ? (
+                  <Suspense fallback={<LoadingPlaceholder />}>
+                    <SelectedComponent />
+                  </Suspense>
+                ) : (
                   <div style={styles.comingSoon}>
                     <div style={styles.comingSoonIcon}>🚀</div>
                     <div style={styles.comingSoonText}>{selectedTool.name}</div>
@@ -107,8 +193,14 @@ export default function EstudosPage({ mainTab, subTab: subTabProp, setSubTab: se
           )}
         </div>
 
-        {/* Right sidebar: Bay Context */}
-        <BayContextPanel />
+        {/* Right Drawer */}
+        <AnimatedDrawer
+          open={rightDrawerOpen}
+          onToggle={() => setRightDrawerOpen((v) => !v)}
+          ariaLabel="Painel lateral direito"
+        >
+          <BayContextPanel embedded />
+        </AnimatedDrawer>
       </div>
     </div>
   );
@@ -135,7 +227,9 @@ const styles = {
   mainLayout: {
     flex: 1,
     display: "flex",
+    flexDirection: "row",
     overflow: "hidden",
+    minHeight: 0,
   },
   headerLeft: {
     display: "flex",
@@ -164,62 +258,29 @@ const styles = {
     letterSpacing: 0.5,
     marginTop: 1,
   },
-  subTabs: {
+  breadcrumb: {
     display: "flex",
-    gap: 4,
-    background: "var(--card2)",
-    borderRadius: 10,
-    padding: 3,
+    alignItems: "center",
+    gap: 8,
+    marginLeft: 8,
   },
-  subTabBtn: {
-    padding: "6px 16px",
-    border: "none",
-    borderRadius: 8,
-    background: "transparent",
+  crumbSep: {
     color: "var(--tx3)",
-    fontSize: 11,
+    fontSize: 14,
+  },
+  crumbCurrent: {
+    fontSize: 12,
     fontWeight: 700,
-    fontFamily: "var(--fh)",
-    cursor: "pointer",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    transition: "all .2s",
-  },
-  subTabActive: {
-    background: "var(--cyan-dim)",
+    fontFamily: "var(--fm)",
     color: "var(--cyan)",
-    borderColor: "rgba(14,165,233,.2)",
   },
-  content: {
+  canvas: {
     flex: 1,
+    minWidth: 0,
     display: "flex",
     flexDirection: "column",
     overflow: "auto",
-    padding: "20px",
-  },
-  emptyState: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 16,
-    padding: 40,
-    textAlign: "center",
-    maxWidth: 380,
-  },
-  emptyIcon: {
-    marginBottom: 4,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: 700,
-    color: "var(--tx)",
-    fontFamily: "var(--fh)",
-    letterSpacing: 0.5,
-  },
-  emptyDesc: {
-    fontSize: 13,
-    color: "var(--tx3)",
-    lineHeight: 1.6,
+    background: "var(--bg)",
   },
   parityBadge: {
     padding: "3px 10px",

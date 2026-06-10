@@ -1,8 +1,15 @@
 /**
- * catalog.js — Metadata for the 8 protection analysis tools in Estudos
+ * catalog.js — Metadata for the protection analysis tools in Estudos (v2 schema)
  *
- * Each tool is organized by category and includes complexity rating,
- * description, and icon for the Studies Hub.
+ * Each tool includes enriched discovery metadata:
+ *  - ansi: array of ANSI/IEEE device function codes
+ *  - workflow: high-level workflow phases (sistema, componentes, protecao, coordenacao, cenarios)
+ *  - domain: domain area tags (e.g. faltas, distancia, diferencial)
+ *  - needsBay: whether the tool requires bay context (Vn, TC/TP)
+ *  - inputs / outputs: artifact shapes expected/produced
+ *  - publishesTopics / subscribesTopics: ArtifactBus topic names
+ *  - keywords: free-form search hints
+ *  - status: "stable" | "beta" | "planned"
  */
 
 export const TOOLS = [
@@ -14,7 +21,16 @@ export const TOOLS = [
     icon: "symm",
     description: "Transformar correntes trifásicas em componentes de sequência (I0, I1, I2)",
     available: true,
-    sprint: 1,
+    status: "stable",
+    ansi: [],
+    workflow: ["sistema"],
+    domain: ["sequencia", "fasores"],
+    needsBay: false,
+    inputs: ["phasors3ph"],
+    outputs: ["sequenceComponents"],
+    publishesTopics: ["symm.sequence"],
+    subscribesTopics: [],
+    keywords: ["fortescue", "i0", "i1", "i2", "sequence", "sequencia", "simetricas", "symmetric"],
   },
   {
     id: "fault-calc",
@@ -24,7 +40,16 @@ export const TOOLS = [
     icon: "fault",
     description: "Calcular correntes de falta para 10 tipos de falta diferentes",
     available: true,
-    sprint: 1,
+    status: "stable",
+    ansi: [],
+    workflow: ["sistema", "protecao"],
+    domain: ["faltas", "curto-circuito"],
+    needsBay: true,
+    inputs: ["systemImpedance"],
+    outputs: ["faultCurrents"],
+    publishesTopics: ["fault.currents"],
+    subscribesTopics: [],
+    keywords: ["falta", "fault", "curto", "short", "circuito", "lg", "ll", "lll", "lll-g"],
   },
   {
     id: "tcc",
@@ -34,7 +59,16 @@ export const TOOLS = [
     icon: "tcc",
     description: "Tabelas de tempo-corrente IEC, IEEE, ANSI",
     available: true,
-    sprint: 2,
+    status: "stable",
+    ansi: ["51", "50", "51N", "50N"],
+    workflow: ["coordenacao", "protecao"],
+    domain: ["sobrecorrente", "curvas"],
+    needsBay: true,
+    inputs: ["protectionSettings"],
+    outputs: ["tccCurve"],
+    publishesTopics: ["tcc.curve"],
+    subscribesTopics: ["fault.currents"],
+    keywords: ["tcc", "curve", "curva", "tempo", "corrente", "iec", "ieee", "ansi", "definite", "overcurrent", "sobrecorrente", "51", "50"],
   },
   {
     id: "distribution",
@@ -44,7 +78,16 @@ export const TOOLS = [
     icon: "dist",
     description: "Queda de tensão, dimensionamento de cabos, confiabilidade",
     available: true,
-    sprint: 2,
+    status: "stable",
+    ansi: [],
+    workflow: ["coordenacao", "componentes"],
+    domain: ["distribuicao", "cabos", "confiabilidade"],
+    needsBay: true,
+    inputs: ["systemLoad"],
+    outputs: ["voltageDrop", "cableSize"],
+    publishesTopics: ["dist.voltageDrop"],
+    subscribesTopics: [],
+    keywords: ["distribuicao", "distribution", "queda", "tensao", "voltage", "drop", "cabo", "cable", "sizing", "dimensionamento", "confiabilidade", "saidi", "saifi"],
   },
   {
     id: "distance",
@@ -54,7 +97,16 @@ export const TOOLS = [
     icon: "dist21",
     description: "Impedância de linha, zonas Mho/Quadrilateral",
     available: true,
-    sprint: 3,
+    status: "stable",
+    ansi: ["21", "21N"],
+    workflow: ["protecao"],
+    domain: ["distancia", "impedancia"],
+    needsBay: true,
+    inputs: ["lineImpedance"],
+    outputs: ["zones", "rxLocus"],
+    publishesTopics: ["distance.zones"],
+    subscribesTopics: ["fault.currents"],
+    keywords: ["distancia", "distance", "21", "mho", "quad", "quadrilateral", "impedancia", "impedance", "linha", "line", "zone", "zona"],
   },
   {
     id: "differential-inrush",
@@ -64,7 +116,16 @@ export const TOOLS = [
     icon: "diff",
     description: "Proteção diferencial com bloqueio de inrush por 2º harmônico",
     available: true,
-    sprint: 3,
+    status: "stable",
+    ansi: ["87", "87T", "87L"],
+    workflow: ["protecao"],
+    domain: ["diferencial", "inrush", "transformador"],
+    needsBay: true,
+    inputs: ["ctMeasurements"],
+    outputs: ["differentialOperating"],
+    publishesTopics: ["differential.operating"],
+    subscribesTopics: [],
+    keywords: ["diferencial", "differential", "87", "inrush", "harmonic", "harmonico", "transformador", "transformer", "magnetizacao"],
   },
   {
     id: "ampacity-ct",
@@ -74,7 +135,16 @@ export const TOOLS = [
     icon: "cable",
     description: "Ampacidade de cabos com derating + análise de saturação de TC",
     available: true,
-    sprint: 4,
+    status: "stable",
+    ansi: [],
+    workflow: ["componentes"],
+    domain: ["cabos", "tc", "saturacao"],
+    needsBay: true,
+    inputs: ["cableSpec", "ctSpec"],
+    outputs: ["ampacity", "ctSaturation"],
+    publishesTopics: ["component.ampacity", "component.ctSaturation"],
+    subscribesTopics: ["fault.currents"],
+    keywords: ["ampacidade", "ampacity", "cabo", "cable", "tc", "ct", "saturacao", "saturation", "derating", "ieee", "c57"],
   },
   {
     id: "scenario-builder",
@@ -84,7 +154,16 @@ export const TOOLS = [
     icon: "edit",
     description: "Criar e validar cenários de falta com diagrama fasorial interativo",
     available: true,
-    sprint: 10,
+    status: "stable",
+    ansi: [],
+    workflow: ["cenarios"],
+    domain: ["cenarios", "fasores", "validacao"],
+    needsBay: false,
+    inputs: ["faultDef"],
+    outputs: ["scenarioJson"],
+    publishesTopics: ["scenario.json"],
+    subscribesTopics: [],
+    keywords: ["cenario", "scenario", "editor", "visual", "builder", "fasor", "phasor", "falta", "fault", "validacao"],
   },
   {
     id: "graph-viz",
@@ -94,8 +173,39 @@ export const TOOLS = [
     icon: "chart",
     description: "Plano R-X com zonas Mho/Quad e curvas TCC com detecção de coordenação",
     available: true,
-    sprint: 10,
+    status: "stable",
+    ansi: ["21", "51", "50"],
+    workflow: ["coordenacao", "protecao"],
+    domain: ["coordenacao", "visualizacao", "distancia", "sobrecorrente"],
+    needsBay: true,
+    inputs: ["zones", "tccCurve"],
+    outputs: ["coordinationReport"],
+    publishesTopics: ["graph.coordination"],
+    subscribesTopics: ["distance.zones", "tcc.curve"],
+    keywords: ["rx", "r-x", "tcc", "grafico", "graph", "plot", "visualizacao", "coordenacao", "coordination", "mho", "quad"],
   },
+];
+
+/**
+ * Ordered list of workflow phases used by the Left Rail (fluxo).
+ * Hardcoded order — do NOT sort alphabetically.
+ */
+export const WORKFLOW_ORDER = [
+  { id: "sistema", label: "Sistema", category: "Sistema" },
+  { id: "componentes", label: "Componentes", category: "Componentes" },
+  { id: "protecao", label: "Proteção", category: "Proteção" },
+  { id: "coordenacao", label: "Coordenação", category: "Coordenação" },
+  { id: "cenarios", label: "Cenários", category: "Cenários" },
+];
+
+/**
+ * Master ANSI function code list for the Left Rail tag cloud.
+ * Keep in sync with tool ansi entries.
+ */
+export const ANSI_CODES = [
+  "21", "27", "32", "46", "47",
+  "50", "50N", "51", "51N",
+  "59", "67", "67N", "81", "87",
 ];
 
 /**
@@ -129,12 +239,21 @@ export function toolsByCategory() {
 }
 
 /**
- * Get tools for a specific sprint.
- * @param {number} sprintNum
+ * Get tools matching a workflow phase id (e.g. "protecao").
+ * @param {string} workflowId
  * @returns {Array}
  */
-export function toolsForSprint(sprintNum) {
-  return TOOLS.filter(t => t.sprint === sprintNum);
+export function toolsForWorkflow(workflowId) {
+  return TOOLS.filter(t => Array.isArray(t.workflow) && t.workflow.includes(workflowId));
+}
+
+/**
+ * Get tools matching an ANSI function code (e.g. "51").
+ * @param {string} ansiCode
+ * @returns {Array}
+ */
+export function toolsForAnsi(ansiCode) {
+  return TOOLS.filter(t => Array.isArray(t.ansi) && t.ansi.includes(ansiCode));
 }
 
 /**

@@ -27,9 +27,21 @@ const CONNECTION_OPTIONS = [
   { value: "Δ", label: "Delta (Δ)" },
 ];
 
-export default function BayContextPanel() {
+/**
+ * Right-drawer tabs (Workbench-lite v1).
+ * Currently only "bay" is wired; "artefatos" and "notas" are TODO placeholders
+ * for the ArtifactBus subscriber and scratchpad respectively.
+ */
+const DRAWER_TABS = [
+  { id: "bay", label: "Bay" },
+  { id: "artefatos", label: "Artefatos" },
+  { id: "notas", label: "Notas" },
+];
+
+export default function BayContextPanel({ embedded = false }) {
   const { bay, setBay } = useBay();
   const [edited, setEdited] = useState(false);
+  const [activeTab, setActiveTab] = useState("bay");
 
   const handleChange = (field, value) => {
     const numValue = isNaN(value) ? value : parseFloat(value);
@@ -68,14 +80,53 @@ export default function BayContextPanel() {
     setEdited(false);
   };
 
+  const rootStyle = embedded ? styles.rootEmbedded : styles.root;
+
   return (
-    <div style={styles.root}>
-      {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.title}>Bay · Parâmetros</div>
-        {edited && <div style={styles.edited}>●</div>}
+    <div style={rootStyle}>
+      {/* Tab bar */}
+      <div style={styles.tabBar} role="tablist" aria-label="Painéis laterais">
+        {DRAWER_TABS.map((t) => {
+          const active = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={active}
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                ...styles.tabBtn,
+                ...(active ? styles.tabBtnActive : {}),
+              }}
+            >
+              {t.label}
+              {t.id === "bay" && edited && <span style={styles.tabDot} aria-hidden="true">●</span>}
+            </button>
+          );
+        })}
       </div>
 
+      {activeTab === "artefatos" && (
+        <div style={styles.placeholder}>
+          <div style={styles.placeholderTitle}>Artefatos</div>
+          <div style={styles.placeholderHint}>
+            ArtifactBus em breve — captura de saídas das ferramentas (faltas, curvas, zonas).
+          </div>
+        </div>
+      )}
+
+      {activeTab === "notas" && (
+        <div style={styles.placeholder}>
+          <div style={styles.placeholderTitle}>Notas</div>
+          <div style={styles.placeholderHint}>
+            Scratchpad para anotações de estudo (em breve).
+          </div>
+        </div>
+      )}
+
+      {activeTab === "bay" && (
+      <>
       {/* Content */}
       <div style={styles.content}>
         {/* System Section */}
@@ -177,6 +228,8 @@ export default function BayContextPanel() {
           </button>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
@@ -228,6 +281,73 @@ const styles = {
     borderLeft: "1px solid var(--bdr)",
     overflow: "hidden",
     zIndex: 10,
+  },
+  rootEmbedded: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    background: "transparent",
+    overflow: "hidden",
+  },
+  tabBar: {
+    display: "flex",
+    gap: 2,
+    padding: "6px 8px",
+    borderBottom: "1px solid var(--bdr)",
+    background: "var(--card2)",
+    flexShrink: 0,
+  },
+  tabBtn: {
+    flex: 1,
+    padding: "6px 8px",
+    border: "1px solid var(--bdr)",
+    borderRadius: 6,
+    background: "var(--card)",
+    color: "var(--tx3)",
+    fontSize: 10,
+    fontWeight: 700,
+    fontFamily: "var(--fh)",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    cursor: "pointer",
+    transition: "all .12s",
+    position: "relative",
+  },
+  tabBtnActive: {
+    background: "var(--cyan-dim)",
+    color: "var(--cyan)",
+    borderColor: "rgba(14,165,233,0.4)",
+  },
+  tabDot: {
+    marginLeft: 4,
+    color: "var(--cyan)",
+    fontSize: 8,
+  },
+  placeholder: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    textAlign: "center",
+    gap: 8,
+  },
+  placeholderTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    fontFamily: "var(--fh)",
+    color: "var(--tx2)",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  placeholderHint: {
+    fontSize: 11,
+    color: "var(--tx3)",
+    fontFamily: "var(--fm)",
+    lineHeight: 1.5,
+    maxWidth: 220,
   },
   header: {
     display: "flex",

@@ -1,16 +1,32 @@
 /**
- * StudiesHub.jsx — Grid display of 8 protection analysis tools
+ * StudiesHub.jsx — Grid display of protection analysis tools (v2)
  *
- * Shows all 8 tools organized by category in a 4-column responsive grid.
- * Available tools are clickable; coming-soon tools show Sprint number.
+ * Filters:
+ *  - workflow (array of workflow phase ids — match if tool.workflow intersects)
+ *  - ansi (array of ANSI codes — match if tool.ansi intersects)
+ * Both default to empty arrays (show everything).
+ *
+ * Favorites:
+ *  - `favorites` is an array of tool ids (persisted by EstudosPage)
+ *  - each card has a ★ toggle that calls onToggleFavorite(id)
+ *
+ * Status:
+ *  - Sprint badge replaced by <StatusBadge status={tool.status} />
  */
 
 import { useMemo, useState } from "react";
 import { toolsByCategory } from "../catalog.js";
 import { loadAnalytics, clearStoredAnalytics } from "../utils/analyticsStorage.js";
 import AnalyticsDashboard from "./AnalyticsDashboard.jsx";
+import StatusBadge from "./StatusBadge.jsx";
 
-export default function StudiesHub({ onSelectTool }) {
+export default function StudiesHub({
+  onSelectTool,
+  favorites = [],
+  onToggleFavorite,
+  workflow = [],
+  ansiFilters = [],
+}) {
   const categoryMap = useMemo(() => toolsByCategory(), []);
   const categories = Object.keys(categoryMap).sort();
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -21,6 +37,24 @@ export default function StudiesHub({ onSelectTool }) {
     setAnalytics(loadAnalytics());
   };
 
+  // Apply workflow + ANSI filters to each category list
+  const filterTools = (tools) => {
+    return tools.filter((tool) => {
+      const wfOk =
+        workflow.length === 0 ||
+        workflow.some((w) => (tool.workflow || []).includes(w));
+      const ansiOk =
+        ansiFilters.length === 0 ||
+        ansiFilters.some((a) => (tool.ansi || []).includes(a));
+      return wfOk && ansiOk;
+    });
+  };
+
+  const filtersActive = workflow.length > 0 || ansiFilters.length > 0;
+  const visibleCategories = categories
+    .map((cat) => ({ cat, tools: filterTools(categoryMap[cat]) }))
+    .filter(({ tools }) => tools.length > 0);
+
   return (
     <div style={styles.root}>
       {/* Header */}
@@ -28,7 +62,15 @@ export default function StudiesHub({ onSelectTool }) {
         <div>
           <div style={styles.title}>Hub de Ferramentas</div>
           <div style={styles.subtitle}>
-            Análise de Proteção Elétrica — 8 ferramentas
+            Análise de Proteção Elétrica
+            {filtersActive && (
+              <span style={styles.filterHint}>
+                {" "}
+                · {workflow.length + ansiFilters.length} filtro
+                {workflow.length + ansiFilters.length > 1 ? "s" : ""} ativo
+                {workflow.length + ansiFilters.length > 1 ? "s" : ""}
+              </span>
+            )}
           </div>
         </div>
         <button
@@ -42,28 +84,47 @@ export default function StudiesHub({ onSelectTool }) {
 
       {/* Grid by category */}
       <div style={styles.content}>
-        {categories.map((category) => (
-          <div key={category} style={styles.section}>
-            <div style={styles.categoryTitle}>{category}</div>
-            <div style={styles.grid}>
-              {categoryMap[category].map((tool) => (
-                <ToolCard
-                  key={tool.id}
-                  tool={tool}
-                  onSelect={() => onSelectTool?.(tool)}
-                />
-              ))}
-            </div>
+        {visibleCategories.length === 0 ? (
+          <div style={styles.empty}>
+            Nenhuma ferramenta corresponde aos filtros selecionados.
           </div>
-        ))}
+        ) : (
+          visibleCategories.map(({ cat, tools }) => (
+            <div key={cat} style={styles.section}>
+              <div style={styles.categoryTitle}>{cat}</div>
+              <div style={styles.grid}>
+                {tools.map((tool) => (
+                  <ToolCard
+                    key={tool.id}
+                    tool={tool}
+                    onSelect={() => onSelectTool?.(tool)}
+                    isFavorite={favorites.includes(tool.id)}
+                    onToggleFavorite={() => onToggleFavorite?.(tool.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Analytics Modal */}
       {showAnalytics && (
         <div style={styles.modalOverlay} onClick={() => setShowAnalytics(false)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="analytics-title" onKeyDown={(e)=>{if(e.key==="Escape")setShowAnalytics(false)}}>
+          <div
+            style={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="analytics-title"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setShowAnalytics(false);
+            }}
+          >
             <div style={styles.modalHeader}>
-              <h2 id="analytics-title" style={styles.modalTitle}>Analytics de Uso</h2>
+              <h2 id="analytics-title" style={styles.modalTitle}>
+                Analytics de Uso
+              </h2>
               <button
                 style={styles.modalClose}
                 onClick={() => setShowAnalytics(false)}
@@ -84,9 +145,9 @@ export default function StudiesHub({ onSelectTool }) {
   );
 }
 
-function ToolCard({ tool, onSelect }) {
+function ToolCard({ tool, onSelect, isFavorite, onToggleFavorite }) {
   const handleKeyDown = (e) => {
-    if (tool.available && (e.key === 'Enter' || e.key === ' ')) {
+    if (tool.available && (e.key === "Enter" || e.key === " ")) {
       onSelect();
       e.preventDefault();
     }
@@ -116,6 +177,24 @@ function ToolCard({ tool, onSelect }) {
       aria-disabled={!tool.available}
       aria-label={tool.name}
     >
+      {/* Favorite toggle (top-right) */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleFavorite?.();
+        }}
+        style={{
+          ...styles.favBtn,
+          color: isFavorite ? "#eab308" : "var(--tx3)",
+        }}
+        aria-pressed={isFavorite}
+        aria-label={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      >
+        {isFavorite ? "★" : "☆"}
+      </button>
+
       {/* Icon placeholder */}
       <div style={styles.iconBox}>
         <svg
@@ -145,6 +224,17 @@ function ToolCard({ tool, onSelect }) {
         <div style={styles.toolName}>{tool.name}</div>
         <div style={styles.toolDesc}>{tool.description}</div>
 
+        {/* ANSI inline chips */}
+        {(tool.ansi || []).length > 0 && (
+          <div style={styles.ansiRow}>
+            {tool.ansi.slice(0, 4).map((code) => (
+              <span key={code} style={styles.ansiChip}>
+                {code}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Complexity indicator */}
         <div style={styles.complexity}>
           {"★".repeat(tool.complexity)}
@@ -152,11 +242,7 @@ function ToolCard({ tool, onSelect }) {
         </div>
 
         {/* Status badge */}
-        {tool.available ? (
-          <div style={styles.badgeAvailable}>Disponível</div>
-        ) : (
-          <div style={styles.badgeComingSoon}>Sprint {tool.sprint}</div>
-        )}
+        <StatusBadge status={tool.status || (tool.available ? "stable" : "planned")} />
       </div>
     </div>
   );
@@ -194,6 +280,10 @@ const styles = {
     marginTop: 4,
     fontFamily: "var(--fm)",
   },
+  filterHint: {
+    color: "var(--cyan)",
+    fontWeight: 700,
+  },
   analyticsBtn: {
     padding: "8px 14px",
     border: "1px solid var(--bdr)",
@@ -211,6 +301,13 @@ const styles = {
     flex: 1,
     overflow: "auto",
     padding: "20px 24px",
+  },
+  empty: {
+    padding: 40,
+    textAlign: "center",
+    color: "var(--tx3)",
+    fontSize: 13,
+    fontFamily: "var(--fm)",
   },
   section: {
     marginBottom: 32,
@@ -231,6 +328,7 @@ const styles = {
     gap: 16,
   },
   card: {
+    position: "relative",
     padding: 16,
     background: "var(--card)",
     border: "1px solid var(--bdr)",
@@ -239,6 +337,23 @@ const styles = {
     flexDirection: "column",
     gap: 12,
     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+  },
+  favBtn: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: 16,
+    lineHeight: 1,
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
   },
   iconBox: {
     display: "flex",
@@ -265,33 +380,26 @@ const styles = {
     lineHeight: 1.5,
     flex: 1,
   },
+  ansiRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 4,
+  },
+  ansiChip: {
+    padding: "2px 6px",
+    borderRadius: 4,
+    background: "var(--card2)",
+    border: "1px solid var(--bdr)",
+    color: "var(--tx2)",
+    fontSize: 9,
+    fontWeight: 700,
+    fontFamily: "var(--fm)",
+  },
   complexity: {
     fontSize: 12,
     color: "var(--cyan)",
     fontWeight: 700,
     fontFamily: "var(--fm)",
-  },
-  badgeAvailable: {
-    padding: "4px 8px",
-    borderRadius: 4,
-    background: "rgba(34,197,94,0.12)",
-    color: "#22c55e",
-    fontSize: 10,
-    fontWeight: 700,
-    fontFamily: "var(--fh)",
-    textAlign: "center",
-    border: "1px solid rgba(34,197,94,0.25)",
-  },
-  badgeComingSoon: {
-    padding: "4px 8px",
-    borderRadius: 4,
-    background: "rgba(107,114,128,0.12)",
-    color: "var(--tx3)",
-    fontSize: 10,
-    fontWeight: 700,
-    fontFamily: "var(--fh)",
-    textAlign: "center",
-    border: "1px solid rgba(107,114,128,0.25)",
   },
   modalOverlay: {
     position: "fixed",

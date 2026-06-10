@@ -11,7 +11,13 @@
 import { useState, useEffect, useRef } from "react";
 import { TOOLS } from "../catalog.js";
 
-export default function SearchPalette({ onSelectTool }) {
+function statusLabel(status) {
+  if (status === "beta") return "Beta";
+  if (status === "planned") return "Planejado";
+  return "Disponível";
+}
+
+export default function SearchPalette({ onSelectTool, favorites = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -86,8 +92,10 @@ export default function SearchPalette({ onSelectTool }) {
     setIsOpen(false);
   };
 
-  // Fuzzy search filter
-  const filtered = query.length === 0 ? [] : filterTools(TOOLS, query);
+  // Fuzzy search filter with favorites + recents ranking
+  const recentIds = recent.map((r) => r.id);
+  const filtered =
+    query.length === 0 ? [] : filterTools(TOOLS, query, { favorites, recentIds });
 
   return (
     <>
@@ -124,6 +132,30 @@ export default function SearchPalette({ onSelectTool }) {
           <div style={styles.results}>
             {query.length === 0 ? (
               <>
+                {favorites.length > 0 && (
+                  <>
+                    <div style={styles.section}>
+                      <div style={styles.sectionTitle}>Favoritos</div>
+                      {favorites
+                        .map((id) => TOOLS.find((t) => t.id === id))
+                        .filter(Boolean)
+                        .slice(0, 5)
+                        .map((tool) => (
+                          <div
+                            key={`fav-${tool.id}`}
+                            style={styles.resultItem}
+                            onClick={() => selectTool(tool)}
+                          >
+                            <div style={styles.resultName}>
+                              <span style={styles.favStar}>★</span> {tool.name}
+                            </div>
+                            <div style={styles.resultCategory}>{tool.category}</div>
+                          </div>
+                        ))}
+                    </div>
+                    <div style={styles.divider} />
+                  </>
+                )}
                 {recent.length > 0 && (
                   <>
                     <div style={styles.section}>
@@ -162,7 +194,7 @@ export default function SearchPalette({ onSelectTool }) {
                       <div style={styles.resultName}>
                         {tool.name}
                         {!tool.available && (
-                          <span style={styles.badge}> (Sprint {tool.sprint})</span>
+                          <span style={styles.badge}> ({statusLabel(tool.status)})</span>
                         )}
                       </div>
                       <div style={styles.resultCategory}>
@@ -204,26 +236,72 @@ export default function SearchPalette({ onSelectTool }) {
 }
 
 /**
- * Fuzzy filter tools by query string.
- * Matches against name and description.
+ * Fuzzy filter tools by query string with ANSI / keyword / domain matching.
+ *
+ * Match dimensions (any hit qualifies):
+ *  - tool.name        (weight 5 for exact, 4 prefix, 3 contains)
+ *  - tool.ansi[]      (weight 6 — explicit ANSI lookup like "21", "51N")
+ *  - tool.keywords[]  (weight 3)
+ *  - tool.domain[]    (weight 2)
+ *  - tool.description (weight 1)
+ *
+ * Ranking bonus:
+ *  + 2 if favorited
+ *  + 1 if recently used
+ *
  * @param {Array} tools
  * @param {string} query
+ * @param {Object} [opts]
+ * @param {Array<string>} [opts.favorites]
+ * @param {Array<string>} [opts.recentIds]
  * @returns {Array} Filtered tools, sorted by relevance
  */
-function filterTools(tools, query) {
-  const q = query.toLowerCase();
-  return tools
-    .filter((tool) => {
+function filterTools(tools, query, opts = {}) {
+  const q = String(query || "").toLowerCase().trim();
+  if (!q) return [];
+  const favorites = opts.favorites || [];
+  const recentIds = opts.recentIds || [];
+
+  const scored = tools
+    .map((tool) => {
       const name = tool.name.toLowerCase();
-      const desc = tool.description.toLowerCase();
-      return name.includes(q) || desc.includes(q);
+      const desc = (tool.description || "").toLowerCase();
+      const ansi = (tool.ansi || []).map((a) => a.toLowerCase());
+      const keywords = (tool.keywords || []).map((k) => k.toLowerCase());
+      const domain = (tool.domain || []).map((d) => d.toLowerCase());
+
+      let score = 0;
+
+      // Name scoring
+      if (name === q) score += 5;
+      else if (name.startsWith(q)) score += 4;
+      else if (name.includes(q)) score += 3;
+
+      // ANSI: support exact match (best) or contains
+      if (ansi.includes(q)) score += 6;
+      else if (ansi.some((a) => a.includes(q))) score += 4;
+
+      // Keywords
+      if (keywords.some((k) => k === q)) score += 4;
+      else if (keywords.some((k) => k.includes(q))) score += 3;
+
+      // Domain tags
+      if (domain.some((d) => d.includes(q))) score += 2;
+
+      // Description fallback
+      if (desc.includes(q)) score += 1;
+
+      // Ranking bonuses
+      if (favorites.includes(tool.id)) score += 2;
+      if (recentIds.includes(tool.id)) score += 1;
+
+      return { tool, score };
     })
-    .sort((a, b) => {
-      // Prefer name matches over description
-      const aNameScore = a.name.toLowerCase().includes(q) ? 1 : 0;
-      const bNameScore = b.name.toLowerCase().includes(q) ? 1 : 0;
-      return bNameScore - aNameScore;
-    });
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({ tool }) => tool);
+
+  return scored;
 }
 
 const styles = {
@@ -319,6 +397,10 @@ const styles = {
     fontSize: 9,
     color: "var(--cyan)",
     fontWeight: 700,
+  },
+  favStar: {
+    color: "#eab308",
+    marginRight: 4,
   },
   divider: {
     height: 1,
