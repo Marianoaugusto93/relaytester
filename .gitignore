@@ -19,6 +19,5 @@ _docs-archive/
 # Local development folders (not part of deploy)
 ProtecView/
 Newton-Rapson/
-src/estudos/
 *.png
 Screenshot_*.png
