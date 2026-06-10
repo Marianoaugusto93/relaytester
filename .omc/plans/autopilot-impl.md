@@ -1,162 +1,206 @@
-# Phase 2 Execution Plan: MVP Refactored Newton-Raphson Solver
+# Implementation Plan: Newton-Raphson Phases 9-13
 
-## Architecture Overview
+**Date:** 2026-06-05  
+**Duration Estimate:** 4-6 hours  
+**Approach:** Sequential phases with parallel tasks where possible
 
-The refactored solver HTML will be organized in three sections:
+## Phase 9: Full Parameter Editor (45-60 min)
 
-1. **Imports Section** (Fixed paths to modules)
-   - solver.js: solvePowerFlow, buildYbus, solveLinear
-   - controls.js: renderControls, applyControls
-   - persistence.js: serializeNetwork, deserializeNetwork
-   - visualization: voltageHeatmapColor, angleHeatmapColor
-   
-2. **HTML Structure** (3-column layout)
-   - Left: SVG diagram (power flow visualization)
-   - Right: 2 panels
-     - Top: Controls (generators, load scale, buttons)
-     - Bottom: Result tables (buses, branches, generators)
+### 9.1 Extend Equipment Modal (20 min)
+- Add property tabs to equipment modal (next to Buses/Branches)
+- Create advanced bus editor panel:
+  - Pg, Pset (generator power)
+  - Qmin, Qmax (reactive limits)
+  - Vset (voltage setpoint)
+  - In-service toggle
+- Create advanced branch editor panel:
+  - Tap, phaseShift (transformer properties)
+  - Thermal rating
+  - In-service toggle
 
-3. **JavaScript Logic** (~250 lines)
-   - Demo network initialization
-   - SVG diagram rendering function
-   - Table population functions
-   - Event listener wiring
-   - Bridge communication handlers
+### 9.2 Property Update Functions (20 min)
+- editBusAdvanced(busId) — load all properties
+- updateBusProperties(busId, props) — save advanced properties
+- editBranchAdvanced(brIdx) — load branch properties
+- updateBranchProperties(brIdx, props) — save
+- toggleInService(type, id) — toggle equipment status
 
-## Implementation Tasks
+### 9.3 Validation & Visual Feedback (15 min)
+- Validate property ranges (Pg limits, voltages, tap ranges)
+- Gray out disabled equipment in diagram (dashed lines, gray buses)
+- Show validation errors in forms
+- Auto-solve after property changes
 
-### Task 1: Fix Module Import Paths (CRITICAL)
-**Priority**: P0 (Blocks everything)
-**File**: `public/newton-rapson/powerflow-refactored.html`
-**Current Issue**: Relative paths `../../src/` don't resolve in public directory
-**Solution**: Change to absolute paths `/src/simulators/...`
-**Status**: ✅ Already fixed in earlier edit
-**Verification**: Console should show no module import errors
-
-### Task 2: Implement SVG Diagram Rendering
-**Priority**: P0
-**Code Location**: `renderDiagram()` function in HTML
-**What to implement**:
-- Parse buses array, calculate x/y positions (circle or horizontal layout)
-- Draw circles (radius 20px) for each bus
-- Color circles using voltageHeatmapColor(bus.V)
-- Draw lines between buses for each branch
-- Add text labels (bus ID, V, θ)
-- Add branch labels (name, S values)
-- Draw arrows on branches to show power flow direction
-**Estimated Lines**: ~150 lines
-**Dependencies**: voltageHeatmapColor, angleHeatmapColor from modules
-
-### Task 3: Implement Interactive Controls
-**Priority**: P1
-**Code Location**: Controls panel HTML + event listeners
-**What to implement**:
-- Generate sliders for each generator (Pg setpoint)
-- Generate slider for load scale
-- Wire onChange events
-- On slider change:
-  - Call applyControls() to update model
-  - Call solvePowerFlow() to re-solve
-  - Call renderDiagram() to update display
-  - Update result tables
-**Estimated Lines**: ~80 lines
-**Dependencies**: renderControls, applyControls from modules
-
-### Task 4: Implement Result Tables
-**Priority**: P1
-**Code Location**: Tables section in HTML + population functions
-**What to implement**:
-- Bus measurements table function:
-  - Iterate buses array
-  - Display ID, type, V (pu), θ (deg), P (MW), Q (Mvar)
-- Branch flows table function:
-  - Calculate S_from and S_to for each branch
-  - Display losses as percentage
-  - Format numbers with 4 decimal places
-- Generator table function:
-  - Show Pset, Qgen, Qlim for each generator
-**Estimated Lines**: ~100 lines
-**Dependencies**: formatAmps, formatNumber utilities
-
-### Task 5: Implement Bridge Communication
-**Priority**: P0
-**Code Location**: Bridge server message handler
-**What to implement**:
-- postMessage listener for solve/serialize/deserialize
-- Error handling with try-catch
-- Status display on message completion
-- Handle timeouts (10 second max)
-**Estimated Lines**: ~40 lines
-**Dependencies**: Built into HTML already (lines 184-211)
-
-### Task 6: Add Event Handlers
-**Priority**: P1
-**Code Location**: wireEventListeners() function
-**What to implement**:
-- [Solve] button → manual solve
-- [Reset] button → reload demo network
-- [Export] button → download JSON
-- Slider changes → auto-solve
-- Status display update
-**Estimated Lines**: ~60 lines
-**Dependencies**: All above functions
-
-### Task 7: Testing & QA
-**Priority**: P2
-**Manual Tests**:
-1. Load page → check for console errors
-2. Click [Solve] → diagram should update
-3. Move sliders → diagram should react
-4. Verify tables populate with correct values
-5. Compare values with legacy solver (±5% tolerance)
-6. Test [Reset] button
-7. Test [Export] button
-
-## Implementation Sequence
-
-**Phase 2 Execution (Parallel Work)**:
-- **Worker 1**: Tasks 1-2 (Module paths + Diagram rendering)
-- **Worker 2**: Tasks 3-4 (Controls + Result tables)
-- **Worker 3**: Tasks 5-6 (Bridge + Event handlers)
-
-**After Phase 2**:
-- **Phase 3 QA**: Verify all tests pass, no console errors
-- **Phase 4 Validation**: Code review, feature completeness check
-
-## File Dependencies
-
-```
-powerflow-refactored.html
-├── /src/simulators/powerflow/core/solver.js
-├── /src/simulators/powerflow/core/controls.js
-├── /src/simulators/powerflow/core/diagnostics.js
-├── /src/simulators/powerflow/core/persistence.js
-├── /src/simulators/powerflow/core/heatmap.js
-└── Bridge server (inline in HTML)
-```
-
-## Success Metrics
-
-- ✅ All 6 tasks completed
-- ✅ No console errors (F12 DevTools)
-- ✅ Diagram renders with real network data
-- ✅ Controls are responsive
-- ✅ Tables populate correctly
-- ✅ Bridge communication works
-- ✅ npm run build succeeds
-- ✅ Toggle comparison works (OLD vs NEW)
-
-## Risk Assessment
-
-| Risk | Mitigation | Status |
-|------|-----------|--------|
-| Module imports fail | Already fixed, verify console | ✅ Addressed |
-| SVG rendering is complex | Use simple circle layout first | 🟡 TBD |
-| Controls don't bind correctly | Test with demo network first | 🟡 TBD |
-| Bridge timeout issues | Add 10s timeout handler | 🟡 TBD |
-| Performance regression | Monitor bundle size increase | 🟡 TBD |
+**Success Check:** Can edit all properties, solver updates, visual feedback works
 
 ---
 
-**Plan Status**: Ready for Phase 2 Execution
-**Estimated Duration**: 2-3 hours execution + 1 hour QA
+## Phase 10: Real Scenario Examples (45-60 min)
+
+### 10.1 Create Scenario Definitions (30 min)
+- Build scenarios.json with complete network data:
+  - IEEE 3-bus (existing demo, expand with full data)
+  - IEEE 5-bus (new, from textbook)
+  - IEEE 14-bus (new, complete topology)
+  - IEEE 30-bus (new, realistic medium system)
+  - 5 educational scenarios (3-phase, L-G, L-L, etc.)
+
+### 10.2 Scenario Loading Logic (15 min)
+- loadCompleteScenario(scenarioId) function
+- Validate loaded network (slack bus exists, connectivity)
+- Show scenario metadata (author, year, description)
+- Auto-initialize controls after load
+
+**Success Check:** Can load IEEE systems, all converge, diagram correct
+
+---
+
+## Phase 11: Animated SVG Visualization (60-90 min)
+
+### 11.1 Power Flow Calculation (20 min)
+- calculatePowerFlows() — compute P, Q, S on each branch
+- getBranchMagnitude(br) — extract power magnitude
+- getNormalizedMagnitude(mag, maxMag) — scale to 0-1
+
+### 11.2 Arrow Animation (30 min)
+- drawPowerFlowArrows() — create arrow SVG elements
+- assignArrowColor(magnitude) — heatmap (cool → hot)
+- assignArrowWidth(magnitude) — scale width 0.1-2.0
+- animatePowerFlow() — requestAnimationFrame loop
+- Update arrows at 10 Hz with smooth transitions
+
+### 11.3 Interactive Tooltips (20 min)
+- Add hover listeners to branches/buses
+- Show tooltip with detailed values (P, Q, S, angle, V, theta)
+- Position tooltip near cursor
+- Fade in/out smoothly
+
+### 11.4 Controls (10 min)
+- Play/pause button for animation
+- Speed control (0.5× to 2×)
+- Toggle arrows on/off
+
+**Success Check:** Arrows animate, colors scale, hover works, smooth 60 FPS
+
+---
+
+## Phase 12: Protection Settings UI (45-60 min)
+
+### 12.1 Settings Data Structure (15 min)
+- Create protectionSettings object:
+  - Enable/disable per function
+  - Pickup current/voltage
+  - Time dial
+  - Curve type
+  - Restore time
+- Initialize with default ANSI values
+
+### 12.2 Protection Panel UI (25 min)
+- Create tabbed protection panel (50, 51, 67, 27, 59, 81U, 81O, 32)
+- Per-function form:
+  - Toggle enable/disable
+  - Slider for pickup (0.5A to 10A)
+  - Slider for time dial (0.05 to 2.0)
+  - Dropdown for curve type (IEC, ANSI, IEEE, DT)
+  - Reset time input
+  - Preset buttons (residential, commercial, industrial)
+
+### 12.3 Trip Prediction (15 min)
+- evaluateRelayTrip() — check if current network will trip
+- Show trip time prediction
+- Color code result (safe=green, warning=yellow, trip=red)
+- Update prediction when scenario changes
+
+### 12.4 Export/Import (5 min)
+- serializeProtectionSettings() → JSON
+- deserializeProtectionSettings(json) → load
+- Add buttons to export/import settings
+
+**Success Check:** All functions configurable, predictions work, export/import works
+
+---
+
+## Phase 13: Results & History (45-60 min)
+
+### 13.1 Enhanced Results Display (20 min)
+- Add color heatmap backgrounds to result tables
+- Show convergence stats:
+  - Iterations count
+  - Final mismatch
+  - Solve time (ms)
+- Add system-level results:
+  - Total generation (MW, MVAr)
+  - Total load (MW, MVAr)
+  - Total losses (MW, MVAr)
+  - Efficiency %
+
+### 13.2 Simulation History (20 min)
+- Create simulationHistory array (limit 20 entries)
+- After each solve: push {timestamp, scenarioId, buses, branches, results}
+- Build history viewer (table with timestamp, scenario, details)
+- Add "Load from History" button to restore previous solve
+
+### 13.3 Comparison Tool (10 min)
+- selectScenarioForComparison(historyIdx)
+- displaySideBySideComparison(current, selected)
+- Highlight differences (color changes, new/deleted equipment)
+
+### 13.4 Export Functions (10 min)
+- exportResultsCSV() → download all tables as CSV
+- exportNetworkJSON() → save network state
+- exportEnhancedCOMTRADE() → improved relay test data
+- Add export buttons to UI
+
+**Success Check:** Heatmaps display, history tracks, exports work, comparison functional
+
+---
+
+## Implementation Order (Sequential)
+
+```
+Phase 9 (Parameter Editor) ← Foundation
+    ↓
+Phase 10 (Real Scenarios) ← Provides test data
+    ↓
+Phase 11 (Animated Visualization) ← Enhanced feedback
+    ↓
+Phase 12 (Protection Settings) ← Advanced features
+    ↓
+Phase 13 (Results & History) ← Bookkeeping & export
+```
+
+## Parallelizable Tasks
+
+- Phase 10 scenario data creation (30 min) can start during Phase 9
+- Phase 13 can start as soon as Phase 9 is done (independent of 11, 12)
+
+## Code Organization
+
+All code stays in single HTML file (public/newton-rapson/powerflow-refactored.html):
+- New functions grouped by phase (// Phase 9: ..., // Phase 10: ..., etc.)
+- Reuse existing functions where possible (renderDiagram, solveNetwork, etc.)
+- Keep CSS grouped at top
+- Keep JavaScript logic at bottom
+
+## Testing Strategy
+
+Per-phase testing:
+1. Phase 9: Edit properties, solver updates correctly
+2. Phase 10: Load each scenario, verify convergence
+3. Phase 11: Check animation smoothness, no console errors
+4. Phase 12: Configure relays, trip predictions accurate
+5. Phase 13: Export/import works, history tracks correctly
+
+## Success Metrics
+
+- ✅ All phases complete
+- ✅ 4-6 hour target met
+- ✅ Total lines < 2500
+- ✅ No console errors
+- ✅ All manual UAT pass
+- ✅ Feature parity with React version
+
+---
+
+**Status**: Plan approved. Ready for Phase 2 (Execution).
+

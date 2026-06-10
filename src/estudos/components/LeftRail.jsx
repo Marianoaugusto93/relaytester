@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TOOLS, WORKFLOW_ORDER, ANSI_CODES, toolsForWorkflow } from "../catalog.js";
+import RecommendedTools from "./RecommendedTools.jsx";
 
 export default function LeftRail({
   onSelectTool,
@@ -87,6 +88,9 @@ export default function LeftRail({
             ))}
           </Section>
         )}
+
+        {/* Recomendado para você (analytics-driven) */}
+        <RecommendedTools onSelectTool={onSelectTool} />
 
         {/* Recentes */}
         {recentTools.length > 0 && (

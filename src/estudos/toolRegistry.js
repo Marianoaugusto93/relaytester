@@ -22,6 +22,16 @@ const DifferentialInrushTool = lazy(() => import("./tools/DifferentialInrushTool
 const AmpacityCTSaturationTool = lazy(() => import("./tools/AmpacityCTSaturationTool.jsx"));
 const VisualScenarioBuilder = lazy(() => import("./components/VisualScenarioBuilder.jsx"));
 const GraphVizContainer = lazy(() => import("./components/GraphVizContainer.jsx"));
+const CoordinationTccTool = lazy(() => import("./tools/CoordinationTccTool.jsx"));
+const TcSizingValidator = lazy(() => import("./tools/TcSizingValidator.jsx"));
+const ReachLoadabilityTool = lazy(() => import("./tools/ReachLoadabilityTool.jsx"));
+const DifferentialTransformerTool = lazy(() => import("./tools/DifferentialTransformerTool.jsx"));
+const InrushDiscriminationTool = lazy(() => import("./tools/InrushDiscriminationTool.jsx"));
+const DirectionalLogicTool = lazy(() => import("./tools/DirectionalLogicTool.jsx"));
+const UnderFrequencyTool = lazy(() => import("./tools/UnderFrequencyTool.jsx"));
+const ReclosingSequenceTool = lazy(() => import("./tools/ReclosingSequenceTool.jsx"));
+const ArcFlashCalculatorTool = lazy(() => import("./tools/ArcFlashCalculatorTool.jsx"));
+const GroundingImpedanceTool = lazy(() => import("./tools/GroundingImpedanceTool.jsx"));
 
 /**
  * @typedef {Object} ToolRegistryEntry
@@ -66,6 +76,46 @@ export const TOOL_REGISTRY = {
   "graph-viz": {
     component: GraphVizContainer,
     label: "Visualização R-X & TCC",
+  },
+  "coordination-tcc": {
+    component: CoordinationTccTool,
+    label: "Coordenação TCC (50/51)",
+  },
+  "tc-sizing": {
+    component: TcSizingValidator,
+    label: "TC Sizing / ANSI Class",
+  },
+  "reach-loadability": {
+    component: ReachLoadabilityTool,
+    label: "Reach 21 / Loadability",
+  },
+  "differential-transformer": {
+    component: DifferentialTransformerTool,
+    label: "Trafo Diferencial 87T",
+  },
+  "inrush-discrimination": {
+    component: InrushDiscriminationTool,
+    label: "Inrush Discrimination 2nd/5th",
+  },
+  "directional-logic": {
+    component: DirectionalLogicTool,
+    label: "Polarização Direcional 32/67",
+  },
+  "under-frequency": {
+    component: UnderFrequencyTool,
+    label: "Subfrequência 81U/81O + df/dt",
+  },
+  "reclosing-sequence": {
+    component: ReclosingSequenceTool,
+    label: "Religamento (79)",
+  },
+  "arc-flash": {
+    component: ArcFlashCalculatorTool,
+    label: "Arc-Flash IEEE 1584-2018",
+  },
+  "grounding-impedance": {
+    component: GroundingImpedanceTool,
+    label: "Aterramento / Zn",
   },
 };
 

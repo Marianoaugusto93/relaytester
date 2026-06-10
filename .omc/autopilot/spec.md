@@ -1,48 +1,72 @@
-# MVP Refactored Newton-Raphson Solver — Specification
+# Newton-Raphson Complete Migration Specification
 
-**Objective**: Expand Phase 6 skeleton to fully functional MVP refactored power flow solver.
+**Date:** 2026-06-05  
+**Target:** MVP-ready refactored solver with feature parity  
+**Duration:** 4-6 hours  
+**Scope:** Phases 9-13  
 
-**Current State**:
-- ✅ Bridge server working (postMessage protocol)
-- ✅ Modules extracted (solver, controls, visualization, persistence)
-- ❌ HTML visualization is placeholder (gray box, no diagram)
-- ❌ No result tables or interactive measurements
+## Current State (Phase 8 Complete)
 
-**Key Deliverables**:
+**File:** public/newton-rapson/powerflow-refactored.html (1299 lines)
 
-1. **Power Flow Diagram** (SVG with real-time rendering)
-   - Bus nodes with voltage heatmap coloring
-   - Branch connections with flow arrows
-   - Bus/branch labels with measurement values
-   
-2. **Interactive Controls**
-   - Generator P setpoint sliders
-   - Load scale multiplier slider
-   - Real-time solver updates on control changes
-   
-3. **Result Tables**
-   - Bus measurements (V, θ, P, Q)
-   - Branch flows (S, losses)
-   - Generator dispatch
-   
-4. **Solver Integration**
-   - [Solve] button → bridge.solve()
-   - [Reset] button → reload demo network
-   - [Export] button → serialize to JSON
-   - Status display (converged / failed)
+**Already Implemented:**
+- Power flow solver (Newton-Raphson)
+- SVG diagram with voltage heatmap
+- Result tables (buses, generators, loads, branches)
+- Equipment editor (add/edit/delete)
+- Scenario selector
+- Network import/export
+- Transformer controls
+- Load scaling
+- COMTRADE export
 
-**Constraints**:
-- Visualization code ≤ 300 lines
-- Total HTML ≤ 500 lines
-- Reuse extracted modules (no duplicate code)
-- Feature parity with legacy solver UI
+## Phase 9: Full Parameter Editor
 
-**Success Criteria**:
-- No console errors
-- Diagram renders with real data
-- Controls are interactive and responsive
-- Solver produces valid results
-- Build passes (npm run build)
-- Toggle comparison works (OLD vs NEW)
+Complete properties editor for all equipment (generators, loads, transformers, lines).
+- Edit all bus properties (Pg, Qmin, Qmax, voltage, angle)
+- Edit all branch properties (r, x, b, tap, phaseShift)
+- Real-time solver updates
+- Out-of-service visual feedback
 
-**Timeline**: 4-5 hours total
+## Phase 10: Real Scenario Examples
+
+Load complete networks with realistic topologies.
+- IEEE 3, 5, 14, 30-bus systems
+- Complete bus/branch definitions
+- Convergence validation
+- Metadata display
+
+## Phase 11: Animated SVG Power Flow
+
+Real-time visualization with animated power flow arrows.
+- Directional arrows on branches
+- Color heatmap (magnitude)
+- Width scaling with power
+- Smooth animation (10 Hz)
+- Hover tooltips with detailed values
+
+## Phase 12: Protection Settings UI
+
+Relay configuration interface.
+- 8+ protection functions (50, 51, 67, 27, 59, 81U, 81O, 32)
+- Pickup, time dial, curve type settings
+- Trip prediction display
+- Export/import settings
+
+## Phase 13: Results & History
+
+Comprehensive results tracking.
+- Color heatmap result tables
+- Convergence details
+- Simulation history (last 20 runs)
+- Results export (CSV, JSON, COMTRADE)
+- Scenario comparison tool
+
+## Target Metrics
+- Total lines: < 2500 (currently 1299)
+- New code: ~1200 lines
+- Performance: < 100ms per operation
+- Duration: 4-6 hours
+- No external libraries (vanilla JS)
+
+**Status**: Ready for Phase 1 (Planning)

@@ -14,6 +14,9 @@
 
 import { useState, useEffect } from "react";
 import { useBay } from "../context/BayContext.jsx";
+import { useArtifactBus } from "../context/ArtifactBus.jsx";
+import ArtifactList from "./ArtifactList.jsx";
+import NotesPanel from "./NotesPanel.jsx";
 
 const GROUNDING_OPTIONS = [
   { value: "solidly", label: "Solidamente Aterrado" },
@@ -28,9 +31,10 @@ const CONNECTION_OPTIONS = [
 ];
 
 /**
- * Right-drawer tabs (Workbench-lite v1).
- * Currently only "bay" is wired; "artefatos" and "notas" are TODO placeholders
- * for the ArtifactBus subscriber and scratchpad respectively.
+ * Right-drawer tabs (Workbench-lite v2 / Track 3).
+ *  - "bay"       Bay context editor
+ *  - "artefatos" Artifact history strip (wildcard "*.result" subscriber)
+ *  - "notas"     Per-tool scratchpad persisted to localStorage
  */
 const DRAWER_TABS = [
   { id: "bay", label: "Bay" },
@@ -38,10 +42,35 @@ const DRAWER_TABS = [
   { id: "notas", label: "Notas" },
 ];
 
-export default function BayContextPanel({ embedded = false }) {
+export default function BayContextPanel({ embedded = false, activeToolId = null, activeToolName = null, onArtifactOpen = null }) {
   const { bay, setBay } = useBay();
+  const bus = useArtifactBus();
   const [edited, setEdited] = useState(false);
   const [activeTab, setActiveTab] = useState("bay");
+  const [artifacts, setArtifacts] = useState([]);
+
+  // Subscribe to wildcard bus topic; collect *.result publications (max 10)
+  useEffect(() => {
+    const unsubscribe = bus.subscribe("*", (topic, data) => {
+      if (typeof topic !== "string" || !topic.endsWith(".result")) return;
+      const toolId = topic.split(".")[0];
+      setArtifacts((prev) =>
+        [
+          { topic, data, timestamp: Date.now(), toolId },
+          ...prev,
+        ].slice(0, 10)
+      );
+    });
+    return unsubscribe;
+  }, [bus]);
+
+  const handleDiscard = (key) => {
+    setArtifacts((prev) => prev.filter((a) => a.timestamp + a.topic !== key));
+  };
+
+  const handleOpenArtifact = (artifact) => {
+    onArtifactOpen?.(artifact);
+  };
 
   const handleChange = (field, value) => {
     const numValue = isNaN(value) ? value : parseFloat(value);
@@ -108,21 +137,18 @@ export default function BayContextPanel({ embedded = false }) {
       </div>
 
       {activeTab === "artefatos" && (
-        <div style={styles.placeholder}>
-          <div style={styles.placeholderTitle}>Artefatos</div>
-          <div style={styles.placeholderHint}>
-            ArtifactBus em breve — captura de saídas das ferramentas (faltas, curvas, zonas).
-          </div>
-        </div>
+        <ArtifactList
+          artifacts={artifacts}
+          onOpen={handleOpenArtifact}
+          onDiscard={handleDiscard}
+        />
       )}
 
       {activeTab === "notas" && (
-        <div style={styles.placeholder}>
-          <div style={styles.placeholderTitle}>Notas</div>
-          <div style={styles.placeholderHint}>
-            Scratchpad para anotações de estudo (em breve).
-          </div>
-        </div>
+        <NotesPanel
+          activeToolId={activeToolId}
+          activeToolName={activeToolName}
+        />
       )}
 
       {activeTab === "bay" && (

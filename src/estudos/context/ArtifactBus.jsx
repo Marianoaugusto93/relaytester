@@ -22,8 +22,9 @@ export function ArtifactBusProvider({ children }) {
 
   /**
    * Subscribe to a topic. Returns an unsubscribe function.
+   * Pass topic "*" to subscribe to all topics (listener receives (topic, payload)).
    * @param {string} topic
-   * @param {Function} listener - called with (payload) on each publish
+   * @param {Function} listener - called with (payload) for specific topics, (topic, payload) for "*"
    * @returns {Function} unsubscribe
    */
   function subscribe(topic, listener) {
@@ -39,6 +40,7 @@ export function ArtifactBusProvider({ children }) {
   /**
    * Publish a payload to all subscribers of a topic.
    * Each listener is isolated; a failing listener does not block others.
+   * Also notifies wildcard "*" listeners with (topic, payload).
    * @param {string} topic
    * @param {*} payload - immutable value; do not mutate after publishing
    */
@@ -48,6 +50,14 @@ export function ArtifactBusProvider({ children }) {
         fn(payload);
       } catch (e) {
         console.error(`[ArtifactBus] Listener error on topic "${topic}":`, e);
+      }
+    });
+    // Wildcard subscribers receive (topic, payload)
+    listenersRef.current.get("*")?.forEach(fn => {
+      try {
+        fn(topic, payload);
+      } catch (e) {
+        console.error(`[ArtifactBus] Wildcard listener error on topic "${topic}":`, e);
       }
     });
   }
