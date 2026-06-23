@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Simulador de Manobras — Subestações</title>
+<style>
+  /* ── Chrome (UI) recolorido para a paleta RelayLab 360 ──────────────────
+     IMPORTANTE: estas variáveis afetam apenas o "chrome" (header, painéis,
+     botoes, SOE). A paleta do unifilar (VCOL/COL/voltColor/stateColor no
+     bloco de logica) NAO e alterada — mantem o padrao de cores por nivel de tensao. */
+  :root{
+    --navy:#181b22;--navy-2:#0e1015;--navy-panel:#1e2129;--navy-line:#2a2e37;
+    --gold:#f97316;--gold-soft:#fb923c;--teal:#0ea5e9;--mint:#4ade80;
+    --slate:#8b93a5;--ink:#f0f0f5;--ink-dim:#9ca3b0;--danger:#f87171;--white:#fff;
+    --mono:"JetBrains Mono","SFMono-Regular",Consolas,Menlo,monospace;
+    --sans:"Inter","Helvetica Neue",Arial,"Liberation Sans",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--navy-2);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh}
+  header{background:var(--navy);border-bottom:3px solid var(--gold);padding:10px 20px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand .mark{width:30px;height:30px;border-radius:50%;
+    background:conic-gradient(from 210deg,var(--gold),var(--gold-soft),var(--gold));
+    box-shadow:0 0 0 3px rgba(249,115,22,.15);position:relative;flex:none}
+  .brand .mark::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--navy)}
+  .titlebar{flex:1;min-width:180px}
+  .titlebar h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.2px}
+  .titlebar p{margin:2px 0 0;font-size:11px;color:var(--ink-dim)}
+  .subpick{display:flex;align-items:center;gap:8px}
+  .subpick label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-dim);font-weight:700}
+  .subpick select{padding:8px 10px;border-radius:8px;background:var(--navy-panel);color:var(--ink);
+    border:1px solid var(--navy-line);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer}
+  main{flex:1;display:grid;grid-template-columns:1fr 320px;min-height:0}
+  @media (max-width:880px){ main{grid-template-columns:1fr} }
+  .stage{position:relative;overflow:hidden;background:radial-gradient(1200px 800px at 50% 0%, #161c2e 0%, var(--navy-2) 70%)}
+  .stage svg{width:100%;height:100%;display:block}
+  .legend{position:absolute;left:14px;bottom:14px;background:rgba(24,27,34,.82);
+    border:1px solid var(--navy-line);border-radius:10px;padding:10px 12px;font-size:11px;backdrop-filter:blur(4px)}
+  .legend .row{display:flex;align-items:center;gap:8px;margin:4px 0;color:var(--ink-dim)}
+  .legend .sw{width:22px;height:4px;border-radius:2px}
+  .legend .chip{width:13px;height:13px;border:2px solid;border-radius:2px}
+  aside{background:var(--navy);border-left:1px solid var(--navy-line);display:flex;flex-direction:column;min-height:0}
+  .panel{padding:16px;border-bottom:1px solid var(--navy-line)}
+  .panel h2{margin:0 0 10px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .scen select{width:100%;padding:8px 10px;border-radius:8px;background:var(--navy-panel);color:var(--ink);
+    border:1px solid var(--navy-line);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer}
+  .scen-desc{font-size:11.5px;color:var(--ink-dim);line-height:1.5;margin:10px 0}
+  .scen-stat{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .badge{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--navy-panel);color:var(--ink-dim)}
+  .badge.ok{background:rgba(74,222,128,.16);color:var(--mint)}
+  .badge.pend{background:rgba(249,115,22,.14);color:var(--gold)}
+  .badge.warn{background:rgba(248,113,113,.14);color:var(--danger)}
+  .scen-score{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--mint);margin:6px 0 2px}
+  .scen-hint{font-size:11px;color:var(--teal);background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.25);
+    border-radius:7px;padding:7px 9px;margin-top:8px;line-height:1.45;display:none}
+  .scen-hint.show{display:block}
+  .scen-btns{display:flex;gap:8px;margin-top:10px}
+  .scen-btns button{flex:1;padding:7px 0;border-radius:7px;border:1px solid var(--navy-line);background:transparent;
+    color:var(--ink-dim);font-size:11px;font-weight:700;cursor:pointer;transition:.12s}
+  .scen-btns button:hover{border-color:var(--teal);color:var(--teal)}
+  .sel-empty{color:var(--ink-dim);font-size:13px;line-height:1.5}
+  .sel-id{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--white)}
+  .sel-type{font-size:12px;color:var(--ink-dim);margin:2px 0 12px}
+  .kv{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--navy-line)}
+  .kv span:first-child{color:var(--ink-dim)}
+  .kv span:last-child{font-family:var(--mono);font-weight:600}
+  .state-tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono)}
+  .st-closed{background:rgba(249,115,22,.16);color:var(--gold)}
+  .st-open{background:rgba(139,147,165,.22);color:var(--slate)}
+  .st-gnd{background:rgba(74,222,128,.18);color:var(--mint)}
+  .cmds{display:flex;gap:8px;margin-top:14px}
+  .cmds button{flex:1;padding:9px 0;border-radius:8px;border:1px solid var(--navy-line);
+    font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:.12s;background:var(--navy-panel);color:var(--ink)}
+  .cmds button:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+  .cmds button:disabled{opacity:.32;cursor:not-allowed}
+  .cmds button.act-open:hover:not(:disabled){border-color:var(--slate);color:var(--ink)}
+  .cmds button.act-gnd:hover:not(:disabled){border-color:var(--mint);color:var(--mint)}
+  .block-msg{margin-top:12px;padding:9px 11px;border-radius:8px;background:rgba(255,107,107,.10);
+    border:1px solid rgba(255,107,107,.4);color:var(--danger);font-size:11.5px;line-height:1.45;display:none}
+  .block-msg.show{display:block}
+  .fault-btn{margin-top:14px;width:100%;padding:10px 0;border-radius:8px;border:1px solid rgba(255,107,107,.5);
+    background:rgba(255,107,107,.10);color:var(--danger);font-size:12px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:.12s;font-family:var(--sans)}
+  .fault-btn:hover{background:rgba(255,107,107,.2)}
+  .fail-toggle{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-dim);cursor:pointer}
+  .fail-toggle .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--slate);flex:none}
+  .fail-toggle.on .box{background:var(--danger);border-color:var(--danger)}
+  .fail-toggle.on{color:var(--danger)}
+  .toolbar{display:flex;gap:8px;padding:12px 16px;flex-wrap:wrap}
+  .toolbar button{flex:1;min-width:80px;padding:8px 0;border-radius:8px;border:1px solid var(--navy-line);
+    background:transparent;color:var(--ink-dim);font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:.12s}
+  .toolbar button:hover{border-color:var(--teal);color:var(--teal)}
+  .soe{flex:1;display:flex;flex-direction:column;min-height:120px}
+  .soe h2{margin:14px 16px 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .soe .list{flex:1;overflow:auto;padding:0 16px 16px;font-family:var(--mono);font-size:11px}
+  .soe .entry{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(44,58,99,.5);line-height:1.4}
+  .soe .entry .t{color:var(--teal);flex:none}
+  .soe .entry .m{color:var(--ink-dim)}
+  .soe .entry.cmd .m{color:var(--ink)}
+  .soe .entry.block .m{color:var(--danger)}
+  .soe .entry.alarm .m{color:#ff8a4c;font-weight:600}
+  .soe .entry.trip .m{color:#ffd166}
+  .soe .empty{color:var(--slate);font-style:italic;padding:8px 0}
+  .device{cursor:pointer}
+  .device:hover .hit{stroke:var(--gold);stroke-width:2;stroke-opacity:.5}
+  .selected .hit{stroke:#ffffff;stroke-width:2.5;stroke-opacity:.9}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="mark"></div></div>
+  <div class="titlebar">
+    <h1>Simulador de Manobras &amp; Falhas em Subestações</h1>
+    <p id="subTitle"></p>
+  </div>
+  <div class="subpick"><label>Subestação</label><select id="subSel"></select></div>
+</header>
+<main>
+  <section class="stage">
+    <svg id="sld" viewBox="0 0 1120 760" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Diagrama unifilar"></svg>
+    <div class="legend" id="legend"></div>
+  </section>
+  <aside>
+    <div class="panel scen">
+      <h2>Cenário de treinamento</h2>
+      <select id="scenSel"></select>
+      <div id="scenInfo"></div>
+    </div>
+    <div class="panel">
+      <h2>Equipamento selecionado</h2>
+      <div id="sel"><div class="sel-empty">Clique em um equipamento para inspecionar e operar. Clique em uma <b>barra</b>, <b>transformador</b> ou <b>alimentador</b> para aplicar uma falta 3φ.</div></div>
+    </div>
+    <div class="toolbar">
+      <button id="btnNormal">Estado normal</button>
+      <button id="btnAllOpen">Abrir tudo</button>
+      <button id="btnMeas">Medições</button>
+      <button id="btnFault">Remover falta</button>
+    </div>
+    <div class="soe">
+      <h2>Sequência de eventos (SOE)</h2>
+      <div class="list" id="soe"><div class="empty">Nenhuma manobra registrada.</div></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+/* =========================================================================
+   SIMULADOR GENÉRICO DE SUBESTAÇÕES — dirigido por dados
+   Cada subestação é um objeto autocontido (nós+coordenadas, ramos, fontes,
+   cargas, proteção, zonas, cenários). O motor e o renderizador são genéricos.
+   ========================================================================= */
+
+/* ---------- PALETA POR NÍVEL DE TENSÃO ---------------------------------- */
+const VCOL={ "230":"#FF7AB6","138":"#FDB805","69":"#FF9F45","34.5":"#5BD1E0","13.8":"#07B494","6.9":"#8FD14F" };
+const COL={ deadLine:"#717ea8",dead:"#5d6a93",busDead:"#46527d",mint:"#3DDC97" };
+function vcol(kV){ return VCOL[String(kV)]||"#FDB805"; }
+function voltColor(kV,live){ return live?vcol(kV):COL.deadLine; }
+function stateColor(live,gnd,kV){ if(live) return vcol(kV); if(gnd) return COL.mint; return COL.deadLine; }
+
+/* =========================================================================
+   REGISTRO DE SUBESTAÇÕES
+   ========================================================================= */
+const SUBSTATIONS={};
+
+/* ---- SE-A : 138/13,8 kV, dupla entrada, barra seccionada -------------- */
+SUBSTATIONS.A={
+  name:"SE-A · 138/13,8 kV — Rebaixadora (barra seccionada)",
+  subtitle:"Dupla entrada · 2 trafos 25 MVA · 4 alimentadores · gerador",
+  baseMVA:100, voltages:[138,13.8],
+  nodes:{
+    LT1:{kind:"point",x:280,y:52,kV:138}, MID1:{kind:"point",x:280,y:118,kV:138},
+    B138A:{kind:"bus",x:150,y:212,x2:520,kV:138,label:"BARRA 138 kV — A"},
+    LT2:{kind:"point",x:840,y:52,kV:138}, MID2:{kind:"point",x:840,y:118,kV:138},
+    B138B:{kind:"bus",x:600,y:212,x2:980,kV:138,label:"BARRA 138 kV — B"},
+    T1P:{kind:"point",x:280,y:300,kV:138}, T1S:{kind:"point",x:280,y:372,kV:13.8},
+    T2P:{kind:"point",x:840,y:300,kV:138}, T2S:{kind:"point",x:840,y:372,kV:13.8},
+    B13A:{kind:"bus",x:120,y:452,x2:520,kV:13.8,label:"BARRA 13,8 kV — A"},
+    B13B:{kind:"bus",x:600,y:452,x2:1000,kV:13.8,label:"BARRA 13,8 kV — B"},
+    GER:{kind:"point",x:948,y:600,kV:13.8},
+    AL1:{kind:"point",x:200,y:600,kV:13.8}, AL2:{kind:"point",x:360,y:600,kV:13.8},
+    AL3:{kind:"point",x:688,y:600,kV:13.8}, AL4:{kind:"point",x:824,y:600,kV:13.8}
+  },
+  edges:{
+    SC1:{type:"disconnector",a:"LT1",b:"MID1",state:"closed",series:"DJ1",kV:138,label:"SC-1",x:280,y:118},
+    DJ1:{type:"breaker",a:"MID1",b:"B138A",state:"closed",kV:138,label:"DJ-1",x:280,y:168},
+    SC2:{type:"disconnector",a:"LT2",b:"MID2",state:"closed",series:"DJ2",kV:138,label:"SC-2",x:840,y:118},
+    DJ2:{type:"breaker",a:"MID2",b:"B138B",state:"closed",kV:138,label:"DJ-2",x:840,y:168},
+    DJINT138:{type:"breaker",a:"B138A",b:"B138B",state:"open",kV:138,label:"DJ-I 138",x:560,y:212},
+    DJT1:{type:"breaker",a:"B138A",b:"T1P",state:"closed",kV:138,label:"DJ-T1",x:280,y:256},
+    TR1:{type:"transformer",a:"T1P",b:"T1S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,label:"TR-01",ratio:"138/13,8",x:280,y:336},
+    DJBT1:{type:"breaker",a:"T1S",b:"B13A",state:"closed",kV:13.8,label:"DJ-BT1",x:280,y:412},
+    DJT2:{type:"breaker",a:"B138B",b:"T2P",state:"closed",kV:138,label:"DJ-T2",x:840,y:256},
+    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,label:"TR-02",ratio:"138/13,8",x:840,y:336},
+    DJBT2:{type:"breaker",a:"T2S",b:"B13B",state:"closed",kV:13.8,label:"DJ-BT2",x:840,y:412},
+    DJINT13:{type:"breaker",a:"B13A",b:"B13B",state:"open",kV:13.8,label:"DJ-I 13,8",x:560,y:452},
+    DJG:{type:"breaker",a:"GER",b:"B13B",state:"open",kV:13.8,label:"DJ-G",x:948,y:512,sync:true},
+    DJAL1:{type:"breaker",a:"B13A",b:"AL1",state:"closed",kV:13.8,label:"DJ-AL01",x:200,y:512},
+    DJAL2:{type:"breaker",a:"B13A",b:"AL2",state:"closed",kV:13.8,label:"DJ-AL02",x:360,y:512},
+    DJAL3:{type:"breaker",a:"B13B",b:"AL3",state:"closed",kV:13.8,label:"DJ-AL03",x:688,y:512},
+    DJAL4:{type:"breaker",a:"B13B",b:"AL4",state:"closed",kV:13.8,label:"DJ-AL04",x:824,y:512},
+    GNDT1:{type:"ground",node:"T1P",state:"open",kV:138,label:"GND-T1",x:280,y:288,side:-1},
+    GNDT2:{type:"ground",node:"T2P",state:"open",kV:138,label:"GND-T2",x:840,y:288,side:1},
+    GNDAL1:{type:"ground",node:"AL1",state:"open",kV:13.8,label:"GND-AL01",x:200,y:556,side:1},
+    GNDAL2:{type:"ground",node:"AL2",state:"open",kV:13.8,label:"GND-AL02",x:360,y:556,side:1},
+    GNDAL3:{type:"ground",node:"AL3",state:"open",kV:13.8,label:"GND-AL03",x:688,y:556,side:1},
+    GNDAL4:{type:"ground",node:"AL4",state:"open",kV:13.8,label:"GND-AL04",x:824,y:556,side:1}
+  },
+  sources:{
+    LT1:{node:"LT1",kV:138,Scc_MVA:1500,XR:10,type:"grid",label:"LT 138 kV",x:280,y:52},
+    LT2:{node:"LT2",kV:138,Scc_MVA:1500,XR:10,type:"grid",label:"LT 138 kV",x:840,y:52},
+    GER:{node:"GER",kV:13.8,MVA:15,Xdpp:0.18,XR:30,type:"gen",label:"GER-01",x:948,y:600}
+  },
+  feeders:{
+    AL1:{node:"AL1",P:4.0,Q:1.9,r:0.30,x:0.40,km:6,kV:13.8,label:"AL-01",x:200,y:600},
+    AL2:{node:"AL2",P:3.2,Q:1.5,r:0.30,x:0.40,km:8,kV:13.8,label:"AL-02",x:360,y:600},
+    AL3:{node:"AL3",P:4.5,Q:2.2,r:0.30,x:0.40,km:5,kV:13.8,label:"AL-03",x:688,y:600},
+    AL4:{node:"AL4",P:2.8,Q:1.3,r:0.30,x:0.40,km:10,kV:13.8,label:"AL-04",x:824,y:600}
+  },
+  prot:{
+    DJAL1:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
+    DJAL2:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
+    DJAL3:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
+    DJAL4:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
+    DJBT1:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30}}, DJBT2:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30}},
+    DJT1:{p51:{pickup:150,curve:"IEC-VI",TMS:0.35}}, DJT2:{p51:{pickup:150,curve:"IEC-VI",TMS:0.35}},
+    DJ1:{p51:{pickup:150,curve:"IEC-VI",TMS:0.45}}, DJ2:{p51:{pickup:150,curve:"IEC-VI",TMS:0.45}}
+  },
+  zones:{
+    TR1:{type:"87T",t:0.04,trips:["DJT1","DJBT1"]}, TR2:{type:"87T",t:0.04,trips:["DJT2","DJBT2"]},
+    B13A:{type:"87B",t:0.05,bus:"B13A"}, B13B:{type:"87B",t:0.05,bus:"B13B"},
+    B138A:{type:"87B",t:0.06,bus:"B138A"}, B138B:{type:"87B",t:0.06,bus:"B138B"}
+  },
+  scenarios:{
+    A1:{title:"A1 · Energização de bay",
+      desc:"A Seção A está desenergizada (SC-1 e DJ-1 abertos). Energize a barra 13,8 kV — A respeitando a sequência seccionadora → disjuntor.",
+      setup:()=>{ resetNormal(); S.edges.SC1.state="open"; S.edges.DJ1.state="open"; },
+      objective:()=>energ().has("B13A"), optimal:2,
+      hint:"Feche a SC-1 (sem carga) e depois o DJ-1."},
+    A2:{title:"A2 · Isolar e aterrar transformador",
+      desc:"Coloque o TR-01 em condição segura para manutenção: isolado em alta e baixa, e aterrado.",
+      setup:()=>resetNormal(),
+      objective:()=>S.edges.DJT1.state==="open"&&S.edges.DJBT1.state==="open"&&S.edges.GNDT1.state==="closed",
+      optimal:3, hint:"Abra DJ-BT1 e DJ-T1; só então a lâmina GND-T1 fecha."},
+    A3:{title:"A3 · Transferência de barra (socorro)",
+      desc:"A LT1 saiu (DJ-1 aberto) e a Seção A está morta. Restabeleça AL-01 e AL-02 socorrendo pela Seção B.",
+      setup:()=>{ resetNormal(); S.edges.DJ1.state="open"; },
+      objective:()=>energ().has("AL1")&&energ().has("AL2"), optimal:2,
+      hint:"Feche as interligações DJ-I 138 e DJ-I 13,8."},
+    A4:{title:"A4 · Entrada do gerador (sincronismo)",
+      desc:"Coloque o GER-01 em paralelo com a barra 13,8 kV — B (energizada). Verifique o sincronismo antes de fechar o DJ-G.",
+      setup:()=>resetNormal(),
+      objective:()=>S.edges.DJG.state==="closed", optimal:1,
+      hint:"Selecione o DJ-G, clique Sincronizar e depois feche."},
+    B7:{title:"B7 · Perda de transformador + transferência",
+      desc:"Falta interna no TR-01: a 87T isolou o transformador. Restabeleça AL-01/AL-02 pela Seção B mantendo o trafo isolado.",
+      setup:()=>{ resetNormal(); doFaultSequence("TR1","transformer"); },
+      objective:()=>energ().has("AL1")&&energ().has("AL2")&&S.edges.DJT1.state==="open", optimal:1,
+      hint:"Com o TR-01 fora, feche a DJ-I 13,8 para socorrer pela TR-02."}
+  }
+};
+
+/* ---- SE-B : 230/69/13,8 kV — três níveis + linhas paralelas ----------- */
+SUBSTATIONS.B={
+  name:"SE-B · 230/69/13,8 kV — Três níveis (linhas paralelas)",
+  subtitle:"2 LTs 230 kV em paralelo · autotrafo 230/69 · trafo 69/13,8 · linha 69 kV",
+  baseMVA:100, voltages:[230,69,13.8],
+  nodes:{
+    LT1:{kind:"point",x:380,y:46,kV:230}, M1:{kind:"point",x:380,y:96,kV:230},
+    LT2:{kind:"point",x:520,y:46,kV:230}, M2:{kind:"point",x:520,y:96,kV:230},
+    B230:{kind:"bus",x:300,y:165,x2:800,kV:230,label:"BARRA 230 kV"},
+    ATP:{kind:"point",x:680,y:235,kV:230}, ATS:{kind:"point",x:680,y:310,kV:69},
+    B69:{kind:"bus",x:300,y:378,x2:830,kV:69,label:"BARRA 69 kV"},
+    F69:{kind:"point",x:400,y:478,kV:69},
+    T2P:{kind:"point",x:720,y:436,kV:69}, T2S:{kind:"point",x:720,y:500,kV:13.8},
+    B13:{kind:"bus",x:520,y:566,x2:900,kV:13.8,label:"BARRA 13,8 kV"},
+    AL1:{kind:"point",x:600,y:684,kV:13.8}, AL2:{kind:"point",x:760,y:684,kV:13.8}
+  },
+  edges:{
+    SC1:{type:"disconnector",a:"LT1",b:"M1",state:"closed",series:"DJ1",kV:230,label:"SC-1",x:380,y:96},
+    DJ1:{type:"breaker",a:"M1",b:"B230",state:"closed",kV:230,label:"DJ-LT1",x:380,y:134},
+    SC2:{type:"disconnector",a:"LT2",b:"M2",state:"closed",series:"DJ2",kV:230,label:"SC-2",x:520,y:96},
+    DJ2:{type:"breaker",a:"M2",b:"B230",state:"closed",kV:230,label:"DJ-LT2",x:520,y:134},
+    DJATH:{type:"breaker",a:"B230",b:"ATP",state:"closed",kV:230,label:"DJ-ATH",x:680,y:205},
+    TRAT:{type:"transformer",a:"ATP",b:"ATS",kV:230,kVsec:69,mva:100,Zpct:12,XR:30,label:"AT 230/69",ratio:"230/69",x:680,y:272},
+    DJATL:{type:"breaker",a:"ATS",b:"B69",state:"closed",kV:69,label:"DJ-ATL",x:680,y:344},
+    DJF69:{type:"breaker",a:"B69",b:"F69",state:"closed",kV:69,label:"DJ-LT69",x:400,y:414},
+    DJT2H:{type:"breaker",a:"B69",b:"T2P",state:"closed",kV:69,label:"DJ-T2H",x:720,y:412},
+    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:69,kVsec:13.8,mva:25,Zpct:10,XR:20,label:"TR-02",ratio:"69/13,8",x:720,y:468},
+    DJT2L:{type:"breaker",a:"T2S",b:"B13",state:"closed",kV:13.8,label:"DJ-T2L",x:720,y:534},
+    DJAL1:{type:"breaker",a:"B13",b:"AL1",state:"closed",kV:13.8,label:"DJ-AL01",x:600,y:602},
+    DJAL2:{type:"breaker",a:"B13",b:"AL2",state:"closed",kV:13.8,label:"DJ-AL02",x:760,y:602},
+    GNDAT:{type:"ground",node:"ATP",state:"open",kV:230,label:"GND-AT",x:680,y:235,side:1},
+    GND69:{type:"ground",node:"F69",state:"open",kV:69,label:"GND-LT69",x:400,y:446,side:1},
+    GNDAL1:{type:"ground",node:"AL1",state:"open",kV:13.8,label:"GND-AL01",x:600,y:640,side:1},
+    GNDAL2:{type:"ground",node:"AL2",state:"open",kV:13.8,label:"GND-AL02",x:760,y:640,side:1}
+  },
+  sources:{
+    LT1:{node:"LT1",kV:230,Scc_MVA:8000,XR:12,type:"grid",label:"LT 230 kV (1)",x:380,y:46},
+    LT2:{node:"LT2",kV:230,Scc_MVA:8000,XR:12,type:"grid",label:"LT 230 kV (2)",x:520,y:46}
+  },
+  feeders:{
+    F69:{node:"F69",P:18,Q:8,r:0.12,x:0.40,km:25,kV:69,label:"LT 69 kV",x:400,y:478},
+    AL1:{node:"AL1",P:5.0,Q:2.4,r:0.30,x:0.40,km:6,kV:13.8,label:"AL-01",x:600,y:684},
+    AL2:{node:"AL2",P:4.2,Q:2.0,r:0.30,x:0.40,km:9,kV:13.8,label:"AL-02",x:760,y:684}
+  },
+  prot:{
+    DJAL1:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03}},
+    DJAL2:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03}},
+    DJF69:{p51:{pickup:400,curve:"IEC-VI",TMS:0.20},p50:{pickup:5000,t:0.04}},
+    DJT2L:{p51:{pickup:700,curve:"IEC-VI",TMS:0.30}}, DJT2H:{p51:{pickup:180,curve:"IEC-VI",TMS:0.35}},
+    DJATL:{p51:{pickup:500,curve:"IEC-VI",TMS:0.40}}, DJATH:{p51:{pickup:160,curve:"IEC-VI",TMS:0.50}},
+    DJ1:{p51:{pickup:200,curve:"IEC-VI",TMS:0.45}}, DJ2:{p51:{pickup:200,curve:"IEC-VI",TMS:0.45}}
+  },
+  zones:{
+    TRAT:{type:"87T",t:0.04,trips:["DJATH","DJATL"]}, TR2:{type:"87T",t:0.04,trips:["DJT2H","DJT2L"]},
+    B230:{type:"87B",t:0.06,bus:"B230"}, B69:{type:"87B",t:0.05,bus:"B69"}, B13:{type:"87B",t:0.05,bus:"B13"}
+  },
+  scenarios:{
+    PB1:{title:"PB1 · Saída de uma LT 230 kV",
+      desc:"A LT 230 kV (2) será desligada para manutenção. Isole-a com segurança (DJ depois SC) mantendo a SE alimentada pela LT (1).",
+      setup:()=>resetNormal(),
+      objective:()=>S.edges.DJ2.state==="open"&&S.edges.SC2.state==="open"&&energ().has("B13"),
+      optimal:2, hint:"Abra o DJ-LT2 e depois a SC-2. A SE segue pela LT (1) em paralelo."},
+    PB2:{title:"PB2 · Isolar e aterrar o autotrafo 230/69",
+      desc:"Coloque o autotransformador 230/69 em condição segura para manutenção: isolado em ambos os lados e aterrado.",
+      setup:()=>resetNormal(),
+      objective:()=>S.edges.DJATH.state==="open"&&S.edges.DJATL.state==="open"&&S.edges.GNDAT.state==="closed",
+      optimal:3, hint:"Abra DJ-ATL e DJ-ATH; depois feche a lâmina GND-AT."}
+  }
+};
+
+/* ---- SE-C : Usina — quatro máquinas geradoras ------------------------- */
+SUBSTATIONS.C={
+  name:"SE-C · Usina — 4 máquinas + elevador 13,8/138 kV",
+  subtitle:"4 geradores 20 MVA · barra de geração 13,8 kV · trafo elevador · LT 138 kV",
+  baseMVA:100, voltages:[138,13.8],
+  nodes:{
+    SYS:{kind:"point",x:600,y:46,kV:138}, MSYS:{kind:"point",x:600,y:96,kV:138},
+    B138:{kind:"bus",x:300,y:170,x2:760,kV:138,label:"BARRA 138 kV"},
+    STP:{kind:"point",x:470,y:206,kV:138}, STS:{kind:"point",x:470,y:322,kV:13.8},
+    B13G:{kind:"bus",x:150,y:468,x2:880,kV:13.8,label:"BARRA DE GERAÇÃO 13,8 kV"},
+    G1:{kind:"point",x:220,y:660,kV:13.8}, G2:{kind:"point",x:400,y:660,kV:13.8},
+    G3:{kind:"point",x:580,y:660,kV:13.8}, G4:{kind:"point",x:760,y:660,kV:13.8},
+    AUX:{kind:"point",x:850,y:600,kV:13.8}
+  },
+  edges:{
+    SCSYS:{type:"disconnector",a:"SYS",b:"MSYS",state:"closed",series:"DJLT",kV:138,label:"SC-LT",x:600,y:96},
+    DJLT:{type:"breaker",a:"MSYS",b:"B138",state:"closed",kV:138,label:"DJ-LT",x:600,y:134},
+    DJSTH:{type:"breaker",a:"B138",b:"STP",state:"closed",kV:138,label:"DJ-ST-H",x:470,y:200},
+    TRST:{type:"transformer",a:"STP",b:"STS",kV:138,kVsec:13.8,mva:80,Zpct:12,XR:30,label:"TR ELEVADOR",ratio:"13,8/138",x:470,y:264},
+    DJSTL:{type:"breaker",a:"STS",b:"B13G",state:"closed",kV:13.8,label:"DJ-ST-L",x:470,y:430},
+    DJG1:{type:"breaker",a:"B13G",b:"G1",state:"open",kV:13.8,label:"DJ-G1",x:220,y:560,sync:true},
+    DJG2:{type:"breaker",a:"B13G",b:"G2",state:"open",kV:13.8,label:"DJ-G2",x:400,y:560,sync:true},
+    DJG3:{type:"breaker",a:"B13G",b:"G3",state:"open",kV:13.8,label:"DJ-G3",x:580,y:560,sync:true},
+    DJG4:{type:"breaker",a:"B13G",b:"G4",state:"open",kV:13.8,label:"DJ-G4",x:760,y:560,sync:true},
+    DJAUX:{type:"breaker",a:"B13G",b:"AUX",state:"closed",kV:13.8,label:"DJ-AUX",x:850,y:520},
+    GNDST:{type:"ground",node:"STS",state:"open",kV:13.8,label:"GND-ST",x:470,y:400,side:1}
+  },
+  sources:{
+    SYS:{node:"SYS",kV:138,Scc_MVA:5000,XR:12,type:"grid",label:"SISTEMA 138 kV",x:600,y:46},
+    G1:{node:"G1",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G1",x:220,y:660},
+    G2:{node:"G2",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G2",x:400,y:660},
+    G3:{node:"G3",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G3",x:580,y:660},
+    G4:{node:"G4",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G4",x:760,y:660}
+  },
+  feeders:{
+    AUX:{node:"AUX",P:3.0,Q:1.4,r:0.20,x:0.30,km:1,kV:13.8,label:"SERV. AUX.",x:850,y:600}
+  },
+  prot:{
+    DJAUX:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:4000,t:0.03}},
+    DJG1:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}}, DJG2:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}},
+    DJG3:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}}, DJG4:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}},
+    DJSTL:{p51:{pickup:3500,curve:"IEC-VI",TMS:0.35}}, DJSTH:{p51:{pickup:400,curve:"IEC-VI",TMS:0.40}},
+    DJLT:{p51:{pickup:300,curve:"IEC-VI",TMS:0.50}}
+  },
+  zones:{
+    TRST:{type:"87T",t:0.04,trips:["DJSTH","DJSTL"]},
+    B138:{type:"87B",t:0.06,bus:"B138"}, B13G:{type:"87B",t:0.05,bus:"B13G"}
+  },
+  scenarios:{
+    PC1:{title:"PC1 · Paralelizar as máquinas",
+      desc:"A usina parte alimentada pelo sistema (barra de geração viva). Coloque as 4 máquinas em paralelo, verificando o sincronismo de cada uma antes de fechar.",
+      setup:()=>resetNormal(),
+      objective:()=>["DJG1","DJG2","DJG3","DJG4"].every(id=>S.edges[id].state==="closed"),
+      optimal:4, hint:"Para cada gerador: selecione o DJ-Gx, clique Sincronizar e feche. A barra está energizada, então o sincronismo é obrigatório."},
+    PC2:{title:"PC2 · Partida em ilha (blackstart)",
+      desc:"O sistema saiu (DJ-LT aberto) e tudo está morto. Energize a barra de geração partindo de G1 (barra morta dispensa sincronismo).",
+      setup:()=>{ resetNormal(); S.edges.DJLT.state="open"; },
+      objective:()=>energ().has("B13G")&&S.edges.DJG1.state==="closed", optimal:1,
+      hint:"Feche o DJ-G1: com a barra morta, o gerador a energiza sem sincronismo."}
+  }
+};
+
+/* =========================================================================
+   ESTADO ATIVO
+   ========================================================================= */
+let S=null, NORMAL={}, syncedG={}, selected=null, showMeas=true;
+let activeFault=null, SOL={busScc:{},busV:{},branchI:{}};
+const Sbase=()=>S.baseMVA;
+const nodeKv=n=>S.nodes[n].kV;
+
+/* =========================================================================
+   MOTOR — energização, aterramento
+   ========================================================================= */
+function conducts(e){ if(e.type==="transformer"||e.type==="line") return true; if(e.type==="ground") return false; return e.state==="closed"; }
+function groundedNodes(){ const s=new Set(); for(const e of Object.values(S.edges)) if(e.type==="ground"&&e.state==="closed") s.add(e.node); return s; }
+function srcNodes(){ return Object.values(S.sources).map(s=>s.node); }
+function computeEnergization(){
+  const adj={}; Object.keys(S.nodes).forEach(n=>adj[n]=[]);
+  for(const [id,e] of Object.entries(S.edges)){ if(!conducts(e)) continue; adj[e.a].push({node:e.b,edge:id}); adj[e.b].push({node:e.a,edge:id}); }
+  const energized=new Set(srcNodes()); const q=[...energized];
+  while(q.length){ const c=q.shift(); for(const nb of adj[c]) if(!energized.has(nb.node)){ energized.add(nb.node); q.push(nb.node); } }
+  const liveEdges=new Set();
+  for(const [id,e] of Object.entries(S.edges)) if(conducts(e)&&(energized.has(e.a)||energized.has(e.b))) liveEdges.add(id);
+  return {nodes:energized,edges:liveEdges};
+}
+
+/* =========================================================================
+   SOLVER ELÉTRICO
+   ========================================================================= */
+const cx=(re,im=0)=>({re,im});
+const cadd=(a,b)=>({re:a.re+b.re,im:a.im+b.im});
+const csub=(a,b)=>({re:a.re-b.re,im:a.im-b.im});
+const cmul=(a,b)=>({re:a.re*b.re-a.im*b.im,im:a.re*b.im+a.im*b.re});
+const cdiv=(a,b)=>{const d=b.re*b.re+b.im*b.im;return{re:(a.re*b.re+a.im*b.im)/d,im:(a.im*b.re-a.re*b.im)/d};};
+const cabs=a=>Math.hypot(a.re,a.im);
+const cinv=a=>cdiv(cx(1,0),a);
+function zFromXR(absZ,xr){const th=Math.atan(xr);return cx(absZ*Math.cos(th),absZ*Math.sin(th));}
+function cMatInv(M){
+  const n=M.length;
+  const A=M.map((row,i)=>row.map(v=>({...v})).concat(Array.from({length:n},(_,j)=>cx(i===j?1:0,0))));
+  for(let col=0;col<n;col++){
+    let piv=col; for(let r=col+1;r<n;r++) if(cabs(A[r][col])>cabs(A[piv][col])) piv=r;
+    [A[col],A[piv]]=[A[piv],A[col]];
+    const d=A[col][col]; for(let j=0;j<2*n;j++) A[col][j]=cdiv(A[col][j],d);
+    for(let r=0;r<n;r++){ if(r===col)continue; const f=A[r][col]; for(let j=0;j<2*n;j++) A[r][j]=csub(A[r][j],cmul(f,A[col][j])); }
+  }
+  return A.map(row=>row.slice(n));
+}
+const ibase=kV=>Sbase()*1e6/(Math.sqrt(3)*kV*1000);
+function feederZpu(ln){ const f=S.feeders[ln]; const Zb=f.kV*f.kV/Sbase(); return cx(f.r*f.km/Zb,f.x*f.km/Zb); }
+function trZpu(e){ return zFromXR((e.Zpct/100)*(Sbase()/e.mva),e.XR); }
+
+function electricalSolve(E){
+  const parent={}; Object.keys(S.nodes).forEach(n=>parent[n]=n);
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  for(const e of Object.values(S.edges)) if((e.type==="breaker"||e.type==="disconnector")&&e.state==="closed") parent[find(e.a)]=find(e.b);
+  const sn=n=>find(n);
+  const liveSN=new Set(); for(const n of E.nodes) liveSN.add(sn(n));
+  const snList=[...liveSN]; const idx={}; snList.forEach((s,i)=>idx[s]=i); const n=snList.length;
+  const Y=Array.from({length:n},()=>Array.from({length:n},()=>cx(0,0)));
+  for(const p of Object.values(S.sources)){
+    if(!E.nodes.has(p.node)) continue; const i=idx[sn(p.node)]; if(i===undefined) continue;
+    const Zs=p.Scc_MVA?zFromXR(Sbase()/p.Scc_MVA,p.XR):zFromXR(p.Xdpp*(Sbase()/p.MVA),p.XR);
+    Y[i][i]=cadd(Y[i][i],cinv(Zs));
+  }
+  for(const e of Object.values(S.edges)){
+    if(e.type!=="transformer") continue; if(!E.nodes.has(e.a)||!E.nodes.has(e.b)) continue;
+    const i=idx[sn(e.a)],j=idx[sn(e.b)]; if(i===undefined||j===undefined||i===j) continue;
+    const y=cinv(trZpu(e)); Y[i][i]=cadd(Y[i][i],y); Y[j][j]=cadd(Y[j][j],y); Y[i][j]=csub(Y[i][j],y); Y[j][i]=csub(Y[j][i],y);
+  }
+  let Z=null; if(n>0){ try{Z=cMatInv(Y);}catch(_){ } }
+  const busScc={}, busV={};
+  const busNodes=Object.keys(S.nodes).filter(id=>S.nodes[id].kind==="bus");
+  for(const b of busNodes){
+    if(!E.nodes.has(b)||!Z){ busScc[b]=null; continue; }
+    const i=idx[sn(b)]; if(i===undefined){ busScc[b]=null; continue; }
+    const Zth=Z[i][i]; if(!isFinite(cabs(Zth))||cabs(Zth)===0){ busScc[b]=null; continue; }
+    const kvB=S.nodes[b].kV; const Icc=cabs(cinv(Zth))*ibase(kvB);
+    busScc[b]={kA:Icc/1000,MVA:Math.sqrt(3)*kvB*Icc/1000};
+  }
+  /* fluxo radial */
+  const adj={}; Object.keys(S.nodes).forEach(x=>adj[x]=[]);
+  for(const [id,e] of Object.entries(S.edges)){ if(!conducts(e)) continue; adj[e.a].push({to:e.b,id}); adj[e.b].push({to:e.a,id}); }
+  const parentEdge={}, order=[], vis=new Set(), q=[];
+  for(const s of srcNodes()) if(E.nodes.has(s)&&!vis.has(s)){ vis.add(s); q.push(s); }
+  while(q.length){ const c=q.shift(); order.push(c); for(const nb of adj[c]) if(!vis.has(nb.to)){ vis.add(nb.to); parentEdge[nb.to]={from:c,id:nb.id}; q.push(nb.to); } }
+  const nodeLoad={}; Object.keys(S.nodes).forEach(x=>nodeLoad[x]=cx(0,0));
+  for(const [ln,f] of Object.entries(S.feeders)) if(E.nodes.has(ln)) nodeLoad[ln]=cx(f.P,f.Q);
+  const downS={}; order.forEach(x=>downS[x]=cx(0,0));
+  for(let k=order.length-1;k>=0;k--){ const x=order[k]; downS[x]=cadd(downS[x],nodeLoad[x]); const pe=parentEdge[x]; if(pe) downS[pe.from]=cadd(downS[pe.from],downS[x]); }
+  const branchI={};
+  for(const [child,pe] of Object.entries(parentEdge)){ const Ss=downS[child], kvB=nodeKv(child); branchI[pe.id]={A:cabs(Ss)*1e6/(Math.sqrt(3)*kvB*1000),S:cabs(Ss),P:Ss.re,Q:Ss.im}; }
+  const Vpu={}; for(const s of srcNodes()) if(E.nodes.has(s)) Vpu[s]=1.0;
+  for(const x of order){ if(Vpu[x]!==undefined) continue; const pe=parentEdge[x]; if(!pe){ Vpu[x]=1.0; continue; }
+    const e=S.edges[pe.id]; let Zb=cx(0,0);
+    if(S.feeders[x]) Zb=feederZpu(x); else if(e.type==="transformer") Zb=trZpu(e);
+    const Ss=downS[x], Vp=Vpu[pe.from]||1.0; const drop=(Ss.re/Sbase()*Zb.re+Ss.im/Sbase()*Zb.im)/Vp; Vpu[x]=Vp-drop;
+  }
+  for(const b of busNodes) busV[b]=E.nodes.has(b)?{pu:Vpu[b]??1.0,kV:S.nodes[b].kV*(Vpu[b]??1.0)}:null;
+  function zthAt(node){ if(!E.nodes.has(node)||!Z) return null; const i=idx[sn(node)]; if(i===undefined) return null; return Z[i][i]; }
+  return {busScc,busV,branchI,zthAt,parentEdge,vpre:1.0};
+}
+
+/* =========================================================================
+   INTERTRAVAMENTO
+   ========================================================================= */
+function canOperate(id,newState){
+  const e=S.edges[id];
+  if(e.type==="disconnector"&&e.series){ const dj=S.edges[e.series];
+    if(dj.state==="closed") return {ok:false,reason:`Seccionadora ${e.label} bloqueada — abra o disjuntor ${dj.label} antes. Seccionadora não manobra sob carga.`}; }
+  if(e.type==="ground"&&newState==="closed"){ if(computeEnergization().nodes.has(e.node))
+    return {ok:false,reason:`Lâmina de terra ${e.label} bloqueada — trecho energizado. Desenergize antes de aterrar.`}; }
+  if(e.type==="breaker"&&newState==="closed"){
+    const saved=e.state; e.state="closed"; const live=computeEnergization().nodes; e.state=saved;
+    const gnd=groundedNodes(); for(const n of gnd) if(live.has(n))
+      return {ok:false,reason:`${e.label} bloqueado — fecharia sobre aterramento ativo em ${n}. Remova a lâmina de terra antes de energizar.`};
+  }
+  if(e.sync&&newState==="closed"){ const other=e.a, otherB=e.b;
+    const busSide=S.nodes[e.a].kind==="bus"?e.a:e.b;
+    if(computeEnergization().nodes.has(busSide)&&!syncedG[id])
+      return {ok:false,reason:`${e.label} bloqueado — máquina fora de sincronismo. Verifique V, f e ângulo (Sincronizar) antes de paralelar com a barra energizada.`};
+  }
+  return {ok:true};
+}
+
+/* =========================================================================
+   PROTEÇÃO
+   ========================================================================= */
+const CURVES={ "IEC-SI":{A:0.14,p:0.02},"IEC-VI":{A:13.5,p:1},"IEC-EI":{A:80,p:2},"IEEE-MI":{A:0.0515,B:0.114,p:0.02},"IEEE-VI":{A:19.61,B:0.491,p:2} };
+function opTime(set,Iref){ const M=Iref/set.pickup; if(M<=1.05) return Infinity; const c=CURVES[set.curve];
+  if(c.B!==undefined) return set.TMS*(c.A/(Math.pow(M,c.p)-1)+c.B); return set.TMS*c.A/(Math.pow(M,c.p)-1); }
+const T_50BF=0.20;
+function breakersOnBus(bus){ return Object.keys(S.edges).filter(id=>{ const e=S.edges[id]; return e.type==="breaker"&&(e.a===bus||e.b===bus); }); }
+function pathBreakers(node,parentEdge){ const path=[]; let cur=node,g=0; while(parentEdge[cur]&&g++<60){ const pe=parentEdge[cur]; if(S.edges[pe.id].type==="breaker") path.push(pe.id); cur=pe.from; } return path; }
+
+function resolveFault(at,kind){
+  const E=computeEnergization(); const sol=electricalSolve(E);
+  if(kind!=="transformer"&&!E.nodes.has(at)) return {ok:false,reason:"Ponto de falta desenergizado — nada a proteger."};
+  let kvF,Zth;
+  if(kind==="feeder"){ kvF=S.feeders[at].kV; const zb=sol.zthAt(at); if(!zb) return {ok:false,reason:"Sem fonte para o ponto."}; Zth=cadd(zb,feederZpu(at)); }
+  else if(kind==="bus"){ kvF=S.nodes[at].kV; Zth=sol.zthAt(at); if(!Zth) return {ok:false,reason:"Barra desenergizada."}; }
+  else { const e=S.edges[at]; kvF=e.kVsec||e.kV; const zb=sol.zthAt(e.b)||sol.zthAt(e.a); Zth=zb||cx(0.5,0); }
+  const If=sol.vpre/cabs(Zth)*ibase(kvF);
+  activeFault={at,kind,If,kV:kvF};
+  const closedOnly=ids=>ids.filter(id=>S.edges[id].state==="closed");
+  const ops=[];
+  if(kind==="transformer"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(z.trips),by:`87T ${S.edges[at].label}`}); }
+  if(kind==="bus"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(breakersOnBus(at)),by:`87B ${at}`}); }
+  const startNode=kind==="transformer"?S.edges[at].b:at;
+  const path=pathBreakers(startNode,sol.parentEdge);
+  for(const id of path){ const set=S.prot[id]; if(!set) continue; const e=S.edges[id]; const Iref=If*(kvF/e.kV);
+    if(set.p50&&Iref>set.p50.pickup) ops.push({t:set.p50.t,trips:[id],by:`50 ${e.label}`,I:Iref});
+    else if(set.p51){ const t=opTime(set.p51,Iref); if(isFinite(t)) ops.push({t,trips:[id],by:`51 ${e.label}`,I:Iref}); } }
+  if(!ops.length) return {ok:true,If,kVf:kvF,seq:[],cleared:false,note:"Nenhuma proteção sensibilizada."};
+  ops.sort((a,b)=>a.t-b.t);
+  const seq=[]; let cleared=false, bfTime=null;
+  for(const op of ops){ const opened=[];
+    for(const id of op.trips){ if(S.edges[id].state==="open") continue;
+      if(S.edges[id].failed){ seq.push({t:op.t,msg:`${op.by}: TRIP em ${S.edges[id].label} — DISJUNTOR RECUSOU`}); if(bfTime===null) bfTime=op.t; }
+      else { S.edges[id].state="open"; S.edges[id].tripped=true; opened.push(S.edges[id].label); } }
+    if(opened.length){ const eff=bfTime!==null?bfTime+T_50BF:op.t; const tag=bfTime!==null?" [50BF retaguarda]":"";
+      seq.push({t:eff,msg:`${op.by} → TRIP ${opened.join(", ")} (Iref=${Math.round(op.I||If)} A)${tag}`});
+      const liveNow=computeEnergization().nodes;
+      const stillFed=kind==="transformer"?(liveNow.has(S.edges[at].a)||liveNow.has(S.edges[at].b)):liveNow.has(at);
+      if(!stillFed){ cleared=true; break; } } }
+  seq.sort((a,b)=>a.t-b.t);
+  return {ok:true,If,kVf:kvF,seq,cleared};
+}
+function clearFault(){ activeFault=null; }
+
+/* =========================================================================
+   RENDERIZADOR GENÉRICO
+   ========================================================================= */
+const NS="http://www.w3.org/2000/svg";
+function svgEl(t,a){ const el=document.createElementNS(NS,t); for(const k in a) el.setAttribute(k,a[k]); return el; }
+function fmtA(a){ return a>=1000?(a/1000).toFixed(2)+" kA":Math.round(a)+" A"; }
+function anchor(nodeId,tx){ const n=S.nodes[nodeId]; if(n.kind==="bus") return {x:Math.max(n.x,Math.min(tx,n.x2)),y:n.y}; return {x:n.x,y:n.y}; }
+function ptToward(from,to,d){ const dx=from.x-to.x, dy=from.y-to.y, L=Math.hypot(dx,dy)||1; return {x:to.x+dx/L*d,y:to.y+dy/L*d}; }
+
+function render(){
+  const svg=document.getElementById("sld"); svg.innerHTML="";
+  const E=computeEnergization(), GND=groundedNodes(); SOL=electricalSolve(E);
+  const L={lines:svgEl("g"),sym:svgEl("g"),txt:svgEl("g"),dev:svgEl("g")};
+  const nodeLive=n=>E.nodes.has(n), nodeGnd=n=>GND.has(n);
+
+  const segLine=(p1,p2,live,kV,gnd)=>{ const col=stateColor(live,gnd,kV);
+    if(live) L.lines.appendChild(svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:col,"stroke-width":9,"stroke-opacity":0.16,"stroke-linecap":"round"}));
+    L.lines.appendChild(svgEl("line",{x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y,stroke:col,"stroke-width":live?3.4:2.6,"stroke-linecap":"round"})); };
+
+  /* condutores: disjuntores, seccionadoras, transformadores */
+  for(const [id,e] of Object.entries(S.edges)){
+    if(e.type==="ground") continue;
+    const dev={x:e.x,y:e.y};
+    if(e.type==="transformer"){
+      const aA=anchor(e.a,e.x), aB=anchor(e.b,e.x);
+      segLine(aA,{x:e.x,y:e.y-28},nodeLive(e.a),nodeKv(e.a),nodeGnd(e.a));
+      segLine(aB,{x:e.x,y:e.y+28},nodeLive(e.b),nodeKv(e.b),nodeGnd(e.b));
+    } else {
+      const aA=anchor(e.a,e.x), aB=anchor(e.b,e.x);
+      segLine(aA,ptToward(aA,dev,14),nodeLive(e.a),nodeKv(e.a),nodeGnd(e.a));
+      segLine(aB,ptToward(aB,dev,14),nodeLive(e.b),nodeKv(e.b),nodeGnd(e.b));
+    }
+  }
+
+  /* barras */
+  for(const [id,n] of Object.entries(S.nodes)){
+    if(n.kind!=="bus") continue;
+    const live=nodeLive(id), col=stateColor(live,nodeGnd(id),n.kV);
+    if(live) L.sym.appendChild(svgEl("rect",{x:n.x-3,y:n.y-7,width:n.x2-n.x+6,height:14,rx:5,fill:col,"fill-opacity":0.18}));
+    L.sym.appendChild(svgEl("rect",{x:n.x,y:n.y-3.5,width:n.x2-n.x,height:7,rx:2,fill:live?col:COL.busDead}));
+    const t=svgEl("text",{x:n.x,y:n.y-14,fill:col,"font-size":12,"font-weight":700,"font-family":"Consolas,monospace"}); t.textContent=n.label; L.txt.appendChild(t);
+    if(showMeas&&live){ const v=SOL.busV[id], sc=SOL.busScc[id]; const m=[];
+      if(v) m.push(v.kV.toFixed(1)+" kV · "+v.pu.toFixed(3)+" pu"); if(sc) m.push("Icc "+sc.kA.toFixed(1)+" kA");
+      const mt=svgEl("text",{x:n.x,y:n.y+18,fill:"#9AA0A6","font-size":9.5,"font-family":"Consolas,monospace"}); mt.textContent=m.join("  ·  "); L.txt.appendChild(mt); }
+  }
+
+  /* transformadores (anel bicolor HV/LV) */
+  for(const [id,e] of Object.entries(S.edges)){
+    if(e.type!=="transformer") continue; const x=e.x,y=e.y;
+    const hv=stateColor(nodeLive(e.a),nodeGnd(e.a),nodeKv(e.a)), lv=stateColor(nodeLive(e.b),nodeGnd(e.b),nodeKv(e.b));
+    L.sym.appendChild(svgEl("circle",{cx:x,cy:y-11,r:16,fill:"none",stroke:hv,"stroke-width":2.4}));
+    L.sym.appendChild(svgEl("circle",{cx:x,cy:y+11,r:16,fill:"none",stroke:lv,"stroke-width":2.4}));
+    const t=svgEl("text",{x:x+26,y:y-6,fill:hv,"font-size":11,"font-weight":700,"font-family":"Consolas,monospace"}); t.textContent=e.label; L.txt.appendChild(t);
+    const t2=svgEl("text",{x:x+26,y:y+9,fill:"#9AA0A6","font-size":9.5,"font-family":"Consolas,monospace"}); t2.textContent=e.mva+" MVA · "+e.ratio; L.txt.appendChild(t2);
+  }
+
+  /* fontes (grid / gerador) */
+  for(const [id,s] of Object.entries(S.sources)){
+    const x=s.x,y=s.y;
+    if(s.type==="grid"){ const live=nodeLive(s.node), c=voltColor(s.kV,live);
+      L.sym.appendChild(svgEl("path",{d:`M${x},${y-18} L${x-8},${y-2} L${x+8},${y-2} Z`,fill:c}));
+      const t=svgEl("text",{x,y:y-26,fill:c,"font-size":11,"font-weight":700,"text-anchor":"middle","font-family":"Consolas,monospace"}); t.textContent=s.label; L.txt.appendChild(t);
+    } else { // gerador
+      const djId=Object.keys(S.edges).find(k=>S.edges[k].sync&&(S.edges[k].a===s.node||S.edges[k].b===s.node));
+      const conn=djId?E.edges.has(djId):nodeLive(s.node); const c=voltColor(s.kV,conn);
+      if(conn) L.sym.appendChild(svgEl("circle",{cx:x,cy:y,r:23,fill:c,"fill-opacity":0.16}));
+      L.sym.appendChild(svgEl("circle",{cx:x,cy:y,r:19,fill:"none",stroke:c,"stroke-width":2.4}));
+      L.sym.appendChild(svgEl("path",{d:`M${x-9},${y} q4.5,-9 9,0 q4.5,9 9,0`,fill:"none",stroke:c,"stroke-width":2}));
+      const t=svgEl("text",{x,y:y+38,fill:c,"font-size":11,"font-weight":700,"text-anchor":"middle","font-family":"Consolas,monospace"}); t.textContent=s.label; L.txt.appendChild(t);
+    }
+  }
+
+  /* cargas (alimentadores) */
+  for(const [ln,f] of Object.entries(S.feeders)){
+    const x=f.x,y=f.y, live=nodeLive(ln), c=stateColor(live,nodeGnd(ln),f.kV);
+    L.sym.appendChild(svgEl("path",{d:`M${x},${y-2} l-9,-16 l18,0 Z`,fill:"none",stroke:c,"stroke-width":2.2}));
+    const t=svgEl("text",{x,y:y+20,fill:c,"font-size":11,"font-weight":700,"text-anchor":"middle","font-family":"Consolas,monospace"}); t.textContent=f.label; L.txt.appendChild(t);
+  }
+
+  /* lâminas de terra */
+  for(const [id,e] of Object.entries(S.edges)){
+    if(e.type!=="ground") continue; const ax=e.x,ay=e.y,side=e.side||1, closed=e.state==="closed";
+    const c=closed?COL.mint:COL.deadLine; const lx=ax+side*30;
+    const g=svgEl("g",{class:"device"+(selected===id?" selected":""),"data-id":id});
+    g.appendChild(svgEl("rect",{class:"hit",x:Math.min(ax,lx)-6,y:ay-10,width:Math.abs(lx-ax)+24,height:32,rx:6,fill:"transparent",stroke:"transparent"}));
+    g.appendChild(svgEl("line",{x1:ax,y1:ay,x2:lx,y2:ay,stroke:c,"stroke-width":2.2,"stroke-linecap":"round"}));
+    const bx=closed?lx:lx-9; g.appendChild(svgEl("line",{x1:lx,y1:ay,x2:bx,y2:ay+13,stroke:c,"stroke-width":2.4,"stroke-linecap":"round"}));
+    [[10,16],[14,11],[18,6]].forEach(([dy,w])=>g.appendChild(svgEl("line",{x1:lx-w/2,y1:ay+dy+4,x2:lx+w/2,y2:ay+dy+4,stroke:c,"stroke-width":2})));
+    g.addEventListener("click",()=>select(id)); L.dev.appendChild(g);
+  }
+
+  /* disjuntores e seccionadoras (símbolo + clique) */
+  for(const [id,e] of Object.entries(S.edges)){
+    if(e.type!=="breaker"&&e.type!=="disconnector") continue;
+    const x=e.x,y=e.y, live=E.edges.has(id), col=voltColor(e.kV,live);
+    const g=svgEl("g",{class:"device"+(selected===id?" selected":""),"data-id":id});
+    g.appendChild(svgEl("rect",{class:"hit",x:x-17,y:y-17,width:34,height:34,rx:6,fill:"transparent",stroke:"transparent"}));
+    if(e.type==="breaker"){ const closed=e.state==="closed", tripped=e.tripped&&!closed;
+      if(closed&&live) g.appendChild(svgEl("rect",{x:x-15,y:y-15,width:30,height:30,rx:5,fill:col,"fill-opacity":0.18}));
+      g.appendChild(svgEl("rect",{x:x-12,y:y-12,width:24,height:24,rx:3,fill:closed?(live?col:COL.dead):"none",
+        stroke:tripped?"#ff6b6b":(closed?(live?col:COL.dead):COL.deadLine),"stroke-width":tripped?2.8:2.4}));
+      if(tripped){ const tt=svgEl("text",{x,y:y+3,fill:"#ff6b6b","font-size":10,"font-weight":700,"text-anchor":"middle"}); tt.textContent="⚡"; g.appendChild(tt); }
+    } else { const closed=e.state==="closed", c=closed?(live?col:COL.dead):COL.deadLine;
+      g.appendChild(svgEl("circle",{cx:x,cy:y+12,r:2.6,fill:c}));
+      g.appendChild(svgEl("circle",{cx:x,cy:y-12,r:2.6,fill:"none",stroke:c,"stroke-width":2}));
+      const bx=closed?x:x-13; g.appendChild(svgEl("line",{x1:x,y1:y+12,x2:bx,y2:y-12,stroke:c,"stroke-width":2.6,"stroke-linecap":"round"})); }
+    const tie=S.nodes[e.a]&&S.nodes[e.b]&&S.nodes[e.a].kind==="bus"&&S.nodes[e.b].kind==="bus";
+    const lt=svgEl("text",{x:x+(tie?0:19),y:tie?y-20:y+4,fill:"#c8cee0","font-size":10.5,"font-weight":600,
+      "font-family":"Consolas,monospace","text-anchor":tie?"middle":"start"}); lt.textContent=e.label; L.txt.appendChild(lt);
+    if(showMeas&&!tie&&e.type==="breaker"&&SOL.branchI[id]&&SOL.branchI[id].A>0.5){ const m=SOL.branchI[id];
+      const it=svgEl("text",{x:x+19,y:y+16,fill:vcol(e.kV),"font-size":9.5,"font-weight":600,"font-family":"Consolas,monospace"});
+      it.textContent=fmtA(m.A)+" · "+m.P.toFixed(1)+" MW"; L.txt.appendChild(it); }
+    g.addEventListener("click",()=>select(id)); L.dev.appendChild(g);
+  }
+
+  /* alvos clicáveis de falta: barras, trafos, alimentadores */
+  const ft=[];
+  for(const [id,n] of Object.entries(S.nodes)) if(n.kind==="bus") ft.push({id,x:n.x,y:n.y-9,w:n.x2-n.x,h:18});
+  for(const [id,e] of Object.entries(S.edges)) if(e.type==="transformer") ft.push({id,x:e.x-20,y:e.y-28,w:40,h:56});
+  for(const ln of Object.keys(S.feeders)){ const f=S.feeders[ln]; ft.push({id:ln,x:f.x-15,y:f.y-26,w:30,h:32}); }
+  for(const f of ft){ const g=svgEl("g",{class:"device"+(selected===f.id?" selected":""),"data-id":f.id});
+    g.appendChild(svgEl("rect",{class:"hit",x:f.x,y:f.y,width:f.w,height:f.h,rx:5,fill:"transparent",stroke:"transparent"}));
+    g.addEventListener("click",()=>select(f.id)); L.dev.appendChild(g); }
+
+  /* marcador de falta */
+  if(activeFault){ let fx,fy;
+    if(activeFault.kind==="bus"){ const c=S.nodes[activeFault.at]; fx=(c.x+c.x2)/2; fy=c.y; }
+    else if(activeFault.kind==="transformer"){ const e=S.edges[activeFault.at]; fx=e.x; fy=e.y; }
+    else { const f=S.feeders[activeFault.at]; fx=f.x; fy=f.y-12; }
+    L.txt.appendChild(svgEl("path",{d:`M${fx},${fy-15} l4,9 l9,-2 l-6,7 l6,7 l-9,-2 l-4,9 l-4,-9 l-9,2 l6,-7 l-6,-7 l9,2 Z`,fill:"#ff4d4d",stroke:"#fff","stroke-width":1})); }
+
+  svg.appendChild(L.lines); svg.appendChild(L.sym); svg.appendChild(L.dev); svg.appendChild(L.txt);
+}
+
+/* legenda dinâmica por níveis de tensão */
+function renderLegend(){
+  const host=document.getElementById("legend"); if(!host) return;
+  let rows=S.voltages.map(kv=>`<div class="row"><span class="sw" style="background:${vcol(kv)}"></span> ${kv} kV energizado</div>`).join("");
+  rows+=`<div class="row"><span class="sw" style="background:var(--mint)"></span> Aterrado</div>
+    <div class="row"><span class="sw" style="background:var(--slate)"></span> Desenergizado</div>`;
+  host.innerHTML=rows;
+}
+
+/* =========================================================================
+   HMI / PAINEL
+   ========================================================================= */
+function select(id){ selected=id; render(); renderPanel(); }
+function labelOf(id){ if(S.edges[id]) return S.edges[id].label; if(S.nodes[id]&&S.nodes[id].label) return S.nodes[id].label; if(S.feeders[id]) return S.feeders[id].label; return id; }
+function renderPanel(){
+  const host=document.getElementById("sel");
+  if(!selected){ host.innerHTML='<div class="sel-empty">Clique em um equipamento para inspecionar e operar. Clique em uma <b>barra</b>, <b>transformador</b> ou <b>alimentador</b> para aplicar uma falta 3φ.</div>'; return; }
+  const e=S.edges[selected], node=S.nodes[selected];
+
+  if(node&&node.kind==="bus"){
+    const v=SOL.busV[selected], sc=SOL.busScc[selected], en=!!v, faulted=activeFault&&activeFault.at===selected;
+    host.innerHTML=`<div class="sel-id">${selected}</div><div class="sel-type">Barramento · ${node.kV} kV</div>
+      <div class="kv"><span>Estado</span><span>${en?'<span class="state-tag st-closed">ENERGIZADA</span>':'<span class="state-tag st-open">MORTA</span>'}</span></div>
+      ${v?`<div class="kv"><span>Tensão</span><span>${v.kV.toFixed(1)} kV · ${v.pu.toFixed(3)} pu</span></div>`:""}
+      ${sc?`<div class="kv"><span>Curto 3φ</span><span>${sc.kA.toFixed(2)} kA · ${sc.MVA.toFixed(0)} MVA</span></div>`:""}
+      ${en&&!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ na barra</button>`:""}
+      ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
+    bindFault(selected,"bus"); return;
+  }
+  if(e&&e.type==="transformer"){
+    const faulted=activeFault&&activeFault.at===selected;
+    host.innerHTML=`<div class="sel-id">${e.label}</div><div class="sel-type">Transformador · ${e.ratio} kV</div>
+      <div class="kv"><span>Potência</span><span>${e.mva} MVA</span></div>
+      <div class="kv"><span>Impedância</span><span>${e.Zpct}% · X/R ${e.XR}</span></div>
+      <div class="kv"><span>Proteção</span><span>87T · 50/51</span></div>
+      ${!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ no trafo</button>`:""}
+      ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
+    bindFault(selected,"transformer"); return;
+  }
+  if(S.feeders[selected]){
+    const f=S.feeders[selected], dj=Object.keys(S.edges).find(k=>S.edges[k].b===selected||S.edges[k].a===selected);
+    const bi=dj?SOL.branchI[dj]:null, faulted=activeFault&&activeFault.at===selected, en=computeEnergization().nodes.has(selected);
+    host.innerHTML=`<div class="sel-id">${f.label}</div><div class="sel-type">Carga / linha · ${f.kV} kV</div>
+      <div class="kv"><span>Estado</span><span>${en?'<span class="state-tag st-closed">EM SERVIÇO</span>':'<span class="state-tag st-open">DESLIGADO</span>'}</span></div>
+      <div class="kv"><span>Carga</span><span>${f.P} MW · ${f.Q} Mvar</span></div>
+      <div class="kv"><span>Linha</span><span>${f.km} km · ${f.r}+j${f.x} Ω/km</span></div>
+      ${bi?`<div class="kv"><span>Corrente</span><span>${fmtA(bi.A)}</span></div>`:""}
+      ${en&&!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ</button>`:""}
+      ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
+    bindFault(selected,"feeder"); return;
+  }
+
+  if(!e){ host.innerHTML='<div class="sel-empty">—</div>'; return; }
+  const isGnd=e.type==="ground";
+  const typeName=e.type==="breaker"?"Disjuntor":e.type==="disconnector"?"Seccionadora":"Lâmina de terra";
+  const closed=e.state==="closed";
+  const stTag=isGnd?(closed?'<span class="state-tag st-gnd">ATERRADO</span>':'<span class="state-tag st-open">ABERTO</span>')
+    :(e.tripped&&!closed?'<span class="state-tag" style="background:rgba(255,107,107,.16);color:#ff6b6b">TRIP</span>':closed?'<span class="state-tag st-closed">FECHADO</span>':'<span class="state-tag st-open">ABERTO</span>');
+  const conn=isGnd?`${e.node} ⏚`:`${e.a} — ${e.b}`;
+  const closeLabel=isGnd?"Aterrar":"Fechar", openLabel=isGnd?"Desaterrar":"Abrir";
+  let measHtml="";
+  if(e.type==="breaker"&&SOL.branchI[selected]){ const m=SOL.branchI[selected];
+    measHtml=`<div class="kv"><span>Corrente</span><span>${fmtA(m.A)}</span></div>
+      <div class="kv"><span>Potência</span><span>${m.S.toFixed(2)} MVA</span></div>
+      <div class="kv"><span>P / Q</span><span>${m.P.toFixed(2)} MW · ${m.Q.toFixed(2)} Mvar</span></div>`; }
+  let protHtml="";
+  if(S.prot[selected]){ const p=S.prot[selected];
+    protHtml=`<div class="kv"><span>51 fase</span><span>${p.p51.pickup} A · ${p.p51.curve} · ${p.p51.TMS}</span></div>`+(p.p50?`<div class="kv"><span>50 inst.</span><span>${p.p50.pickup} A · ${(p.p50.t*1000)|0} ms</span></div>`:""); }
+  const failHtml=e.type==="breaker"?`<div class="fail-toggle ${e.failed?'on':''}" id="failTog"><span class="box"></span> Simular recusa de abertura (50BF)</div>`:"";
+  const syncHtml=e.sync?`<div class="fail-toggle ${syncedG[selected]?'on':''}" id="syncTog" style="${syncedG[selected]?'color:var(--mint)':''}"><span class="box" style="${syncedG[selected]?'background:var(--mint);border-color:var(--mint)':''}"></span> ${syncedG[selected]?'Sincronismo verificado (V, f, ângulo OK)':'Sincronizar (verificar V, f, ângulo)'}</div>`:"";
+  host.innerHTML=`<div class="sel-id">${e.label}</div><div class="sel-type">${typeName} · ${e.kV} kV</div>
+    <div class="kv"><span>Estado</span><span>${stTag}</span></div>
+    <div class="kv"><span>Identificador</span><span>${selected}</span></div>
+    <div class="kv"><span>Conexão</span><span>${conn}</span></div>
+    ${measHtml}${protHtml}
+    <div class="cmds">
+      <button id="cmdClose" class="${isGnd?'act-gnd':''}" ${closed?"disabled":""}>${closeLabel}</button>
+      <button id="cmdOpen" class="act-open" ${!closed?"disabled":""}>${openLabel}</button>
+    </div>${failHtml}${syncHtml}
+    <div class="block-msg" id="blkMsg"></div>`;
+  document.getElementById("cmdClose").onclick=()=>operate(selected,"closed");
+  document.getElementById("cmdOpen").onclick=()=>operate(selected,"open");
+  const ftg=document.getElementById("failTog"); if(ftg) ftg.onclick=()=>{ e.failed=!e.failed; log("auto",`${e.label}: recusa de abertura ${e.failed?"ARMADA":"desarmada"}.`); renderPanel(); };
+  const stg=document.getElementById("syncTog"); if(stg) stg.onclick=()=>{ syncedG[selected]=!syncedG[selected]; log("auto",`${e.label}: sincronismo ${syncedG[selected]?"VERIFICADO (V, f, ângulo OK)":"cancelado"}.`); renderPanel(); };
+}
+function bindFault(id,kind){ const cf=document.getElementById("cmdFault"); if(cf) cf.onclick=()=>applyFault(id,kind);
+  const cr=document.getElementById("cmdRem"); if(cr) cr.onclick=()=>removeFault(); }
+function showBlock(msg){ const b=document.getElementById("blkMsg"); if(b){ b.textContent="⛔ "+msg; b.classList.add("show"); } }
+
+function operate(id,newState){
+  const e=S.edges[id]; if(e.state===newState) return;
+  const chk=canOperate(id,newState);
+  if(!chk.ok){ log("block","BLOQUEIO: "+chk.reason); if(currentScenario&&!scenDone) scenViolations++; render(); renderPanel(); showBlock(chk.reason); updateScenBar(); return; }
+  e.state=newState;
+  if(newState==="closed") e.tripped=false;
+  if(e.sync&&newState==="open") syncedG[id]=false;
+  const verb=e.type==="ground"?(newState==="closed"?"ATERRAR":"DESATERRAR"):(newState==="closed"?"FECHAR":"ABRIR");
+  log("cmd",`${verb} ${e.label}`);
+  if(currentScenario&&!scenDone) scenManeuvers++;
+  render(); renderPanel(); reportIslands();
+  if(newState==="closed"&&activeFault){
+    const fed=activeFault.kind==="transformer"?(computeEnergization().nodes.has(S.edges[activeFault.at].a)||computeEnergization().nodes.has(S.edges[activeFault.at].b)):computeEnergization().nodes.has(activeFault.at);
+    if(fed){ log("alarm","RELIGAMENTO SOBRE FALTA — proteção reatua."); if(currentScenario&&!scenDone) scenCatastrophic=true; doFaultSequence(activeFault.at,activeFault.kind); }
+  }
+  checkObjective();
+}
+function doFaultSequence(at,kind){
+  const r=resolveFault(at,kind);
+  if(!r.ok){ log("alarm","FALTA: "+r.reason); render(); renderPanel(); return; }
+  log("alarm",`FALTA 3φ em ${labelOf(at)} — If = ${(r.If/1000).toFixed(2)} kA @ ${r.kVf} kV`);
+  r.seq.forEach(s=>log("trip",`t=${(s.t*1000).toFixed(0)} ms · ${s.msg}`));
+  if(r.cleared) log("auto","Falta isolada pela proteção."); else log("alarm","⚠ FALTA NÃO ELIMINADA — verifique ajustes/recusas.");
+  render(); renderPanel(); reportIslands();
+}
+function applyFault(at,kind){ if(activeFault) return; doFaultSequence(at,kind); }
+function removeFault(){ if(!activeFault) return; log("auto",`Falta removida em ${labelOf(activeFault.at)} (reparo concluído).`); clearFault(); render(); renderPanel(); }
+
+/* SOE */
+const soe=[]; const nowts=()=>new Date().toLocaleTimeString("pt-BR",{hour12:false});
+function log(kind,msg){ soe.unshift({t:nowts(),m:msg,k:kind}); const h=document.getElementById("soe");
+  h.innerHTML=soe.length?soe.map(x=>`<div class="entry ${x.k}"><span class="t">${x.t}</span><span class="m">${x.m}</span></div>`).join(""):'<div class="empty">Nenhuma manobra registrada.</div>'; }
+let lastLive=-1;
+function reportIslands(){ const n=computeEnergization().nodes.size; if(lastLive>=0&&n!==lastLive){ const d=n-lastLive; log("auto",`Energização recalculada: ${n} nós vivos (${d>0?"+":""}${d}).`); } lastLive=n; }
+
+document.getElementById("btnNormal").onclick=()=>{ resetNormal(); selected=null; log("auto","Restaurado estado normal de operação."); render(); renderPanel(); reportIslands(); updateScenBar(); };
+document.getElementById("btnAllOpen").onclick=()=>{ Object.values(S.edges).forEach(e=>{ if(e.state) e.state="open"; }); log("auto","Todos os disjuntores, seccionadoras e lâminas de terra abertos."); render(); renderPanel(); reportIslands(); };
+document.getElementById("btnMeas").onclick=()=>{ showMeas=!showMeas; render(); renderPanel(); };
+document.getElementById("btnFault").onclick=()=>{ if(activeFault) removeFault(); else log("auto","Nenhuma falta ativa. Clique numa barra, trafo ou alimentador para aplicar uma falta 3φ."); };
+
+/* =========================================================================
+   CENÁRIOS · AVALIADOR · PERSISTÊNCIA
+   ========================================================================= */
+const energ=()=>computeEnergization().nodes;
+function resetNormal(){ Object.keys(NORMAL).forEach(id=>{ if(S.edges[id]) S.edges[id].state=NORMAL[id]; });
+  Object.values(S.edges).forEach(e=>{ e.tripped=false; e.failed=false; }); clearFault(); syncedG={}; }
+let currentScenario=null, scenManeuvers=0, scenViolations=0, scenCatastrophic=false, scenDone=false, scenScore=null;
+function scoreKey(){ return "sim_scores_"+activeSub; }
+function loadScores(){ try{ return JSON.parse(localStorage.getItem(scoreKey())||"{}"); }catch(_){ return {}; } }
+function saveScore(id,score){ try{ const s=loadScores(); if(!(id in s)||score>s[id]){ s[id]=score; localStorage.setItem(scoreKey(),JSON.stringify(s)); } }catch(_){} }
+function loadScenario(id){ currentScenario=id; scenManeuvers=0; scenViolations=0; scenCatastrophic=false; scenDone=false; scenScore=null;
+  selected=null;
+  if(id==="free") resetNormal(); else SCEN()[id].setup();
+  log("auto",`Cenário: ${id==="free"?"Modo livre":SCEN()[id].title}.`);
+  render(); renderPanel(); reportIslands(); updateScenBar(); }
+function SCEN(){ return S.scenarios; }
+function checkObjective(){ if(!currentScenario||currentScenario==="free"||scenDone) return; const sc=SCEN()[currentScenario]; if(sc.objective&&sc.objective()) finishScenario(); }
+function finishScenario(){ const sc=SCEN()[currentScenario]; let score;
+  if(scenCatastrophic) score=0; else { const eff=scenManeuvers<=sc.optimal?10:Math.max(0,10-(scenManeuvers-sc.optimal)*3); score=Math.max(0,100-scenViolations*15+eff); }
+  scenDone=true; scenScore=score; saveScore(currentScenario,score);
+  log("auto",`✓ CENÁRIO CONCLUÍDO — ${score}/110 · manobras ${scenManeuvers}/${sc.optimal} · violações ${scenViolations}${scenCatastrophic?" · FALHA GRAVE":""}.`);
+  updateScenBar(); }
+function updateScenBar(){ const host=document.getElementById("scenInfo"); if(!host) return;
+  if(currentScenario==="free"){ host.innerHTML=`<div class="scen-desc">Opere a subestação livremente: manobre, aterre, injete faltas e observe a proteção. Sem avaliação.</div>`; return; }
+  const sc=SCEN()[currentScenario], best=loadScores()[currentScenario];
+  const statusBadge=scenDone?`<span class="badge ok">OBJETIVO ATINGIDO</span>`:`<span class="badge pend">EM ANDAMENTO</span>`;
+  const scoreHtml=scenDone?`<div class="scen-score" style="${scenScore<60?'color:var(--danger)':scenScore<85?'color:var(--gold)':''}">${scenScore}<span style="font-size:13px;color:var(--ink-dim)">/110</span></div>`:"";
+  host.innerHTML=`<div class="scen-desc">${sc.desc}</div>
+    <div class="scen-stat">${statusBadge}<span class="badge">Manobras ${scenManeuvers}/${sc.optimal}</span>
+    <span class="badge ${scenViolations?'warn':''}">Violações ${scenViolations}</span>${best!==undefined?`<span class="badge ok">Melhor ${best}</span>`:""}</div>
+    ${scoreHtml}
+    <div class="scen-btns"><button id="scenRestart">Reiniciar</button><button id="scenHint">Dica</button></div>
+    <div class="scen-hint" id="hintBox">${sc.hint}</div>`;
+  const rb=document.getElementById("scenRestart"); if(rb) rb.onclick=()=>loadScenario(currentScenario);
+  const hb=document.getElementById("scenHint"); if(hb) hb.onclick=()=>document.getElementById("hintBox").classList.toggle("show");
+}
+function populateScenSel(){ const sel=document.getElementById("scenSel"); const scores=loadScores();
+  let opts=`<option value="free">Modo livre — operação aberta</option>`;
+  opts+=Object.entries(SCEN()).map(([id,sc])=>`<option value="${id}">${sc.title}${scores[id]!==undefined?"  ✓"+scores[id]:""}</option>`).join("");
+  sel.innerHTML=opts; sel.value="free"; sel.onchange=()=>loadScenario(sel.value);
+}
+
+/* =========================================================================
+   SELETOR DE SUBESTAÇÃO + INIT
+   ========================================================================= */
+let activeSub=null;
+function loadSub(id){
+  activeSub=id; S=SUBSTATIONS[id];
+  NORMAL={}; Object.keys(S.edges).forEach(eid=>{ if(S.edges[eid].state) NORMAL[eid]=S.edges[eid].state; });
+  syncedG={}; selected=null; lastLive=-1;
+  document.getElementById("subTitle").textContent=S.subtitle;
+  renderLegend(); populateScenSel();
+  loadScenario("free");
+}
+(function initSub(){ const sel=document.getElementById("subSel");
+  sel.innerHTML=Object.entries(SUBSTATIONS).map(([id,s])=>`<option value="${id}">${s.name}</option>`).join("");
+  sel.onchange=()=>loadSub(sel.value);
+  loadSub("A");
+})();
+</script>
+</body>
+</html>
