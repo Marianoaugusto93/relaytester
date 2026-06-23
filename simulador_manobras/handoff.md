@@ -3,7 +3,11 @@
 Documento de transferência para continuidade do desenvolvimento no **Claude Code**.
 Cobre arquitetura, estado atual, modelo de dados, validação, publicação e próximos passos.
 
-> **Entregável atual:** `simulador-manobras.html` — arquivo único, ~885 linhas, ~63 KB, 100% client-side.
+> **Fonte única de verdade (2026-06-23):** `public/simulador-manobras.html`. Edite **apenas** esse arquivo
+> — ele é servido via iframe por `src/SimuladorManobrasPage.jsx` (aba "🔀 Manobras"). A antiga cópia
+> fonte foi arquivada em `archive/simulador-manobras-source/`. Este `handoff.md` permanece como referência.
+
+> **Entregável atual:** `public/simulador-manobras.html` — arquivo único, 100% client-side.
 
 ---
 
@@ -123,7 +127,9 @@ SUBSTATIONS.X = {
     // seccionadora
     SC: { type:"disconnector", a, b, state, series:"DJx", kV, label, x, y },
     // transformador (a = lado de cima/HV, b = lado de baixo/LV)
-    TR: { type:"transformer", a, b, kV, kVsec, mva, Zpct, XR,
+    // `vector` define o modelo de sequência-zero: "Dyn" (delta AT / estrela-aterr. BT),
+    // "YNd" (estrela-aterr. AT / delta BT), "YNyn" (ambos aterr.: série), "Dd"/"Yy" (bloqueia).
+    TR: { type:"transformer", a, b, kV, kVsec, mva, Zpct, XR, vector:"Dyn",
           label, ratio:"138/13,8", x, y },
     // lâmina de terra (um terminal → nó aterrado)
     GND:{ type:"ground", node:"NoX", state:"open", kV, label, x, y, side:1|-1 },
@@ -131,14 +137,25 @@ SUBSTATIONS.X = {
 
   sources: {
     // rede (grid): símbolo de seta; impedância por Scc/XR
-    LT: { node:"NoLT", kV, Scc_MVA, XR, type:"grid", label, x, y },
+    // seq-zero: grid aterrado por padrão (grnd!==false); Z0 = x0x1·Z1 (def. x0x1=1).
+    LT: { node:"NoLT", kV, Scc_MVA, XR, type:"grid", x0x1:1, label, x, y },
     // gerador: símbolo de círculo; impedância por Xd"/MVA
-    G:  { node:"NoG", kV, MVA, Xdpp, XR, type:"gen", label, x, y },
+    // seq-zero: gerador NÃO aterrado por padrão (grnd:true p/ contribuir; Zg p/ aterr. por impedância).
+    G:  { node:"NoG", kV, MVA, Xdpp, XR, type:"gen", grnd:false, label, x, y },
+  },
+
+  prot: {
+    // fase: p51 {pickup,curve,TMS}, p50 {pickup,t}
+    // neutro (3I0): p51n {pickup,curve,TMS}, p50n {pickup,t} — só atuam no lado aterrado
+    // religamento: p79 {dead:[t1,t2,...]} — tempos mortos por tentativa; nº de tiros = dead.length
+    DJ: { p51:{...}, p50:{...}, p51n:{...}, p50n:{...}, p79:{dead:[0.5,3.0]} },
   },
 
   feeders: {
-    // carga + linha (Ω/km). Desenhada como triângulo no nó.
-    AL: { node:"NoAL", P, Q, r, x, km, kV, label, x, y },
+    // carga + linha. Desenhada como triângulo no nó.
+    // ATENÇÃO: reatância de linha é `xl` (Ω/km) — `x`/`y` são as coordenadas de
+    // desenho. Não use `x` para reatância (colide com a coordenada e é sobrescrito).
+    AL: { node:"NoAL", P, Q, r, xl, km, kV, x0x1:3, label, x, y },
   },
 
   prot: {
@@ -296,14 +313,16 @@ setTimeout(()=>{
 
 ---
 
-## 11. Limitações e simplificações atuais (v1)
+## 11. Limitações e simplificações atuais (v2)
 
-- **Somente falta trifásica** (sequência positiva). Sem `Z0`/`Z2`, sem 1φ/2φ, sem proteção de neutro (50N/51N).
+- **Faltas 3φ / 2φ (L-L) / 1φ (L-G) / 2φ-T** via redes de sequência. **Z2 ≈ Z1** (aproximação);
+  **Z0** montado por grupo vetorial dos trafos e aterramento das fontes. Proteção de neutro **50N/51N**
+  atua no lado aterrado (delta bloqueia 3I0). Curva real da seq-zero das linhas: `Z0 ≈ x0x1·Z1` (def. 3).
 - **Fluxo de carga radial aproximado** (somatório a jusante). Em malha (interligações fechadas) o fluxo nas ties é aproximado.
 - **Tensões aproximadas** (queda série, sem iteração).
 - **87T/87B por zona** (pertencimento topológico), não por cálculo real de corrente diferencial/slope.
 - **Sincronismo** é um booleano (sem dinâmica de V/f/ângulo).
-- **Sem religamento automático (79)** — apenas religamento manual sobre falta.
+- **Religamento automático (79)** nos alimentadores/linhas: tempo morto por tiro, sucesso em falta transitória, bloqueio (86) em falta permanente. Sem reclaim time (rearme automático) — o rearme após 86 é manual. Religamento manual sobre falta também reatua a proteção.
 - **Arranjos de barra simples** — sem disjuntor-e-meio nem barra em anel ainda.
 
 ---
@@ -311,8 +330,10 @@ setTimeout(()=>{
 ## 12. Próximos caminhos (roadmap)
 
 **Curto prazo**
-- Faltas **1φ/2φ**: redes de sequência (`Z0`, grupo vetorial dos trafos), proteção de **neutro 50N/51N**.
-- **79 (religamento)** automático com ciclos e bloqueio sobre falta permanente.
+- ✅ Faltas **1φ/2φ/2φ-T**: redes de sequência (`Z0`, grupo vetorial dos trafos), proteção de **neutro 50N/51N** (2026-06-23).
+- ✅ **79 (religamento)** automático: ciclo de tentativas com tempo morto por tiro, sucesso em falta transitória, **bloqueio (86/lockout)** sobre falta permanente, rearme por fechamento manual (2026-06-23).
+- Refinos pendentes da seq-zero: `Z2` explícito (≠ Z1 nas máquinas), tap-ground real dos autotrafos (YNynd com terciário), seletor de impedância de falta `Zf`.
+- 79 — possíveis evoluções: tempo de religamento (reclaim) com rearme automático, 1º tiro rápido (instantâneo) + tiros lentos, bloqueio de 79 por 50BF/87.
 - Exportar **relatório de desempenho** do aluno (CSV/PDF) e SOE.
 
 **Médio prazo**

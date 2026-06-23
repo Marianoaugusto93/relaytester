@@ -85,6 +85,11 @@
   .fault-btn{margin-top:14px;width:100%;padding:10px 0;border-radius:8px;border:1px solid rgba(255,107,107,.5);
     background:rgba(255,107,107,.10);color:var(--danger);font-size:12px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:.12s;font-family:var(--sans)}
   .fault-btn:hover{background:rgba(255,107,107,.2)}
+  .fault-pick{margin-top:14px}
+  .fault-pick label{display:block;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-dim);font-weight:700;margin-bottom:5px}
+  .fault-pick select{width:100%;padding:7px 9px;border-radius:8px;background:var(--navy-panel);color:var(--ink);
+    border:1px solid var(--navy-line);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer}
+  .fault-pick+.fault-btn{margin-top:8px}
   .fail-toggle{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-dim);cursor:pointer}
   .fail-toggle .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--slate);flex:none}
   .fail-toggle.on .box{background:var(--danger);border-color:var(--danger)}
@@ -190,10 +195,10 @@ SUBSTATIONS.A={
     DJ2:{type:"breaker",a:"MID2",b:"B138B",state:"closed",kV:138,label:"DJ-2",x:840,y:168},
     DJINT138:{type:"breaker",a:"B138A",b:"B138B",state:"open",kV:138,label:"DJ-I 138",x:560,y:212},
     DJT1:{type:"breaker",a:"B138A",b:"T1P",state:"closed",kV:138,label:"DJ-T1",x:280,y:256},
-    TR1:{type:"transformer",a:"T1P",b:"T1S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,label:"TR-01",ratio:"138/13,8",x:280,y:336},
+    TR1:{type:"transformer",a:"T1P",b:"T1S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,vector:"Dyn",label:"TR-01",ratio:"138/13,8",x:280,y:336},
     DJBT1:{type:"breaker",a:"T1S",b:"B13A",state:"closed",kV:13.8,label:"DJ-BT1",x:280,y:412},
     DJT2:{type:"breaker",a:"B138B",b:"T2P",state:"closed",kV:138,label:"DJ-T2",x:840,y:256},
-    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,label:"TR-02",ratio:"138/13,8",x:840,y:336},
+    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:138,kVsec:13.8,mva:25,Zpct:10.5,XR:20,vector:"Dyn",label:"TR-02",ratio:"138/13,8",x:840,y:336},
     DJBT2:{type:"breaker",a:"T2S",b:"B13B",state:"closed",kV:13.8,label:"DJ-BT2",x:840,y:412},
     DJINT13:{type:"breaker",a:"B13A",b:"B13B",state:"open",kV:13.8,label:"DJ-I 13,8",x:560,y:452},
     DJG:{type:"breaker",a:"GER",b:"B13B",state:"open",kV:13.8,label:"DJ-G",x:948,y:512,sync:true},
@@ -214,17 +219,18 @@ SUBSTATIONS.A={
     GER:{node:"GER",kV:13.8,MVA:15,Xdpp:0.18,XR:30,type:"gen",label:"GER-01",x:948,y:600}
   },
   feeders:{
-    AL1:{node:"AL1",P:4.0,Q:1.9,r:0.30,x:0.40,km:6,kV:13.8,label:"AL-01",x:200,y:600},
-    AL2:{node:"AL2",P:3.2,Q:1.5,r:0.30,x:0.40,km:8,kV:13.8,label:"AL-02",x:360,y:600},
-    AL3:{node:"AL3",P:4.5,Q:2.2,r:0.30,x:0.40,km:5,kV:13.8,label:"AL-03",x:688,y:600},
-    AL4:{node:"AL4",P:2.8,Q:1.3,r:0.30,x:0.40,km:10,kV:13.8,label:"AL-04",x:824,y:600}
+    AL1:{node:"AL1",P:4.0,Q:1.9,r:0.30,xl:0.40,km:6,kV:13.8,label:"AL-01",x:200,y:600},
+    AL2:{node:"AL2",P:3.2,Q:1.5,r:0.30,xl:0.40,km:8,kV:13.8,label:"AL-02",x:360,y:600},
+    AL3:{node:"AL3",P:4.5,Q:2.2,r:0.30,xl:0.40,km:5,kV:13.8,label:"AL-03",x:688,y:600},
+    AL4:{node:"AL4",P:2.8,Q:1.3,r:0.30,xl:0.40,km:10,kV:13.8,label:"AL-04",x:824,y:600}
   },
   prot:{
-    DJAL1:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
-    DJAL2:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
-    DJAL3:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
-    DJAL4:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03}},
-    DJBT1:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30}}, DJBT2:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30}},
+    DJAL1:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03},p51n:{pickup:60,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1200,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJAL2:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03},p51n:{pickup:60,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1200,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJAL3:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03},p51n:{pickup:60,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1200,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJAL4:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:3000,t:0.03},p51n:{pickup:60,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1200,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJBT1:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30},p51n:{pickup:120,curve:"IEC-VI",TMS:0.35}},
+    DJBT2:{p51:{pickup:600,curve:"IEC-VI",TMS:0.30},p51n:{pickup:120,curve:"IEC-VI",TMS:0.35}},
     DJT1:{p51:{pickup:150,curve:"IEC-VI",TMS:0.35}}, DJT2:{p51:{pickup:150,curve:"IEC-VI",TMS:0.35}},
     DJ1:{p51:{pickup:150,curve:"IEC-VI",TMS:0.45}}, DJ2:{p51:{pickup:150,curve:"IEC-VI",TMS:0.45}}
   },
@@ -284,11 +290,11 @@ SUBSTATIONS.B={
     SC2:{type:"disconnector",a:"LT2",b:"M2",state:"closed",series:"DJ2",kV:230,label:"SC-2",x:520,y:96},
     DJ2:{type:"breaker",a:"M2",b:"B230",state:"closed",kV:230,label:"DJ-LT2",x:520,y:134},
     DJATH:{type:"breaker",a:"B230",b:"ATP",state:"closed",kV:230,label:"DJ-ATH",x:680,y:205},
-    TRAT:{type:"transformer",a:"ATP",b:"ATS",kV:230,kVsec:69,mva:100,Zpct:12,XR:30,label:"AT 230/69",ratio:"230/69",x:680,y:272},
+    TRAT:{type:"transformer",a:"ATP",b:"ATS",kV:230,kVsec:69,mva:100,Zpct:12,XR:30,vector:"YNyn",label:"AT 230/69",ratio:"230/69",x:680,y:272},
     DJATL:{type:"breaker",a:"ATS",b:"B69",state:"closed",kV:69,label:"DJ-ATL",x:680,y:344},
     DJF69:{type:"breaker",a:"B69",b:"F69",state:"closed",kV:69,label:"DJ-LT69",x:400,y:414},
     DJT2H:{type:"breaker",a:"B69",b:"T2P",state:"closed",kV:69,label:"DJ-T2H",x:720,y:412},
-    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:69,kVsec:13.8,mva:25,Zpct:10,XR:20,label:"TR-02",ratio:"69/13,8",x:720,y:468},
+    TR2:{type:"transformer",a:"T2P",b:"T2S",kV:69,kVsec:13.8,mva:25,Zpct:10,XR:20,vector:"Dyn",label:"TR-02",ratio:"69/13,8",x:720,y:468},
     DJT2L:{type:"breaker",a:"T2S",b:"B13",state:"closed",kV:13.8,label:"DJ-T2L",x:720,y:534},
     DJAL1:{type:"breaker",a:"B13",b:"AL1",state:"closed",kV:13.8,label:"DJ-AL01",x:600,y:602},
     DJAL2:{type:"breaker",a:"B13",b:"AL2",state:"closed",kV:13.8,label:"DJ-AL02",x:760,y:602},
@@ -302,16 +308,16 @@ SUBSTATIONS.B={
     LT2:{node:"LT2",kV:230,Scc_MVA:8000,XR:12,type:"grid",label:"LT 230 kV (2)",x:520,y:46}
   },
   feeders:{
-    F69:{node:"F69",P:18,Q:8,r:0.12,x:0.40,km:25,kV:69,label:"LT 69 kV",x:400,y:478},
-    AL1:{node:"AL1",P:5.0,Q:2.4,r:0.30,x:0.40,km:6,kV:13.8,label:"AL-01",x:600,y:684},
-    AL2:{node:"AL2",P:4.2,Q:2.0,r:0.30,x:0.40,km:9,kV:13.8,label:"AL-02",x:760,y:684}
+    F69:{node:"F69",P:18,Q:8,r:0.12,xl:0.40,km:25,kV:69,label:"LT 69 kV",x:400,y:478},
+    AL1:{node:"AL1",P:5.0,Q:2.4,r:0.30,xl:0.40,km:6,kV:13.8,label:"AL-01",x:600,y:684},
+    AL2:{node:"AL2",P:4.2,Q:2.0,r:0.30,xl:0.40,km:9,kV:13.8,label:"AL-02",x:760,y:684}
   },
   prot:{
-    DJAL1:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03}},
-    DJAL2:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03}},
-    DJF69:{p51:{pickup:400,curve:"IEC-VI",TMS:0.20},p50:{pickup:5000,t:0.04}},
-    DJT2L:{p51:{pickup:700,curve:"IEC-VI",TMS:0.30}}, DJT2H:{p51:{pickup:180,curve:"IEC-VI",TMS:0.35}},
-    DJATL:{p51:{pickup:500,curve:"IEC-VI",TMS:0.40}}, DJATH:{p51:{pickup:160,curve:"IEC-VI",TMS:0.50}},
+    DJAL1:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03},p51n:{pickup:70,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1400,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJAL2:{p51:{pickup:350,curve:"IEC-VI",TMS:0.15},p50:{pickup:3500,t:0.03},p51n:{pickup:70,curve:"IEC-VI",TMS:0.10},p50n:{pickup:1400,t:0.05},p79:{dead:[0.5,3.0]}},
+    DJF69:{p51:{pickup:400,curve:"IEC-VI",TMS:0.20},p50:{pickup:5000,t:0.04},p51n:{pickup:80,curve:"IEC-VI",TMS:0.15},p79:{dead:[1.0]}},
+    DJT2L:{p51:{pickup:700,curve:"IEC-VI",TMS:0.30},p51n:{pickup:140,curve:"IEC-VI",TMS:0.35}}, DJT2H:{p51:{pickup:180,curve:"IEC-VI",TMS:0.35}},
+    DJATL:{p51:{pickup:500,curve:"IEC-VI",TMS:0.40},p51n:{pickup:100,curve:"IEC-VI",TMS:0.35}}, DJATH:{p51:{pickup:160,curve:"IEC-VI",TMS:0.50}},
     DJ1:{p51:{pickup:200,curve:"IEC-VI",TMS:0.45}}, DJ2:{p51:{pickup:200,curve:"IEC-VI",TMS:0.45}}
   },
   zones:{
@@ -350,7 +356,7 @@ SUBSTATIONS.C={
     SCSYS:{type:"disconnector",a:"SYS",b:"MSYS",state:"closed",series:"DJLT",kV:138,label:"SC-LT",x:600,y:96},
     DJLT:{type:"breaker",a:"MSYS",b:"B138",state:"closed",kV:138,label:"DJ-LT",x:600,y:134},
     DJSTH:{type:"breaker",a:"B138",b:"STP",state:"closed",kV:138,label:"DJ-ST-H",x:470,y:200},
-    TRST:{type:"transformer",a:"STP",b:"STS",kV:138,kVsec:13.8,mva:80,Zpct:12,XR:30,label:"TR ELEVADOR",ratio:"13,8/138",x:470,y:264},
+    TRST:{type:"transformer",a:"STP",b:"STS",kV:138,kVsec:13.8,mva:80,Zpct:12,XR:30,vector:"YNd",label:"TR ELEVADOR",ratio:"13,8/138",x:470,y:264},
     DJSTL:{type:"breaker",a:"STS",b:"B13G",state:"closed",kV:13.8,label:"DJ-ST-L",x:470,y:430},
     DJG1:{type:"breaker",a:"B13G",b:"G1",state:"open",kV:13.8,label:"DJ-G1",x:220,y:560,sync:true},
     DJG2:{type:"breaker",a:"B13G",b:"G2",state:"open",kV:13.8,label:"DJ-G2",x:400,y:560,sync:true},
@@ -367,14 +373,14 @@ SUBSTATIONS.C={
     G4:{node:"G4",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G4",x:760,y:660}
   },
   feeders:{
-    AUX:{node:"AUX",P:3.0,Q:1.4,r:0.20,x:0.30,km:1,kV:13.8,label:"SERV. AUX.",x:850,y:600}
+    AUX:{node:"AUX",P:3.0,Q:1.4,r:0.20,xl:0.30,km:1,kV:13.8,label:"SERV. AUX.",x:850,y:600}
   },
   prot:{
     DJAUX:{p51:{pickup:300,curve:"IEC-VI",TMS:0.15},p50:{pickup:4000,t:0.03}},
     DJG1:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}}, DJG2:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}},
     DJG3:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}}, DJG4:{p51:{pickup:1000,curve:"IEC-VI",TMS:0.25}},
     DJSTL:{p51:{pickup:3500,curve:"IEC-VI",TMS:0.35}}, DJSTH:{p51:{pickup:400,curve:"IEC-VI",TMS:0.40}},
-    DJLT:{p51:{pickup:300,curve:"IEC-VI",TMS:0.50}}
+    DJLT:{p51:{pickup:300,curve:"IEC-VI",TMS:0.50},p51n:{pickup:80,curve:"IEC-VI",TMS:0.40}}
   },
   zones:{
     TRST:{type:"87T",t:0.04,trips:["DJSTH","DJSTL"]},
@@ -441,7 +447,7 @@ function cMatInv(M){
   return A.map(row=>row.slice(n));
 }
 const ibase=kV=>Sbase()*1e6/(Math.sqrt(3)*kV*1000);
-function feederZpu(ln){ const f=S.feeders[ln]; const Zb=f.kV*f.kV/Sbase(); return cx(f.r*f.km/Zb,f.x*f.km/Zb); }
+function feederZpu(ln){ const f=S.feeders[ln]; const Zb=f.kV*f.kV/Sbase(); return cx(f.r*f.km/Zb,f.xl*f.km/Zb); }
 function trZpu(e){ return zFromXR((e.Zpct/100)*(Sbase()/e.mva),e.XR); }
 
 function electricalSolve(E){
@@ -496,6 +502,84 @@ function electricalSolve(E){
 }
 
 /* =========================================================================
+   REDES DE SEQUÊNCIA (0/1/2) — base p/ faltas 1φ / 2φ / 2φ-T e 50N/51N
+   -------------------------------------------------------------------------
+   Z1: fontes como shunt 1/Z1, trafos como série 1/Zt (igual ao solver 3φ).
+   Z2: aproximado = Z1 (Xd″≈Xd2 nas máquinas; passivo nos demais).
+   Z0: topologia depende do grupo vetorial do trafo e do aterramento das
+       fontes. Delta bloqueia a passagem; estrela-aterrada referencia à terra.
+   ========================================================================= */
+/* modelo de sequência-zero por grupo vetorial (a = AT/topo, b = BT/baixo) */
+const Z0MODELS={
+  "DYN": {through:false,gndA:false,gndB:true },  // delta AT · estrela-aterr. BT
+  "YND": {through:false,gndA:true, gndB:false},  // estrela-aterr. AT · delta BT
+  "YNYN":{through:true, gndA:false,gndB:false},  // ambos estrela-aterr.: série
+  "DD":  {through:false,gndA:false,gndB:false},  // delta-delta: bloqueia
+  "YY":  {through:false,gndA:false,gndB:false}   // estrela isolada: bloqueia
+};
+function trZ0Model(e){ return Z0MODELS[(e.vector||"YNYN").toUpperCase()]||Z0MODELS["YNYN"]; }
+const cscale=(z,k)=>cx(z.re*k,z.im*k);
+function feederZ0pu(ln){ const f=S.feeders[ln]; const Zb=f.kV*f.kV/Sbase(); const k=f.x0x1??3; return cx(f.r*k*f.km/Zb,f.xl*k*f.km/Zb); }
+
+/* resolve Thévenin de sequência `seq` (0,1,2) em qualquer nó energizado */
+function seqSolve(E,seq){
+  const parent={}; Object.keys(S.nodes).forEach(n=>parent[n]=n);
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  for(const e of Object.values(S.edges)) if((e.type==="breaker"||e.type==="disconnector")&&e.state==="closed") parent[find(e.a)]=find(e.b);
+  const sn=n=>find(n);
+  const live=[...new Set([...E.nodes].map(sn))]; const idx={}; live.forEach((s,i)=>idx[s]=i); const n=live.length;
+  const Y=Array.from({length:n},()=>Array.from({length:n},()=>cx(0,0)));
+  const adj=Array.from({length:n},()=>[]); const shunted=new Array(n).fill(false);
+  const addSeries=(a,b,y)=>{ const i=idx[sn(a)],j=idx[sn(b)]; if(i===undefined||j===undefined||i===j) return;
+    Y[i][i]=cadd(Y[i][i],y);Y[j][j]=cadd(Y[j][j],y);Y[i][j]=csub(Y[i][j],y);Y[j][i]=csub(Y[j][i],y); adj[i].push(j);adj[j].push(i); };
+  const addShunt=(node,y)=>{ const i=idx[sn(node)]; if(i===undefined) return; Y[i][i]=cadd(Y[i][i],y); shunted[i]=true; };
+  for(const p of Object.values(S.sources)){
+    if(!E.nodes.has(p.node)) continue;
+    const Z1=p.Scc_MVA?zFromXR(Sbase()/p.Scc_MVA,p.XR):zFromXR(p.Xdpp*(Sbase()/p.MVA),p.XR);
+    if(seq===1||seq===2){ addShunt(p.node,cinv(Z1)); }
+    else { const grounded=p.type==="grid"?(p.grnd!==false):(p.grnd===true); if(!grounded) continue;
+      let Z0=cscale(Z1,p.x0x1??1); if(p.Zg) Z0=cadd(Z0,cx(3*p.Zg,0)); addShunt(p.node,cinv(Z0)); }
+  }
+  for(const e of Object.values(S.edges)){
+    if(e.type!=="transformer") continue; if(!E.nodes.has(e.a)||!E.nodes.has(e.b)) continue;
+    const zt=trZpu(e);
+    if(seq===1||seq===2){ addSeries(e.a,e.b,cinv(zt)); }
+    else { const m=trZ0Model(e);
+      if(m.through){ addSeries(e.a,e.b,cinv(zt)); }
+      else { if(m.gndA) addShunt(e.a,cinv(zt)); if(m.gndB) addShunt(e.b,cinv(zt)); } }
+  }
+  const comp=new Array(n).fill(-1); let nc=0;
+  for(let s=0;s<n;s++) if(comp[s]<0){ const st=[s]; comp[s]=nc; while(st.length){ const c=st.pop(); for(const nb of adj[c]) if(comp[nb]<0){ comp[nb]=nc; st.push(nb); } } nc++; }
+  const ref=new Array(nc).fill(false); for(let i=0;i<n;i++) if(shunted[i]) ref[comp[i]]=true;
+  const Zdiag={};
+  for(let c=0;c<nc;c++){ if(!ref[c]) continue; const mem=[]; for(let i=0;i<n;i++) if(comp[i]===c) mem.push(i);
+    let Zi; try{ Zi=cMatInv(mem.map(r=>mem.map(cc=>Y[r][cc]))); }catch(_){ continue; }
+    mem.forEach((gi,li)=>{ Zdiag[gi]=Zi[li][li]; }); }
+  return { zAt(node){ if(!E.nodes.has(node)) return null; const i=idx[sn(node)]; if(i===undefined) return null; return Zdiag[i]??null; } };
+}
+
+/* correntes de sequência por tipo de falta (E=1∠0 pu) */
+function seqCurr(Z1,Z2,Z0,ftype){
+  const E=cx(1,0), Z=cadd; const zero=cx(0,0);
+  if(ftype==="3ph"){ const I1=cdiv(E,Z1); return {I0:zero,I1,I2:zero}; }
+  if(ftype==="2ph"){ const I1=cdiv(E,Z(Z1,Z2)); return {I0:zero,I1,I2:cx(-I1.re,-I1.im)}; }
+  if(ftype==="1ph"){ if(!Z0) return null; const I=cdiv(E,Z(Z(Z1,Z2),Z0)); return {I0:I,I1:I,I2:I}; }
+  if(ftype==="2phg"){ if(!Z0) return seqCurr(Z1,Z2,Z0,"2ph"); /* sem terra → vira L-L */
+    const Zp=cdiv(cmul(Z2,Z0),Z(Z2,Z0)); const I1=cdiv(E,Z(Z1,Zp));
+    const I2=cmul(I1,cdiv(cx(-Z0.re,-Z0.im),Z(Z2,Z0))); const I0=cmul(I1,cdiv(cx(-Z2.re,-Z2.im),Z(Z2,Z0)));
+    return {I0,I1,I2}; }
+  const I1=cdiv(E,Z1); return {I0:zero,I1,I2:zero};
+}
+/* componentes simétricas → fasores de fase */
+const AOP=cx(Math.cos(2*Math.PI/3),Math.sin(2*Math.PI/3)), AOP2=cx(Math.cos(-2*Math.PI/3),Math.sin(-2*Math.PI/3));
+function abcFromSeq(s){
+  return { Ia:cadd(cadd(s.I0,s.I1),s.I2),
+           Ib:cadd(cadd(s.I0,cmul(AOP2,s.I1)),cmul(AOP,s.I2)),
+           Ic:cadd(cadd(s.I0,cmul(AOP,s.I1)),cmul(AOP2,s.I2)) };
+}
+const FTYPES={"3ph":"Trifásica (3φ)","2ph":"Bifásica (2φ · F-F)","1ph":"Monofásica (1φ · F-T)","2phg":"Bifásica-terra (2φ-T)"};
+
+/* =========================================================================
    INTERTRAVAMENTO
    ========================================================================= */
 function canOperate(id,newState){
@@ -527,25 +611,53 @@ const T_50BF=0.20;
 function breakersOnBus(bus){ return Object.keys(S.edges).filter(id=>{ const e=S.edges[id]; return e.type==="breaker"&&(e.a===bus||e.b===bus); }); }
 function pathBreakers(node,parentEdge){ const path=[]; let cur=node,g=0; while(parentEdge[cur]&&g++<60){ const pe=parentEdge[cur]; if(S.edges[pe.id].type==="breaker") path.push(pe.id); cur=pe.from; } return path; }
 
-function resolveFault(at,kind){
+function resolveFault(at,kind,ftype){
+  ftype=ftype||"3ph";
   const E=computeEnergization(); const sol=electricalSolve(E);
   if(kind!=="transformer"&&!E.nodes.has(at)) return {ok:false,reason:"Ponto de falta desenergizado — nada a proteger."};
-  let kvF,Zth;
-  if(kind==="feeder"){ kvF=S.feeders[at].kV; const zb=sol.zthAt(at); if(!zb) return {ok:false,reason:"Sem fonte para o ponto."}; Zth=cadd(zb,feederZpu(at)); }
-  else if(kind==="bus"){ kvF=S.nodes[at].kV; Zth=sol.zthAt(at); if(!Zth) return {ok:false,reason:"Barra desenergizada."}; }
-  else { const e=S.edges[at]; kvF=e.kVsec||e.kV; const zb=sol.zthAt(e.b)||sol.zthAt(e.a); Zth=zb||cx(0.5,0); }
-  const If=sol.vpre/cabs(Zth)*ibase(kvF);
-  activeFault={at,kind,If,kV:kvF};
+  const s1=seqSolve(E,1), s0=seqSolve(E,0);
+  /* nó elétrico e tensão do ponto de falta */
+  let kvF, fn;
+  if(kind==="feeder"){ kvF=S.feeders[at].kV; fn=at; }
+  else if(kind==="bus"){ kvF=S.nodes[at].kV; fn=at; }
+  else { const e=S.edges[at]; kvF=e.kVsec||e.kV; fn=e.b; }
+  let Z1=s1.zAt(fn); let Z0=s0.zAt(fn);
+  if(!Z1){ const e=S.edges[at]; Z1=s1.zAt(e?.a)||cx(0.5,0); if(Z0===null&&e) Z0=s0.zAt(e.a); }
+  if(!Z1) return {ok:false,reason:kind==="bus"?"Barra desenergizada.":"Sem fonte para o ponto."};
+  if(kind==="feeder"){ Z1=cadd(Z1,feederZpu(at)); if(Z0) Z0=cadd(Z0,feederZ0pu(at)); }
+  const Z2=Z1;                                  // Z2 ≈ Z1 (aproximação didática)
+  /* correntes de sequência → fasores de fase → grandezas para a proteção */
+  const sc=seqCurr(Z1,Z2,Z0,ftype);
+  if(!sc) return {ok:true,If:0,I3I0:0,kVf:kvF,ftype,seq:[],cleared:false,
+    note:`Ponto sem retorno de sequência-zero (sistema não aterrado aqui) — falta ${FTYPES[ftype]} produz corrente de terra desprezível.`};
+  const ph=abcFromSeq(sc); const Ib=ibase(kvF);
+  const Iph=Math.max(cabs(ph.Ia),cabs(ph.Ib),cabs(ph.Ic))*Ib;   // maior corrente de fase (50/51)
+  const I3I0=3*cabs(sc.I0)*Ib;                                   // corrente de terra 3I0 (50N/51N)
+  const If=Iph;
+  activeFault={at,kind,ftype,If,I3I0,kV:kvF};
   const closedOnly=ids=>ids.filter(id=>S.edges[id].state==="closed");
   const ops=[];
   if(kind==="transformer"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(z.trips),by:`87T ${S.edges[at].label}`}); }
   if(kind==="bus"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(breakersOnBus(at)),by:`87B ${at}`}); }
+  /* percurso radial até a fonte: coleta disjuntores e detecta onde o delta
+     bloqueia a sequência-zero (3I0 só circula no lado aterrado da falta). */
   const startNode=kind==="transformer"?S.edges[at].b:at;
-  const path=pathBreakers(startNode,sol.parentEdge);
-  for(const id of path){ const set=S.prot[id]; if(!set) continue; const e=S.edges[id]; const Iref=If*(kvF/e.kV);
-    if(set.p50&&Iref>set.p50.pickup) ops.push({t:set.p50.t,trips:[id],by:`50 ${e.label}`,I:Iref});
-    else if(set.p51){ const t=opTime(set.p51,Iref); if(isFinite(t)) ops.push({t,trips:[id],by:`51 ${e.label}`,I:Iref}); } }
-  if(!ops.length) return {ok:true,If,kVf:kvF,seq:[],cleared:false,note:"Nenhuma proteção sensibilizada."};
+  let gndReach=I3I0>0.5;
+  const pathEdges=(()=>{const p=[];let c=startNode,k=0;while(sol.parentEdge[c]&&k++<60){p.push(sol.parentEdge[c].id);c=sol.parentEdge[c].from;}return p;})();
+  for(const id of pathEdges){
+    const e=S.edges[id];
+    if(e.type==="breaker"){
+      const set=S.prot[id]; if(set){
+        const Iref=If*(kvF/e.kV);                 // fase referida ao nível do equipamento
+        if(set.p50&&Iref>set.p50.pickup) ops.push({t:set.p50.t,trips:[id],by:`50 ${e.label}`,I:Iref});
+        else if(set.p51){ const t=opTime(set.p51,Iref); if(isFinite(t)) ops.push({t,trips:[id],by:`51 ${e.label}`,I:Iref}); }
+        if(gndReach){ const I0ref=I3I0*(kvF/e.kV);  // terra referida ao nível do equipamento
+          if(set.p50n&&I0ref>set.p50n.pickup) ops.push({t:set.p50n.t,trips:[id],by:`50N ${e.label}`,I:I0ref});
+          else if(set.p51n){ const t=opTime(set.p51n,I0ref); if(isFinite(t)) ops.push({t,trips:[id],by:`51N ${e.label}`,I:I0ref}); } }
+      }
+    } else if(e.type==="transformer"){ if(!trZ0Model(e).through) gndReach=false; }  // delta bloqueia 3I0 a montante
+  }
+  if(!ops.length) return {ok:true,If,I3I0,kVf:kvF,ftype,seq:[],cleared:false,note:"Nenhuma proteção sensibilizada."};
   ops.sort((a,b)=>a.t-b.t);
   const seq=[]; let cleared=false, bfTime=null;
   for(const op of ops){ const opened=[];
@@ -558,7 +670,7 @@ function resolveFault(at,kind){
       const stillFed=kind==="transformer"?(liveNow.has(S.edges[at].a)||liveNow.has(S.edges[at].b)):liveNow.has(at);
       if(!stillFed){ cleared=true; break; } } }
   seq.sort((a,b)=>a.t-b.t);
-  return {ok:true,If,kVf:kvF,seq,cleared};
+  return {ok:true,If,I3I0,kVf:kvF,ftype,seq,cleared};
 }
 function clearFault(){ activeFault=null; }
 
@@ -708,8 +820,13 @@ function renderLegend(){
 /* =========================================================================
    HMI / PAINEL
    ========================================================================= */
+let faultType="3ph", faultTransient=false;
 function select(id){ selected=id; render(); renderPanel(); }
 function labelOf(id){ if(S.edges[id]) return S.edges[id].label; if(S.nodes[id]&&S.nodes[id].label) return S.nodes[id].label; if(S.feeders[id]) return S.feeders[id].label; return id; }
+function faultPickHTML(label){ return `<div class="fault-pick"><label for="ftypeSel">Tipo de falta</label>
+  <select id="ftypeSel">${Object.entries(FTYPES).map(([k,v])=>`<option value="${k}"${k===faultType?" selected":""}>${v}</option>`).join("")}</select></div>
+  <div class="fail-toggle ${faultTransient?'on':''}" id="transTog"><span class="box"></span> Falta transitória (extingue-se no tempo morto do 79)</div>
+  <button class="fault-btn" id="cmdFault">⚡ Aplicar falta — ${label}</button>`; }
 function renderPanel(){
   const host=document.getElementById("sel");
   if(!selected){ host.innerHTML='<div class="sel-empty">Clique em um equipamento para inspecionar e operar. Clique em uma <b>barra</b>, <b>transformador</b> ou <b>alimentador</b> para aplicar uma falta 3φ.</div>'; return; }
@@ -721,7 +838,7 @@ function renderPanel(){
       <div class="kv"><span>Estado</span><span>${en?'<span class="state-tag st-closed">ENERGIZADA</span>':'<span class="state-tag st-open">MORTA</span>'}</span></div>
       ${v?`<div class="kv"><span>Tensão</span><span>${v.kV.toFixed(1)} kV · ${v.pu.toFixed(3)} pu</span></div>`:""}
       ${sc?`<div class="kv"><span>Curto 3φ</span><span>${sc.kA.toFixed(2)} kA · ${sc.MVA.toFixed(0)} MVA</span></div>`:""}
-      ${en&&!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ na barra</button>`:""}
+      ${en&&!activeFault?faultPickHTML("barra"):""}
       ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
     bindFault(selected,"bus"); return;
   }
@@ -730,8 +847,9 @@ function renderPanel(){
     host.innerHTML=`<div class="sel-id">${e.label}</div><div class="sel-type">Transformador · ${e.ratio} kV</div>
       <div class="kv"><span>Potência</span><span>${e.mva} MVA</span></div>
       <div class="kv"><span>Impedância</span><span>${e.Zpct}% · X/R ${e.XR}</span></div>
+      <div class="kv"><span>Ligação</span><span>${e.vector||"YNyn"}</span></div>
       <div class="kv"><span>Proteção</span><span>87T · 50/51</span></div>
-      ${!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ no trafo</button>`:""}
+      ${!activeFault?faultPickHTML("trafo"):""}
       ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
     bindFault(selected,"transformer"); return;
   }
@@ -741,9 +859,9 @@ function renderPanel(){
     host.innerHTML=`<div class="sel-id">${f.label}</div><div class="sel-type">Carga / linha · ${f.kV} kV</div>
       <div class="kv"><span>Estado</span><span>${en?'<span class="state-tag st-closed">EM SERVIÇO</span>':'<span class="state-tag st-open">DESLIGADO</span>'}</span></div>
       <div class="kv"><span>Carga</span><span>${f.P} MW · ${f.Q} Mvar</span></div>
-      <div class="kv"><span>Linha</span><span>${f.km} km · ${f.r}+j${f.x} Ω/km</span></div>
+      <div class="kv"><span>Linha</span><span>${f.km} km · ${f.r}+j${f.xl} Ω/km</span></div>
       ${bi?`<div class="kv"><span>Corrente</span><span>${fmtA(bi.A)}</span></div>`:""}
-      ${en&&!activeFault?`<button class="fault-btn" id="cmdFault">⚡ Aplicar falta 3φ</button>`:""}
+      ${en&&!activeFault?faultPickHTML("alimentador"):""}
       ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
     bindFault(selected,"feeder"); return;
   }
@@ -753,7 +871,7 @@ function renderPanel(){
   const typeName=e.type==="breaker"?"Disjuntor":e.type==="disconnector"?"Seccionadora":"Lâmina de terra";
   const closed=e.state==="closed";
   const stTag=isGnd?(closed?'<span class="state-tag st-gnd">ATERRADO</span>':'<span class="state-tag st-open">ABERTO</span>')
-    :(e.tripped&&!closed?'<span class="state-tag" style="background:rgba(255,107,107,.16);color:#ff6b6b">TRIP</span>':closed?'<span class="state-tag st-closed">FECHADO</span>':'<span class="state-tag st-open">ABERTO</span>');
+    :(e.locked&&!closed?'<span class="state-tag" style="background:rgba(255,107,107,.22);color:#ff6b6b">86 BLOQUEIO</span>':e.tripped&&!closed?'<span class="state-tag" style="background:rgba(255,107,107,.16);color:#ff6b6b">TRIP</span>':closed?'<span class="state-tag st-closed">FECHADO</span>':'<span class="state-tag st-open">ABERTO</span>');
   const conn=isGnd?`${e.node} ⏚`:`${e.a} — ${e.b}`;
   const closeLabel=isGnd?"Aterrar":"Fechar", openLabel=isGnd?"Desaterrar":"Abrir";
   let measHtml="";
@@ -763,7 +881,11 @@ function renderPanel(){
       <div class="kv"><span>P / Q</span><span>${m.P.toFixed(2)} MW · ${m.Q.toFixed(2)} Mvar</span></div>`; }
   let protHtml="";
   if(S.prot[selected]){ const p=S.prot[selected];
-    protHtml=`<div class="kv"><span>51 fase</span><span>${p.p51.pickup} A · ${p.p51.curve} · ${p.p51.TMS}</span></div>`+(p.p50?`<div class="kv"><span>50 inst.</span><span>${p.p50.pickup} A · ${(p.p50.t*1000)|0} ms</span></div>`:""); }
+    protHtml=(p.p51?`<div class="kv"><span>51 fase</span><span>${p.p51.pickup} A · ${p.p51.curve} · ${p.p51.TMS}</span></div>`:"")
+      +(p.p50?`<div class="kv"><span>50 inst.</span><span>${p.p50.pickup} A · ${(p.p50.t*1000)|0} ms</span></div>`:"")
+      +(p.p51n?`<div class="kv"><span>51N neutro</span><span>${p.p51n.pickup} A · ${p.p51n.curve} · ${p.p51n.TMS}</span></div>`:"")
+      +(p.p50n?`<div class="kv"><span>50N inst.</span><span>${p.p50n.pickup} A · ${(p.p50n.t*1000)|0} ms</span></div>`:"")
+      +(p.p79?`<div class="kv"><span>79 religam.</span><span>${(Array.isArray(p.p79.dead)?p.p79.dead:[p.p79.dead]).length} tent. · ${(Array.isArray(p.p79.dead)?p.p79.dead:[p.p79.dead]).map(d=>d+"s").join(" / ")}</span></div>`:""); }
   const failHtml=e.type==="breaker"?`<div class="fail-toggle ${e.failed?'on':''}" id="failTog"><span class="box"></span> Simular recusa de abertura (50BF)</div>`:"";
   const syncHtml=e.sync?`<div class="fail-toggle ${syncedG[selected]?'on':''}" id="syncTog" style="${syncedG[selected]?'color:var(--mint)':''}"><span class="box" style="${syncedG[selected]?'background:var(--mint);border-color:var(--mint)':''}"></span> ${syncedG[selected]?'Sincronismo verificado (V, f, ângulo OK)':'Sincronizar (verificar V, f, ângulo)'}</div>`:"";
   host.innerHTML=`<div class="sel-id">${e.label}</div><div class="sel-type">${typeName} · ${e.kV} kV</div>
@@ -781,7 +903,9 @@ function renderPanel(){
   const ftg=document.getElementById("failTog"); if(ftg) ftg.onclick=()=>{ e.failed=!e.failed; log("auto",`${e.label}: recusa de abertura ${e.failed?"ARMADA":"desarmada"}.`); renderPanel(); };
   const stg=document.getElementById("syncTog"); if(stg) stg.onclick=()=>{ syncedG[selected]=!syncedG[selected]; log("auto",`${e.label}: sincronismo ${syncedG[selected]?"VERIFICADO (V, f, ângulo OK)":"cancelado"}.`); renderPanel(); };
 }
-function bindFault(id,kind){ const cf=document.getElementById("cmdFault"); if(cf) cf.onclick=()=>applyFault(id,kind);
+function bindFault(id,kind){ const ts=document.getElementById("ftypeSel"); if(ts) ts.onchange=()=>{ faultType=ts.value; };
+  const tt=document.getElementById("transTog"); if(tt) tt.onclick=()=>{ faultTransient=!faultTransient; renderPanel(); };
+  const cf=document.getElementById("cmdFault"); if(cf) cf.onclick=()=>applyFault(id,kind);
   const cr=document.getElementById("cmdRem"); if(cr) cr.onclick=()=>removeFault(); }
 function showBlock(msg){ const b=document.getElementById("blkMsg"); if(b){ b.textContent="⛔ "+msg; b.classList.add("show"); } }
 
@@ -790,7 +914,7 @@ function operate(id,newState){
   const chk=canOperate(id,newState);
   if(!chk.ok){ log("block","BLOQUEIO: "+chk.reason); if(currentScenario&&!scenDone) scenViolations++; render(); renderPanel(); showBlock(chk.reason); updateScenBar(); return; }
   e.state=newState;
-  if(newState==="closed") e.tripped=false;
+  if(newState==="closed"){ e.tripped=false; if(e.locked){ e.locked=false; log("auto",`${e.label}: religador rearmado (bloqueio 86 reposto).`); } }
   if(e.sync&&newState==="open") syncedG[id]=false;
   const verb=e.type==="ground"?(newState==="closed"?"ATERRAR":"DESATERRAR"):(newState==="closed"?"FECHAR":"ABRIR");
   log("cmd",`${verb} ${e.label}`);
@@ -798,19 +922,51 @@ function operate(id,newState){
   render(); renderPanel(); reportIslands();
   if(newState==="closed"&&activeFault){
     const fed=activeFault.kind==="transformer"?(computeEnergization().nodes.has(S.edges[activeFault.at].a)||computeEnergization().nodes.has(S.edges[activeFault.at].b)):computeEnergization().nodes.has(activeFault.at);
-    if(fed){ log("alarm","RELIGAMENTO SOBRE FALTA — proteção reatua."); if(currentScenario&&!scenDone) scenCatastrophic=true; doFaultSequence(activeFault.at,activeFault.kind); }
+    if(fed){ log("alarm","RELIGAMENTO SOBRE FALTA — proteção reatua."); if(currentScenario&&!scenDone) scenCatastrophic=true; doFaultSequence(activeFault.at,activeFault.kind,activeFault.ftype,activeFault.transient); }
   }
   checkObjective();
 }
-function doFaultSequence(at,kind){
-  const r=resolveFault(at,kind);
+/* 79 — religamento automático. Após a proteção isolar a falta, os disjuntores
+   tripados que possuem p79 religam após o tempo morto. Falta transitória →
+   sucesso e linha restabelecida; falta permanente → reatuação a cada tentativa
+   e, esgotadas as tentativas, BLOQUEIO (lockout / 86). */
+function runReclose(ids,at,kind,ftype,transient,tBase){
+  const p79=S.prot[ids[0]].p79; const deads=Array.isArray(p79.dead)?p79.dead:[p79.dead];
+  const labels=ids.map(i=>S.edges[i].label).join(", ");
+  let t=tBase;
+  for(let shot=1;shot<=deads.length;shot++){
+    t+=deads[shot-1];
+    ids.forEach(id=>{ S.edges[id].state="closed"; S.edges[id].tripped=false; });
+    log("trip",`t=${(t*1000).toFixed(0)} ms · 79 RELIGAMENTO tentativa ${shot}/${deads.length} → fecha ${labels}`);
+    if(transient){ clearFault();
+      log("auto",`Religamento ${shot} BEM-SUCEDIDO — falta transitória extinta, ${labels} restabelecido(s).`);
+      return; }
+    const rr=resolveFault(at,kind,ftype);
+    if(rr.ok&&rr.seq.length){ rr.seq.forEach(s=>log("trip",`t=${((s.t+t)*1000).toFixed(0)} ms · ${s.msg} [pós-religamento]`)); t+=rr.seq[rr.seq.length-1].t; }
+    log("alarm",`Religamento ${shot} sobre falta PERMANENTE — proteção reatua.`);
+  }
+  ids.forEach(id=>{ S.edges[id].state="open"; S.edges[id].tripped=true; S.edges[id].locked=true; });
+  log("alarm",`79 BLOQUEIO (lockout · 86) — ${labels} inibido(s). Repare a falta e rearme (fechamento manual).`);
+}
+function doFaultSequence(at,kind,ftype,transient){
+  ftype=ftype||"3ph";
+  const r=resolveFault(at,kind,ftype); if(activeFault) activeFault.transient=!!transient;
   if(!r.ok){ log("alarm","FALTA: "+r.reason); render(); renderPanel(); return; }
-  log("alarm",`FALTA 3φ em ${labelOf(at)} — If = ${(r.If/1000).toFixed(2)} kA @ ${r.kVf} kV`);
+  const gnd=(ftype==="1ph"||ftype==="2phg");
+  log("alarm",`FALTA ${FTYPES[ftype]}${transient?" (transitória)":""} em ${labelOf(at)} @ ${r.kVf} kV — Ifase = ${(r.If/1000).toFixed(2)} kA${gnd?` · 3I0 = ${(r.I3I0/1000).toFixed(2)} kA`:""}`);
+  if(r.note) log("auto",r.note);
   r.seq.forEach(s=>log("trip",`t=${(s.t*1000).toFixed(0)} ms · ${s.msg}`));
-  if(r.cleared) log("auto","Falta isolada pela proteção."); else log("alarm","⚠ FALTA NÃO ELIMINADA — verifique ajustes/recusas.");
+  if(r.seq.length){
+    if(r.cleared){
+      const reclosers=Object.keys(S.edges).filter(id=>S.edges[id].tripped&&S.edges[id].state==="open"&&S.prot[id]&&S.prot[id].p79);
+      const tBase=r.seq[r.seq.length-1].t;
+      if(reclosers.length) runReclose(reclosers,at,kind,ftype,transient,tBase);
+      else log("auto","Falta isolada pela proteção.");
+    } else log("alarm","⚠ FALTA NÃO ELIMINADA — verifique ajustes/recusas.");
+  }
   render(); renderPanel(); reportIslands();
 }
-function applyFault(at,kind){ if(activeFault) return; doFaultSequence(at,kind); }
+function applyFault(at,kind){ if(activeFault) return; doFaultSequence(at,kind,faultType,faultTransient); }
 function removeFault(){ if(!activeFault) return; log("auto",`Falta removida em ${labelOf(activeFault.at)} (reparo concluído).`); clearFault(); render(); renderPanel(); }
 
 /* SOE */
@@ -830,7 +986,7 @@ document.getElementById("btnFault").onclick=()=>{ if(activeFault) removeFault();
    ========================================================================= */
 const energ=()=>computeEnergization().nodes;
 function resetNormal(){ Object.keys(NORMAL).forEach(id=>{ if(S.edges[id]) S.edges[id].state=NORMAL[id]; });
-  Object.values(S.edges).forEach(e=>{ e.tripped=false; e.failed=false; }); clearFault(); syncedG={}; }
+  Object.values(S.edges).forEach(e=>{ e.tripped=false; e.failed=false; e.locked=false; }); clearFault(); syncedG={}; }
 let currentScenario=null, scenManeuvers=0, scenViolations=0, scenCatastrophic=false, scenDone=false, scenScore=null;
 function scoreKey(){ return "sim_scores_"+activeSub; }
 function loadScores(){ try{ return JSON.parse(localStorage.getItem(scoreKey())||"{}"); }catch(_){ return {}; } }
