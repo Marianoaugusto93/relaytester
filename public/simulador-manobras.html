@@ -216,7 +216,7 @@ SUBSTATIONS.A={
   sources:{
     LT1:{node:"LT1",kV:138,Scc_MVA:1500,XR:10,type:"grid",label:"LT 138 kV",x:280,y:52},
     LT2:{node:"LT2",kV:138,Scc_MVA:1500,XR:10,type:"grid",label:"LT 138 kV",x:840,y:52},
-    GER:{node:"GER",kV:13.8,MVA:15,Xdpp:0.18,XR:30,type:"gen",label:"GER-01",x:948,y:600}
+    GER:{node:"GER",kV:13.8,MVA:15,Xdpp:0.18,Xd2:0.22,XR:30,type:"gen",label:"GER-01",x:948,y:600}
   },
   feeders:{
     AL1:{node:"AL1",P:4.0,Q:1.9,r:0.30,xl:0.40,km:6,kV:13.8,label:"AL-01",x:200,y:600},
@@ -367,10 +367,10 @@ SUBSTATIONS.C={
   },
   sources:{
     SYS:{node:"SYS",kV:138,Scc_MVA:5000,XR:12,type:"grid",label:"SISTEMA 138 kV",x:600,y:46},
-    G1:{node:"G1",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G1",x:220,y:660},
-    G2:{node:"G2",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G2",x:400,y:660},
-    G3:{node:"G3",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G3",x:580,y:660},
-    G4:{node:"G4",kV:13.8,MVA:20,Xdpp:0.20,XR:30,type:"gen",label:"G4",x:760,y:660}
+    G1:{node:"G1",kV:13.8,MVA:20,Xdpp:0.20,Xd2:0.24,XR:30,type:"gen",label:"G1",x:220,y:660},
+    G2:{node:"G2",kV:13.8,MVA:20,Xdpp:0.20,Xd2:0.24,XR:30,type:"gen",label:"G2",x:400,y:660},
+    G3:{node:"G3",kV:13.8,MVA:20,Xdpp:0.20,Xd2:0.24,XR:30,type:"gen",label:"G3",x:580,y:660},
+    G4:{node:"G4",kV:13.8,MVA:20,Xdpp:0.20,Xd2:0.24,XR:30,type:"gen",label:"G4",x:760,y:660}
   },
   feeders:{
     AUX:{node:"AUX",P:3.0,Q:1.4,r:0.20,xl:0.30,km:1,kV:13.8,label:"SERV. AUX.",x:850,y:600}
@@ -505,7 +505,7 @@ function electricalSolve(E){
    REDES DE SEQUÊNCIA (0/1/2) — base p/ faltas 1φ / 2φ / 2φ-T e 50N/51N
    -------------------------------------------------------------------------
    Z1: fontes como shunt 1/Z1, trafos como série 1/Zt (igual ao solver 3φ).
-   Z2: aproximado = Z1 (Xd″≈Xd2 nas máquinas; passivo nos demais).
+   Z2: rede/trafo/linha = Z1 (passivos); máquinas usam Xd2 (≈(Xd″+Xq″)/2, def. Xdpp), XR2 (def. XR).
    Z0: topologia depende do grupo vetorial do trafo e do aterramento das
        fontes. Delta bloqueia a passagem; estrela-aterrada referencia à terra.
    ========================================================================= */
@@ -536,7 +536,11 @@ function seqSolve(E,seq){
   for(const p of Object.values(S.sources)){
     if(!E.nodes.has(p.node)) continue;
     const Z1=p.Scc_MVA?zFromXR(Sbase()/p.Scc_MVA,p.XR):zFromXR(p.Xdpp*(Sbase()/p.MVA),p.XR);
-    if(seq===1||seq===2){ addShunt(p.node,cinv(Z1)); }
+    if(seq===1){ addShunt(p.node,cinv(Z1)); }
+    else if(seq===2){
+      // seq-negativa: rede (grid) é simétrica (Z2=Z1); máquina usa Xd2≈(Xd″+Xq″)/2, default Xd″
+      const Z2=p.Scc_MVA?Z1:zFromXR((p.Xd2??p.Xdpp)*(Sbase()/p.MVA),p.XR2??p.XR);
+      addShunt(p.node,cinv(Z2)); }
     else { const grounded=p.type==="grid"?(p.grnd!==false):(p.grnd===true); if(!grounded) continue;
       let Z0=cscale(Z1,p.x0x1??1); if(p.Zg) Z0=cadd(Z0,cx(3*p.Zg,0)); addShunt(p.node,cinv(Z0)); }
   }
@@ -615,17 +619,17 @@ function resolveFault(at,kind,ftype){
   ftype=ftype||"3ph";
   const E=computeEnergization(); const sol=electricalSolve(E);
   if(kind!=="transformer"&&!E.nodes.has(at)) return {ok:false,reason:"Ponto de falta desenergizado — nada a proteger."};
-  const s1=seqSolve(E,1), s0=seqSolve(E,0);
+  const s1=seqSolve(E,1), s2=seqSolve(E,2), s0=seqSolve(E,0);
   /* nó elétrico e tensão do ponto de falta */
   let kvF, fn;
   if(kind==="feeder"){ kvF=S.feeders[at].kV; fn=at; }
   else if(kind==="bus"){ kvF=S.nodes[at].kV; fn=at; }
   else { const e=S.edges[at]; kvF=e.kVsec||e.kV; fn=e.b; }
-  let Z1=s1.zAt(fn); let Z0=s0.zAt(fn);
-  if(!Z1){ const e=S.edges[at]; Z1=s1.zAt(e?.a)||cx(0.5,0); if(Z0===null&&e) Z0=s0.zAt(e.a); }
+  let Z1=s1.zAt(fn); let Z2=s2.zAt(fn); let Z0=s0.zAt(fn);
+  if(!Z1){ const e=S.edges[at]; Z1=s1.zAt(e?.a)||cx(0.5,0); if(!Z2) Z2=s2.zAt(e?.a); if(Z0===null&&e) Z0=s0.zAt(e.a); }
   if(!Z1) return {ok:false,reason:kind==="bus"?"Barra desenergizada.":"Sem fonte para o ponto."};
-  if(kind==="feeder"){ Z1=cadd(Z1,feederZpu(at)); if(Z0) Z0=cadd(Z0,feederZ0pu(at)); }
-  const Z2=Z1;                                  // Z2 ≈ Z1 (aproximação didática)
+  if(!Z2) Z2=Z1;                                // sem retorno de seq-negativa → Z2≈Z1 (rede passiva)
+  if(kind==="feeder"){ Z1=cadd(Z1,feederZpu(at)); Z2=cadd(Z2,feederZpu(at)); if(Z0) Z0=cadd(Z0,feederZ0pu(at)); }
   /* correntes de sequência → fasores de fase → grandezas para a proteção */
   const sc=seqCurr(Z1,Z2,Z0,ftype);
   if(!sc) return {ok:true,If:0,I3I0:0,kVf:kvF,ftype,seq:[],cleared:false,

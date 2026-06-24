@@ -140,8 +140,9 @@ SUBSTATIONS.X = {
     // seq-zero: grid aterrado por padrão (grnd!==false); Z0 = x0x1·Z1 (def. x0x1=1).
     LT: { node:"NoLT", kV, Scc_MVA, XR, type:"grid", x0x1:1, label, x, y },
     // gerador: símbolo de círculo; impedância por Xd"/MVA
+    // seq-negativa: máquina usa Xd2 (≈(Xd″+Xq″)/2; def. = Xdpp se omitido); XR2 opcional (def. XR).
     // seq-zero: gerador NÃO aterrado por padrão (grnd:true p/ contribuir; Zg p/ aterr. por impedância).
-    G:  { node:"NoG", kV, MVA, Xdpp, XR, type:"gen", grnd:false, label, x, y },
+    G:  { node:"NoG", kV, MVA, Xdpp, Xd2, XR, type:"gen", grnd:false, label, x, y },
   },
 
   prot: {
@@ -315,7 +316,9 @@ setTimeout(()=>{
 
 ## 11. Limitações e simplificações atuais (v2)
 
-- **Faltas 3φ / 2φ (L-L) / 1φ (L-G) / 2φ-T** via redes de sequência. **Z2 ≈ Z1** (aproximação);
+- **Faltas 3φ / 2φ (L-L) / 1φ (L-G) / 2φ-T** via redes de sequência. **Z2 explícito**: rede/trafo/linha
+  passivos (Z2 = Z1); **máquinas usam `Xd2`** (≈(Xd″+Xq″)/2, def. Xdpp) e `XR2` opcional — faltas
+  desequilibradas perto de geradores ficam ~3-5% menores que com Z2 = Z1.
   **Z0** montado por grupo vetorial dos trafos e aterramento das fontes. Proteção de neutro **50N/51N**
   atua no lado aterrado (delta bloqueia 3I0). Curva real da seq-zero das linhas: `Z0 ≈ x0x1·Z1` (def. 3).
 - **Fluxo de carga radial aproximado** (somatório a jusante). Em malha (interligações fechadas) o fluxo nas ties é aproximado.
@@ -332,7 +335,15 @@ setTimeout(()=>{
 **Curto prazo**
 - ✅ Faltas **1φ/2φ/2φ-T**: redes de sequência (`Z0`, grupo vetorial dos trafos), proteção de **neutro 50N/51N** (2026-06-23).
 - ✅ **79 (religamento)** automático: ciclo de tentativas com tempo morto por tiro, sucesso em falta transitória, **bloqueio (86/lockout)** sobre falta permanente, rearme por fechamento manual (2026-06-23).
-- Refinos pendentes da seq-zero: `Z2` explícito (≠ Z1 nas máquinas), tap-ground real dos autotrafos (YNynd com terciário), seletor de impedância de falta `Zf`.
+- ✅ **`Z2` explícito** (≠ Z1 nas máquinas): geradores usam `Xd2` (def. Xdpp) e `XR2` opcional; rede/trafo/linha permanecem Z2 = Z1 (2026-06-24).
+- ⏭️ **PRÓXIMO RECOMENDADO — seletor de impedância de falta `Zf`** (falta resistiva / arco). Maior valor
+  pedagógico e autocontido. Plano:
+  1. UI: campo `Zf` (Ω, def. 0 = falta sólida) no painel de seleção, junto ao seletor de tipo de falta (`FTYPES`).
+  2. Converter para pu na base do ponto: `zfPu = Zf / (kVf²/Sbase)`; somar como impedância de falta nas redes
+     de sequência em `seqCurr` — 3φ: `Z1+Zf`; 2φ: `Z1+Z2+Zf`; 1φ: `Z1+Z2+Z0+3·Zf`; 2φ-T: `Zf` no ramo de terra (`3·Zf` em Z0).
+  3. Refletir no SOE: registrar `Zf` aplicado e mostrar a corrente reduzida e o tempo de 51 maior.
+  4. Validar (jsdom): `Zf=0` reproduz os valores atuais; `Zf>0` reduz `If` e aumenta `opTime`.
+- Refinos pendentes da seq-zero: tap-ground real dos autotrafos (YNynd com terciário).
 - 79 — possíveis evoluções: tempo de religamento (reclaim) com rearme automático, 1º tiro rápido (instantâneo) + tiros lentos, bloqueio de 79 por 50BF/87.
 - Exportar **relatório de desempenho** do aluno (CSV/PDF) e SOE.
 
