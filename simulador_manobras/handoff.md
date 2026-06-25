@@ -321,6 +321,9 @@ setTimeout(()=>{
   desequilibradas perto de geradores ficam ~3-5% menores que com Z2 = Z1.
   **Z0** montado por grupo vetorial dos trafos e aterramento das fontes. Proteção de neutro **50N/51N**
   atua no lado aterrado (delta bloqueia 3I0). Curva real da seq-zero das linhas: `Z0 ≈ x0x1·Z1` (def. 3).
+  **Impedância de falta `Zf`** (Ω, resistiva/arco) disponível no painel: 0 = falta sólida; `Zf>0` reduz a
+  corrente e atrasa o 51. Modelada como `3·Zf` no ramo de terra para faltas à terra (não distingue
+  resistência de arco por fase vs. resistência de aterramento).
 - **Fluxo de carga radial aproximado** (somatório a jusante). Em malha (interligações fechadas) o fluxo nas ties é aproximado.
 - **Tensões aproximadas** (queda série, sem iteração).
 - **87T/87B por zona** (pertencimento topológico), não por cálculo real de corrente diferencial/slope.
@@ -336,14 +339,12 @@ setTimeout(()=>{
 - ✅ Faltas **1φ/2φ/2φ-T**: redes de sequência (`Z0`, grupo vetorial dos trafos), proteção de **neutro 50N/51N** (2026-06-23).
 - ✅ **79 (religamento)** automático: ciclo de tentativas com tempo morto por tiro, sucesso em falta transitória, **bloqueio (86/lockout)** sobre falta permanente, rearme por fechamento manual (2026-06-23).
 - ✅ **`Z2` explícito** (≠ Z1 nas máquinas): geradores usam `Xd2` (def. Xdpp) e `XR2` opcional; rede/trafo/linha permanecem Z2 = Z1 (2026-06-24).
-- ⏭️ **PRÓXIMO RECOMENDADO — seletor de impedância de falta `Zf`** (falta resistiva / arco). Maior valor
-  pedagógico e autocontido. Plano:
-  1. UI: campo `Zf` (Ω, def. 0 = falta sólida) no painel de seleção, junto ao seletor de tipo de falta (`FTYPES`).
-  2. Converter para pu na base do ponto: `zfPu = Zf / (kVf²/Sbase)`; somar como impedância de falta nas redes
-     de sequência em `seqCurr` — 3φ: `Z1+Zf`; 2φ: `Z1+Z2+Zf`; 1φ: `Z1+Z2+Z0+3·Zf`; 2φ-T: `Zf` no ramo de terra (`3·Zf` em Z0).
-  3. Refletir no SOE: registrar `Zf` aplicado e mostrar a corrente reduzida e o tempo de 51 maior.
-  4. Validar (jsdom): `Zf=0` reproduz os valores atuais; `Zf>0` reduz `If` e aumenta `opTime`.
-- Refinos pendentes da seq-zero: tap-ground real dos autotrafos (YNynd com terciário).
+- ✅ **Seletor de impedância de falta `Zf`** (falta resistiva / arco) (2026-06-25):
+  - UI: campo `Zf` (Ω, def. 0 = falta sólida) no painel de seleção, abaixo do tipo de falta (`faultPickHTML`/`bindFault`, estado `faultZf`).
+  - Motor: `seqCurr(Z1,Z2,Z0,ftype,zf)` soma a impedância de falta — 3φ `Z1+Zf`; 2φ `Z1+Z2+Zf`; 1φ `Z1+Z2+Z0+3·Zf`; 2φ-T `Z0+3·Zf` no ramo de terra. `resolveFault` converte `zfPu = Zf/(kVf²/Sbase)` e encadeia por `doFaultSequence`/`runReclose`/`applyFault` (persistido em `activeFault.zf` p/ religamento).
+  - SOE: registra `Zf` aplicado; corrente reduzida e tempo de 51 maior visíveis.
+  - Validado (jsdom): `Zf=0` reproduz exatamente os valores atuais; `Zf>0` reduz `If` (3φ/2φ) e `3I0` (1φ/2φ-T) monotonicamente, com 51 mais lento.
+- ⏭️ **PRÓXIMO RECOMENDADO — refinos da seq-zero**: tap-ground real dos autotrafos (YNynd com terciário).
 - 79 — possíveis evoluções: tempo de religamento (reclaim) com rearme automático, 1º tiro rápido (instantâneo) + tiros lentos, bloqueio de 79 por 50BF/87.
 - Exportar **relatório de desempenho** do aluno (CSV/PDF) e SOE.
 

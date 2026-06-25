@@ -87,8 +87,10 @@
   .fault-btn:hover{background:rgba(255,107,107,.2)}
   .fault-pick{margin-top:14px}
   .fault-pick label{display:block;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-dim);font-weight:700;margin-bottom:5px}
-  .fault-pick select{width:100%;padding:7px 9px;border-radius:8px;background:var(--navy-panel);color:var(--ink);
+  .fault-pick select,.fault-pick input{width:100%;padding:7px 9px;border-radius:8px;background:var(--navy-panel);color:var(--ink);
     border:1px solid var(--navy-line);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer}
+  .fault-pick input{cursor:text}
+  .fault-pick .hint{font-size:10px;color:var(--ink-dim);margin-top:4px;font-weight:500;text-transform:none;letter-spacing:0}
   .fault-pick+.fault-btn{margin-top:8px}
   .fail-toggle{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-dim);cursor:pointer}
   .fail-toggle .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--slate);flex:none}
@@ -562,17 +564,21 @@ function seqSolve(E,seq){
   return { zAt(node){ if(!E.nodes.has(node)) return null; const i=idx[sn(node)]; if(i===undefined) return null; return Zdiag[i]??null; } };
 }
 
-/* correntes de sequência por tipo de falta (E=1∠0 pu) */
-function seqCurr(Z1,Z2,Z0,ftype){
+/* correntes de sequência por tipo de falta (E=1∠0 pu)
+   zf = impedância de falta (pu, resistiva/arco). 3φ: Z1+Zf; 2φ: Z1+Z2+Zf;
+   1φ: Z1+Z2+Z0+3·Zf; 2φ-T: 3·Zf no ramo de terra (Z0+3·Zf). */
+function seqCurr(Z1,Z2,Z0,ftype,zf){
   const E=cx(1,0), Z=cadd; const zero=cx(0,0);
-  if(ftype==="3ph"){ const I1=cdiv(E,Z1); return {I0:zero,I1,I2:zero}; }
-  if(ftype==="2ph"){ const I1=cdiv(E,Z(Z1,Z2)); return {I0:zero,I1,I2:cx(-I1.re,-I1.im)}; }
-  if(ftype==="1ph"){ if(!Z0) return null; const I=cdiv(E,Z(Z(Z1,Z2),Z0)); return {I0:I,I1:I,I2:I}; }
-  if(ftype==="2phg"){ if(!Z0) return seqCurr(Z1,Z2,Z0,"2ph"); /* sem terra → vira L-L */
-    const Zp=cdiv(cmul(Z2,Z0),Z(Z2,Z0)); const I1=cdiv(E,Z(Z1,Zp));
-    const I2=cmul(I1,cdiv(cx(-Z0.re,-Z0.im),Z(Z2,Z0))); const I0=cmul(I1,cdiv(cx(-Z2.re,-Z2.im),Z(Z2,Z0)));
+  const zf1=zf||zero, zf3=cx(3*zf1.re,3*zf1.im);
+  if(ftype==="3ph"){ const I1=cdiv(E,Z(Z1,zf1)); return {I0:zero,I1,I2:zero}; }
+  if(ftype==="2ph"){ const I1=cdiv(E,Z(Z(Z1,Z2),zf1)); return {I0:zero,I1,I2:cx(-I1.re,-I1.im)}; }
+  if(ftype==="1ph"){ if(!Z0) return null; const I=cdiv(E,Z(Z(Z(Z1,Z2),Z0),zf3)); return {I0:I,I1:I,I2:I}; }
+  if(ftype==="2phg"){ if(!Z0) return seqCurr(Z1,Z2,Z0,"2ph",zf); /* sem terra → vira L-L */
+    const Z0g=Z(Z0,zf3);                                       // terra através de 3·Zf
+    const Zp=cdiv(cmul(Z2,Z0g),Z(Z2,Z0g)); const I1=cdiv(E,Z(Z1,Zp));
+    const I2=cmul(I1,cdiv(cx(-Z0g.re,-Z0g.im),Z(Z2,Z0g))); const I0=cmul(I1,cdiv(cx(-Z2.re,-Z2.im),Z(Z2,Z0g)));
     return {I0,I1,I2}; }
-  const I1=cdiv(E,Z1); return {I0:zero,I1,I2:zero};
+  const I1=cdiv(E,Z(Z1,zf1)); return {I0:zero,I1,I2:zero};
 }
 /* componentes simétricas → fasores de fase */
 const AOP=cx(Math.cos(2*Math.PI/3),Math.sin(2*Math.PI/3)), AOP2=cx(Math.cos(-2*Math.PI/3),Math.sin(-2*Math.PI/3));
@@ -615,8 +621,8 @@ const T_50BF=0.20;
 function breakersOnBus(bus){ return Object.keys(S.edges).filter(id=>{ const e=S.edges[id]; return e.type==="breaker"&&(e.a===bus||e.b===bus); }); }
 function pathBreakers(node,parentEdge){ const path=[]; let cur=node,g=0; while(parentEdge[cur]&&g++<60){ const pe=parentEdge[cur]; if(S.edges[pe.id].type==="breaker") path.push(pe.id); cur=pe.from; } return path; }
 
-function resolveFault(at,kind,ftype){
-  ftype=ftype||"3ph";
+function resolveFault(at,kind,ftype,zf){
+  ftype=ftype||"3ph"; zf=Math.max(0,+zf||0);
   const E=computeEnergization(); const sol=electricalSolve(E);
   if(kind!=="transformer"&&!E.nodes.has(at)) return {ok:false,reason:"Ponto de falta desenergizado — nada a proteger."};
   const s1=seqSolve(E,1), s2=seqSolve(E,2), s0=seqSolve(E,0);
@@ -630,15 +636,17 @@ function resolveFault(at,kind,ftype){
   if(!Z1) return {ok:false,reason:kind==="bus"?"Barra desenergizada.":"Sem fonte para o ponto."};
   if(!Z2) Z2=Z1;                                // sem retorno de seq-negativa → Z2≈Z1 (rede passiva)
   if(kind==="feeder"){ Z1=cadd(Z1,feederZpu(at)); Z2=cadd(Z2,feederZpu(at)); if(Z0) Z0=cadd(Z0,feederZ0pu(at)); }
+  /* impedância de falta (Ω) → pu na base do ponto: Zb = kVf²/Sbase */
+  const zfPu=zf>0?cx(zf/(kvF*kvF/Sbase()),0):null;
   /* correntes de sequência → fasores de fase → grandezas para a proteção */
-  const sc=seqCurr(Z1,Z2,Z0,ftype);
-  if(!sc) return {ok:true,If:0,I3I0:0,kVf:kvF,ftype,seq:[],cleared:false,
+  const sc=seqCurr(Z1,Z2,Z0,ftype,zfPu);
+  if(!sc) return {ok:true,If:0,I3I0:0,kVf:kvF,ftype,zf,seq:[],cleared:false,
     note:`Ponto sem retorno de sequência-zero (sistema não aterrado aqui) — falta ${FTYPES[ftype]} produz corrente de terra desprezível.`};
   const ph=abcFromSeq(sc); const Ib=ibase(kvF);
   const Iph=Math.max(cabs(ph.Ia),cabs(ph.Ib),cabs(ph.Ic))*Ib;   // maior corrente de fase (50/51)
   const I3I0=3*cabs(sc.I0)*Ib;                                   // corrente de terra 3I0 (50N/51N)
   const If=Iph;
-  activeFault={at,kind,ftype,If,I3I0,kV:kvF};
+  activeFault={at,kind,ftype,zf,If,I3I0,kV:kvF};
   const closedOnly=ids=>ids.filter(id=>S.edges[id].state==="closed");
   const ops=[];
   if(kind==="transformer"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(z.trips),by:`87T ${S.edges[at].label}`}); }
@@ -661,7 +669,7 @@ function resolveFault(at,kind,ftype){
       }
     } else if(e.type==="transformer"){ if(!trZ0Model(e).through) gndReach=false; }  // delta bloqueia 3I0 a montante
   }
-  if(!ops.length) return {ok:true,If,I3I0,kVf:kvF,ftype,seq:[],cleared:false,note:"Nenhuma proteção sensibilizada."};
+  if(!ops.length) return {ok:true,If,I3I0,kVf:kvF,ftype,zf,seq:[],cleared:false,note:"Nenhuma proteção sensibilizada."};
   ops.sort((a,b)=>a.t-b.t);
   const seq=[]; let cleared=false, bfTime=null;
   for(const op of ops){ const opened=[];
@@ -674,7 +682,7 @@ function resolveFault(at,kind,ftype){
       const stillFed=kind==="transformer"?(liveNow.has(S.edges[at].a)||liveNow.has(S.edges[at].b)):liveNow.has(at);
       if(!stillFed){ cleared=true; break; } } }
   seq.sort((a,b)=>a.t-b.t);
-  return {ok:true,If,I3I0,kVf:kvF,ftype,seq,cleared};
+  return {ok:true,If,I3I0,kVf:kvF,ftype,zf,seq,cleared};
 }
 function clearFault(){ activeFault=null; }
 
@@ -824,11 +832,14 @@ function renderLegend(){
 /* =========================================================================
    HMI / PAINEL
    ========================================================================= */
-let faultType="3ph", faultTransient=false;
+let faultType="3ph", faultTransient=false, faultZf=0;
 function select(id){ selected=id; render(); renderPanel(); }
 function labelOf(id){ if(S.edges[id]) return S.edges[id].label; if(S.nodes[id]&&S.nodes[id].label) return S.nodes[id].label; if(S.feeders[id]) return S.feeders[id].label; return id; }
 function faultPickHTML(label){ return `<div class="fault-pick"><label for="ftypeSel">Tipo de falta</label>
   <select id="ftypeSel">${Object.entries(FTYPES).map(([k,v])=>`<option value="${k}"${k===faultType?" selected":""}>${v}</option>`).join("")}</select></div>
+  <div class="fault-pick"><label for="zfInp">Impedância de falta Zf (Ω)</label>
+  <input id="zfInp" type="number" min="0" step="0.5" value="${faultZf}" inputmode="decimal">
+  <div class="hint">0 = falta sólida. Zf &gt; 0 (arco/resistiva) reduz a corrente e atrasa o 51.</div></div>
   <div class="fail-toggle ${faultTransient?'on':''}" id="transTog"><span class="box"></span> Falta transitória (extingue-se no tempo morto do 79)</div>
   <button class="fault-btn" id="cmdFault">⚡ Aplicar falta — ${label}</button>`; }
 function renderPanel(){
@@ -908,6 +919,7 @@ function renderPanel(){
   const stg=document.getElementById("syncTog"); if(stg) stg.onclick=()=>{ syncedG[selected]=!syncedG[selected]; log("auto",`${e.label}: sincronismo ${syncedG[selected]?"VERIFICADO (V, f, ângulo OK)":"cancelado"}.`); renderPanel(); };
 }
 function bindFault(id,kind){ const ts=document.getElementById("ftypeSel"); if(ts) ts.onchange=()=>{ faultType=ts.value; };
+  const zi=document.getElementById("zfInp"); if(zi) zi.oninput=()=>{ faultZf=Math.max(0,+zi.value||0); };
   const tt=document.getElementById("transTog"); if(tt) tt.onclick=()=>{ faultTransient=!faultTransient; renderPanel(); };
   const cf=document.getElementById("cmdFault"); if(cf) cf.onclick=()=>applyFault(id,kind);
   const cr=document.getElementById("cmdRem"); if(cr) cr.onclick=()=>removeFault(); }
@@ -926,7 +938,7 @@ function operate(id,newState){
   render(); renderPanel(); reportIslands();
   if(newState==="closed"&&activeFault){
     const fed=activeFault.kind==="transformer"?(computeEnergization().nodes.has(S.edges[activeFault.at].a)||computeEnergization().nodes.has(S.edges[activeFault.at].b)):computeEnergization().nodes.has(activeFault.at);
-    if(fed){ log("alarm","RELIGAMENTO SOBRE FALTA — proteção reatua."); if(currentScenario&&!scenDone) scenCatastrophic=true; doFaultSequence(activeFault.at,activeFault.kind,activeFault.ftype,activeFault.transient); }
+    if(fed){ log("alarm","RELIGAMENTO SOBRE FALTA — proteção reatua."); if(currentScenario&&!scenDone) scenCatastrophic=true; doFaultSequence(activeFault.at,activeFault.kind,activeFault.ftype,activeFault.transient,activeFault.zf); }
   }
   checkObjective();
 }
@@ -934,7 +946,7 @@ function operate(id,newState){
    tripados que possuem p79 religam após o tempo morto. Falta transitória →
    sucesso e linha restabelecida; falta permanente → reatuação a cada tentativa
    e, esgotadas as tentativas, BLOQUEIO (lockout / 86). */
-function runReclose(ids,at,kind,ftype,transient,tBase){
+function runReclose(ids,at,kind,ftype,transient,tBase,zf){
   const p79=S.prot[ids[0]].p79; const deads=Array.isArray(p79.dead)?p79.dead:[p79.dead];
   const labels=ids.map(i=>S.edges[i].label).join(", ");
   let t=tBase;
@@ -945,32 +957,33 @@ function runReclose(ids,at,kind,ftype,transient,tBase){
     if(transient){ clearFault();
       log("auto",`Religamento ${shot} BEM-SUCEDIDO — falta transitória extinta, ${labels} restabelecido(s).`);
       return; }
-    const rr=resolveFault(at,kind,ftype);
+    const rr=resolveFault(at,kind,ftype,zf);
     if(rr.ok&&rr.seq.length){ rr.seq.forEach(s=>log("trip",`t=${((s.t+t)*1000).toFixed(0)} ms · ${s.msg} [pós-religamento]`)); t+=rr.seq[rr.seq.length-1].t; }
     log("alarm",`Religamento ${shot} sobre falta PERMANENTE — proteção reatua.`);
   }
   ids.forEach(id=>{ S.edges[id].state="open"; S.edges[id].tripped=true; S.edges[id].locked=true; });
   log("alarm",`79 BLOQUEIO (lockout · 86) — ${labels} inibido(s). Repare a falta e rearme (fechamento manual).`);
 }
-function doFaultSequence(at,kind,ftype,transient){
-  ftype=ftype||"3ph";
-  const r=resolveFault(at,kind,ftype); if(activeFault) activeFault.transient=!!transient;
+function doFaultSequence(at,kind,ftype,transient,zf){
+  ftype=ftype||"3ph"; zf=Math.max(0,+zf||0);
+  const r=resolveFault(at,kind,ftype,zf); if(activeFault) activeFault.transient=!!transient;
   if(!r.ok){ log("alarm","FALTA: "+r.reason); render(); renderPanel(); return; }
   const gnd=(ftype==="1ph"||ftype==="2phg");
-  log("alarm",`FALTA ${FTYPES[ftype]}${transient?" (transitória)":""} em ${labelOf(at)} @ ${r.kVf} kV — Ifase = ${(r.If/1000).toFixed(2)} kA${gnd?` · 3I0 = ${(r.I3I0/1000).toFixed(2)} kA`:""}`);
+  const zfTag=zf>0?` · Zf = ${zf} Ω (arco/resistiva)`:"";
+  log("alarm",`FALTA ${FTYPES[ftype]}${transient?" (transitória)":""} em ${labelOf(at)} @ ${r.kVf} kV — Ifase = ${(r.If/1000).toFixed(2)} kA${gnd?` · 3I0 = ${(r.I3I0/1000).toFixed(2)} kA`:""}${zfTag}`);
   if(r.note) log("auto",r.note);
   r.seq.forEach(s=>log("trip",`t=${(s.t*1000).toFixed(0)} ms · ${s.msg}`));
   if(r.seq.length){
     if(r.cleared){
       const reclosers=Object.keys(S.edges).filter(id=>S.edges[id].tripped&&S.edges[id].state==="open"&&S.prot[id]&&S.prot[id].p79);
       const tBase=r.seq[r.seq.length-1].t;
-      if(reclosers.length) runReclose(reclosers,at,kind,ftype,transient,tBase);
+      if(reclosers.length) runReclose(reclosers,at,kind,ftype,transient,tBase,zf);
       else log("auto","Falta isolada pela proteção.");
     } else log("alarm","⚠ FALTA NÃO ELIMINADA — verifique ajustes/recusas.");
   }
   render(); renderPanel(); reportIslands();
 }
-function applyFault(at,kind){ if(activeFault) return; doFaultSequence(at,kind,faultType,faultTransient); }
+function applyFault(at,kind){ if(activeFault) return; doFaultSequence(at,kind,faultType,faultTransient,faultZf); }
 function removeFault(){ if(!activeFault) return; log("auto",`Falta removida em ${labelOf(activeFault.at)} (reparo concluído).`); clearFault(); render(); renderPanel(); }
 
 /* SOE */
