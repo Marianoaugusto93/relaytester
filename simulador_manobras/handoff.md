@@ -129,6 +129,9 @@ SUBSTATIONS.X = {
     // transformador (a = lado de cima/HV, b = lado de baixo/LV)
     // `vector` define o modelo de sequência-zero: "Dyn" (delta AT / estrela-aterr. BT),
     // "YNd" (estrela-aterr. AT / delta BT), "YNyn" (ambos aterr.: série), "Dd"/"Yy" (bloqueia).
+    // "YNynd" (autotrafo/3-enrol. c/ terciário delta): T de seq-zero ZH/ZL/ZT com ponto-estrela
+    //   aterrado pelo terciário → fonte de 3I0 dos dois lados. Requer ensaios `Zht`/`Zlt` (% na
+    //   base `mva`; def.=Zpct) e opcional `tert` (kV do terciário, só rótulo no painel).
     TR: { type:"transformer", a, b, kV, kVsec, mva, Zpct, XR, vector:"Dyn",
           label, ratio:"138/13,8", x, y },
     // lâmina de terra (um terminal → nó aterrado)
@@ -234,7 +237,7 @@ Retorna `{ok, reason}`. Regras:
 
 ### SE-B — 230/69/13,8 kV (três níveis + linhas paralelas)
 - **2 LTs 230 kV em paralelo** → barra 230 kV.
-- Autotransformador 230/69 (100 MVA, 12%) → barra 69 kV.
+- Autotransformador 230/69 (100 MVA, 12%, **terciário delta `YNynd`** — fonte de 3I0) → barra 69 kV.
 - Barra 69 kV: 1 linha de 69 kV (saída) + trafo 69/13,8 (25 MVA) → barra 13,8 kV com 2 alimentadores.
 - Rede 230 kV: 8000 MVA, X/R 12.
 
@@ -324,6 +327,9 @@ setTimeout(()=>{
   **Impedância de falta `Zf`** (Ω, resistiva/arco) disponível no painel: 0 = falta sólida; `Zf>0` reduz a
   corrente e atrasa o 51. Modelada como `3·Zf` no ramo de terra para faltas à terra (não distingue
   resistência de arco por fase vs. resistência de aterramento).
+  **Autotrafo com terciário delta (`YNynd`)**: modelado pelo T de seq-zero (ZH/ZL/ZT) com o ponto-estrela
+  aterrado pelo terciário — fonte de 3I0 dos dois lados. Braço negativo do T (normal em autotrafo) é
+  limitado a ~0 (rede passiva). Terciário tratado só como caminho de seq-zero (sem carga/curto no delta).
 - **Fluxo de carga radial aproximado** (somatório a jusante). Em malha (interligações fechadas) o fluxo nas ties é aproximado.
 - **Tensões aproximadas** (queda série, sem iteração).
 - **87T/87B por zona** (pertencimento topológico), não por cálculo real de corrente diferencial/slope.
@@ -344,7 +350,13 @@ setTimeout(()=>{
   - Motor: `seqCurr(Z1,Z2,Z0,ftype,zf)` soma a impedância de falta — 3φ `Z1+Zf`; 2φ `Z1+Z2+Zf`; 1φ `Z1+Z2+Z0+3·Zf`; 2φ-T `Z0+3·Zf` no ramo de terra. `resolveFault` converte `zfPu = Zf/(kVf²/Sbase)` e encadeia por `doFaultSequence`/`runReclose`/`applyFault` (persistido em `activeFault.zf` p/ religamento).
   - SOE: registra `Zf` aplicado; corrente reduzida e tempo de 51 maior visíveis.
   - Validado (jsdom): `Zf=0` reproduz exatamente os valores atuais; `Zf>0` reduz `If` (3φ/2φ) e `3I0` (1φ/2φ-T) monotonicamente, com 51 mais lento.
-- ⏭️ **PRÓXIMO RECOMENDADO — refinos da seq-zero**: tap-ground real dos autotrafos (YNynd com terciário).
+- ✅ **Terciário delta do autotrafo (`YNynd`)** (2026-06-25): modelo T de seq-zero (ZH/ZL/ZT a partir de
+  `Zpct`=ZHL + ensaios `Zht`/`Zlt`), ponto-estrela aterrado pelo terciário (`tr3wZ0`); `seqSolve` adiciona
+  nó-estrela interno na rede Z0. Autotrafo da SE-B (`TRAT`) migrado para `YNynd` (Zht 20%, Zlt 16%).
+  Validado (jsdom): Z0 finito nos dois lados; 1φ@69 kV = 7,33 kA com terciário vs 6,63 kA no série puro
+  (Δ≈700 A); regressão SE-A (6,28 kA) e SE-C (20,92 kA) intactas.
+- ⏭️ **PRÓXIMO RECOMENDADO — relatório de desempenho do aluno** (exportar SOE + pontuação em CSV/PDF),
+  ou novas proteções de linha (67 direcional / 21 distância).
 - 79 — possíveis evoluções: tempo de religamento (reclaim) com rearme automático, 1º tiro rápido (instantâneo) + tiros lentos, bloqueio de 79 por 50BF/87.
 - Exportar **relatório de desempenho** do aluno (CSV/PDF) e SOE.
 

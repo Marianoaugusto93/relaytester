@@ -292,7 +292,7 @@ SUBSTATIONS.B={
     SC2:{type:"disconnector",a:"LT2",b:"M2",state:"closed",series:"DJ2",kV:230,label:"SC-2",x:520,y:96},
     DJ2:{type:"breaker",a:"M2",b:"B230",state:"closed",kV:230,label:"DJ-LT2",x:520,y:134},
     DJATH:{type:"breaker",a:"B230",b:"ATP",state:"closed",kV:230,label:"DJ-ATH",x:680,y:205},
-    TRAT:{type:"transformer",a:"ATP",b:"ATS",kV:230,kVsec:69,mva:100,Zpct:12,XR:30,vector:"YNyn",label:"AT 230/69",ratio:"230/69",x:680,y:272},
+    TRAT:{type:"transformer",a:"ATP",b:"ATS",kV:230,kVsec:69,mva:100,Zpct:12,XR:30,vector:"YNynd",Zht:20,Zlt:16,tert:13.8,label:"AT 230/69",ratio:"230/69",x:680,y:272},
     DJATL:{type:"breaker",a:"ATS",b:"B69",state:"closed",kV:69,label:"DJ-ATL",x:680,y:344},
     DJF69:{type:"breaker",a:"B69",b:"F69",state:"closed",kV:69,label:"DJ-LT69",x:400,y:414},
     DJT2H:{type:"breaker",a:"B69",b:"T2P",state:"closed",kV:69,label:"DJ-T2H",x:720,y:412},
@@ -516,10 +516,23 @@ const Z0MODELS={
   "DYN": {through:false,gndA:false,gndB:true },  // delta AT · estrela-aterr. BT
   "YND": {through:false,gndA:true, gndB:false},  // estrela-aterr. AT · delta BT
   "YNYN":{through:true, gndA:false,gndB:false},  // ambos estrela-aterr.: série
+  "YNYND":{through:true,gndA:false,gndB:false,tertiary:true}, // autotrafo/3-enrol. c/ terciário delta: T (ZH-ZL-ZT) c/ ponto-estrela aterrado pelo terciário
   "DD":  {through:false,gndA:false,gndB:false},  // delta-delta: bloqueia
   "YY":  {through:false,gndA:false,gndB:false}   // estrela isolada: bloqueia
 };
 function trZ0Model(e){ return Z0MODELS[(e.vector||"YNYN").toUpperCase()]||Z0MODELS["YNYN"]; }
+/* sequência-zero do 3-enrolamentos (autotrafo c/ terciário delta) → estrela ZH/ZL/ZT (pu).
+   ZHL=Zpct nameplate; ZHT/ZLT dos ensaios H-T e L-T (def.=Zpct). Terciário delta curto-circuita
+   o enrolamento T em seq-zero → ponto-estrela aterrado por ZT. Braço negativo (normal em autotrafo)
+   é limitado a ~0 (não-físico no modelo passivo de rede). */
+function tr3wZ0(e){
+  const base=Sbase()/e.mva;
+  const zhl=(e.Zpct/100)*base, zht=((e.Zht??e.Zpct)/100)*base, zlt=((e.Zlt??e.Zpct)/100)*base;
+  const cl=v=>Math.max(1e-4,v);
+  return { zh:zFromXR(cl(0.5*(zhl+zht-zlt)),e.XR),
+           zl:zFromXR(cl(0.5*(zhl+zlt-zht)),e.XR),
+           zt:zFromXR(cl(0.5*(zht+zlt-zhl)),e.XR) };
+}
 const cscale=(z,k)=>cx(z.re*k,z.im*k);
 function feederZ0pu(ln){ const f=S.feeders[ln]; const Zb=f.kV*f.kV/Sbase(); const k=f.x0x1??3; return cx(f.r*k*f.km/Zb,f.xl*k*f.km/Zb); }
 
@@ -529,12 +542,17 @@ function seqSolve(E,seq){
   const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
   for(const e of Object.values(S.edges)) if((e.type==="breaker"||e.type==="disconnector")&&e.state==="closed") parent[find(e.a)]=find(e.b);
   const sn=n=>find(n);
-  const live=[...new Set([...E.nodes].map(sn))]; const idx={}; live.forEach((s,i)=>idx[s]=i); const n=live.length;
+  const live=[...new Set([...E.nodes].map(sn))];
+  // nós-estrela internos (seq-zero) dos trafos de 3 enrolamentos com terciário delta
+  const stars=seq===0?Object.entries(S.edges).filter(([id,e])=>e.type==="transformer"&&trZ0Model(e).tertiary&&E.nodes.has(e.a)&&E.nodes.has(e.b)).map(([id])=>"__star_"+id):[];
+  const idx={}; live.forEach((s,i)=>idx[s]=i); stars.forEach((s,i)=>idx[s]=live.length+i);
+  const n=live.length+stars.length;
+  const ix=k=>k.startsWith("__star_")?idx[k]:idx[sn(k)];   // nó-estrela: índice direto; nó real: via supernó
   const Y=Array.from({length:n},()=>Array.from({length:n},()=>cx(0,0)));
   const adj=Array.from({length:n},()=>[]); const shunted=new Array(n).fill(false);
-  const addSeries=(a,b,y)=>{ const i=idx[sn(a)],j=idx[sn(b)]; if(i===undefined||j===undefined||i===j) return;
+  const addSeries=(a,b,y)=>{ const i=ix(a),j=ix(b); if(i===undefined||j===undefined||i===j) return;
     Y[i][i]=cadd(Y[i][i],y);Y[j][j]=cadd(Y[j][j],y);Y[i][j]=csub(Y[i][j],y);Y[j][i]=csub(Y[j][i],y); adj[i].push(j);adj[j].push(i); };
-  const addShunt=(node,y)=>{ const i=idx[sn(node)]; if(i===undefined) return; Y[i][i]=cadd(Y[i][i],y); shunted[i]=true; };
+  const addShunt=(node,y)=>{ const i=ix(node); if(i===undefined) return; Y[i][i]=cadd(Y[i][i],y); shunted[i]=true; };
   for(const p of Object.values(S.sources)){
     if(!E.nodes.has(p.node)) continue;
     const Z1=p.Scc_MVA?zFromXR(Sbase()/p.Scc_MVA,p.XR):zFromXR(p.Xdpp*(Sbase()/p.MVA),p.XR);
@@ -546,12 +564,14 @@ function seqSolve(E,seq){
     else { const grounded=p.type==="grid"?(p.grnd!==false):(p.grnd===true); if(!grounded) continue;
       let Z0=cscale(Z1,p.x0x1??1); if(p.Zg) Z0=cadd(Z0,cx(3*p.Zg,0)); addShunt(p.node,cinv(Z0)); }
   }
-  for(const e of Object.values(S.edges)){
+  for(const [id,e] of Object.entries(S.edges)){
     if(e.type!=="transformer") continue; if(!E.nodes.has(e.a)||!E.nodes.has(e.b)) continue;
     const zt=trZpu(e);
     if(seq===1||seq===2){ addSeries(e.a,e.b,cinv(zt)); }
     else { const m=trZ0Model(e);
-      if(m.through){ addSeries(e.a,e.b,cinv(zt)); }
+      if(m.tertiary){ const w=tr3wZ0(e); const star="__star_"+id;  // T (ZH-ZL-ZT): série H↔estrela↔L + estrela aterrada pelo terciário delta
+        addSeries(e.a,star,cinv(w.zh)); addSeries(e.b,star,cinv(w.zl)); addShunt(star,cinv(w.zt)); }
+      else if(m.through){ addSeries(e.a,e.b,cinv(zt)); }
       else { if(m.gndA) addShunt(e.a,cinv(zt)); if(m.gndB) addShunt(e.b,cinv(zt)); } }
   }
   const comp=new Array(n).fill(-1); let nc=0;
@@ -863,6 +883,7 @@ function renderPanel(){
       <div class="kv"><span>Potência</span><span>${e.mva} MVA</span></div>
       <div class="kv"><span>Impedância</span><span>${e.Zpct}% · X/R ${e.XR}</span></div>
       <div class="kv"><span>Ligação</span><span>${e.vector||"YNyn"}</span></div>
+      ${e.tert?`<div class="kv"><span>Terciário Δ</span><span>${e.tert} kV · fonte 3I0</span></div>`:""}
       <div class="kv"><span>Proteção</span><span>87T · 50/51</span></div>
       ${!activeFault?faultPickHTML("trafo"):""}
       ${faulted?`<button class="fault-btn" id="cmdRem">Remover falta (reparo)</button>`:""}`;
