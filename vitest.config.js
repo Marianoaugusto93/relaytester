@@ -15,7 +15,7 @@ export default defineConfig({
         'node_modules/',
         'dist/',
         'tests/',
-        'docs_archive_clean/',
+        'archive/',
         'ProtecView/',
       ],
     },

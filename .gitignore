@@ -21,3 +21,7 @@ ProtecView/
 Newton-Rapson/
 *.png
 Screenshot_*.png
+
+# Build/crash artifacts
+error.log
+*.stackdump
