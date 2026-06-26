@@ -13,6 +13,7 @@ import { S } from "./appStyles.js";
 import { Tgl, IB } from "./widgets.jsx";
 import { HelpProvider, useHelp } from "./HelpContext.jsx";
 import { useArtifactBus } from "./estudos/context/ArtifactBus.jsx";
+import { useIframeBridge } from "./integration/iframeBridge.js";
 const HelpModal = lazy(() => import("./HelpModal.jsx"));
 const Tutorial = lazy(() => import("./Tutorial.jsx"));
 import { LanguageProvider } from "./i18n/LanguageContext.jsx";
@@ -40,6 +41,8 @@ const AnalyticsDashboard = lazy(() => import("./AnalyticsDashboard.jsx"));
 function AppInner(){
   const{t}=useTranslation();
   const bus=useArtifactBus();
+  // Bridge standalone iframe simulators (Manobras/NR/Coordenograma) ↔ ArtifactBus
+  useIframeBridge();
   // ── State ──────────────────────────────────────────────────────────────────
   const[page,setPage]=useState(1);
   const[p,setP]=useState(defaultPhasors);const[sys,setSys]=useState(defaultSystem);
