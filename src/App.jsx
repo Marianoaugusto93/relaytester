@@ -150,6 +150,36 @@ function AppInner(){
     return unsub;
   },[bus]);
 
+  // ── Bridge listener: Manobras (iframe) → injeção do Relé ───────────────────
+  // Recebe uma falta aplicada no Simulador de Manobras (corrente primária) e
+  // pré-carrega a injeção do Relé convertida ao secundário, navegando para a aba.
+  useEffect(()=>{
+    const unsub=bus.subscribe('fault.currents',(payload)=>{
+      if(!payload||typeof payload!=='object')return;
+      const rtcL=(sys.tc.priA/sys.tc.secA)||1;
+      const Isec=Math.max(0,(Number(payload.If)||0)/rtcL);
+      const ft=String(payload.ftype||'3ph');
+      const z={mag:0,ang:0};
+      let cur;
+      if(ft.includes('1')){          // 1φ (A-terra)
+        cur={Ia:{mag:Isec,ang:0},Ib:{...z},Ic:{...z}};
+      }else if(ft.includes('2')){    // 2φ (B-C)
+        cur={Ia:{...z},Ib:{mag:Isec,ang:-120},Ic:{mag:Isec,ang:120}};
+      }else{                          // 3φ
+        cur={Ia:{mag:Isec,ang:0},Ib:{mag:Isec,ang:-120},Ic:{mag:Isec,ang:120}};
+      }
+      const vnomPN=((sys.tp.secV)||115)/Math.sqrt(3);
+      const vf=Math.max(2,vnomPN*0.3); // tensão colapsada durante a falta (~0.3pu)
+      const vol={Va:{mag:vf,ang:0},Vb:{mag:vf,ang:-120},Vc:{mag:vf,ang:120}};
+      setBalI('manual');setBalV('manual');
+      setP({currents:cur,voltages:vol});
+      setPage(1); // aba Relé
+      const kA=(Number(payload.If)||0)/1000;
+      setEvts(ev=>[{time:nowShort(),icon:'🔀',text:`Falta importada de Manobras: ${payload.label||payload.at||''} ${ft} ${kA.toFixed(2)}kA → ${Isec.toFixed(1)}A sec`,dt:''},...ev.slice(0,20)]);
+    });
+    return unsub;
+  },[bus,sys]);
+
   // ── Breaker callback ───────────────────────────────────────────────────────
   /**
    * Handle breaker state changes (open/closed) and automatic reclosing logic.

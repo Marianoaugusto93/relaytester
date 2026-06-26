@@ -667,6 +667,10 @@ function resolveFault(at,kind,ftype,zf){
   const I3I0=3*cabs(sc.I0)*Ib;                                   // corrente de terra 3I0 (50N/51N)
   const If=Iph;
   activeFault={at,kind,ftype,zf,If,I3I0,kV:kvF};
+  if(window.RelayLabBridge) window.RelayLabBridge.publish("fault.currents",{
+    kind:kind, ftype:ftype, If:If, I3I0:I3I0, kV:kvF, at:at, zf:zf,
+    label:(S.edges[at]&&S.edges[at].label)||(S.nodes[at]&&S.nodes[at].label)||at
+  });
   const closedOnly=ids=>ids.filter(id=>S.edges[id].state==="closed");
   const ops=[];
   if(kind==="transformer"){ const z=S.zones[at]; if(z) ops.push({t:z.t,trips:closedOnly(z.trips),by:`87T ${S.edges[at].label}`}); }
@@ -1079,5 +1083,6 @@ function loadSub(id){
   loadSub("A");
 })();
 </script>
+<script src="/relaylab-bridge.js"></script>
 </body>
 </html>
