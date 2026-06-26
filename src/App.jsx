@@ -123,6 +123,9 @@ function AppInner(){
   // ── 27 monitor hook ────────────────────────────────────────────────────────
   const{check27IdleCondition}=use27Monitor({relayProt,relayReadings,sys,injecting,trippedStageIds,setTrippedStageIds,setIsTripped,setFaultRecord,setTripHistory,setDiag,setEvts,rtc,rtp});
 
+  // ── Cleanup de timers no unmount (evita setState-after-unmount e timers vazados) ──
+  useEffect(()=>()=>{if(tr.current)clearInterval(tr.current);stop79();},[tr,stop79]);
+
   // ── Page view analytics ────────────────────────────────────────────────────
   useEffect(()=>{ analytics.recordPageView(mainTab); },[mainTab]);
 
@@ -332,7 +335,7 @@ function AppInner(){
     setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);
     if(preset.label){analytics.recordScenarioLoad(preset.label);}
     setEvts(ev=>[{time:nowShort(),icon:'⚡',text:t('appEvents.presetApplied',{name:preset.label}),dt:''},...ev.slice(0,20)]);
-  },[]);
+  },[t]);
 
   // ── Analytics-wrapped simulation controls ──────────────────────────────────
   const runSimWithAnalytics=useCallback(()=>{analytics.recordInjectionStart();runSim();},[runSim]);

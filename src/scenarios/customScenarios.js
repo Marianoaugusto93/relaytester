@@ -98,6 +98,10 @@ export function importScenarioFromFile(file) {
       try {
         const obj = JSON.parse(e.target.result);
         if (!obj || typeof obj !== "object") throw new Error("Invalid JSON");
+        // Shape guard: single scenario object or array of scenario objects
+        const isScenarioLike = s => s && typeof s === "object" && !Array.isArray(s);
+        const ok = Array.isArray(obj) ? obj.every(isScenarioLike) : isScenarioLike(obj);
+        if (!ok) throw new Error("Unexpected scenario format");
         resolve(obj);
       } catch (err) {
         reject(err);

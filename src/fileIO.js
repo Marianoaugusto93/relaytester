@@ -5,6 +5,15 @@ export const FILE_HEADER='# RELAYLAB 360 — Parametrization File';
 export const FILE_VERSION='v1.0';
 
 /**
+ * Parse a float, returning a fallback when the input is missing or non-finite.
+ * Prevents corrupt save files from injecting NaN into the protection engine.
+ * @param {string} v - Raw string value
+ * @param {number} fallback - Value to keep when parse fails
+ * @returns {number} Parsed finite number or fallback
+ */
+function safeNum(v,fallback){const n=parseFloat(v);return Number.isFinite(n)?n:fallback;}
+
+/**
  * Build plaintext save file content.
  * Serializes system parameters, protection settings, output matrix, and field wiring.
  * Format: INI-style sections with key=value pairs.
@@ -133,12 +142,12 @@ export function parseSaveFile(text,currentProt,currentMatrix){
     const val=line.substring(eq+1).trim();
 
     if(section==='SYSTEM'){
-      if(key==='TP_PRI_V')sys.tp.priV=parseFloat(val);
-      else if(key==='TP_SEC_V')sys.tp.secV=parseFloat(val);
+      if(key==='TP_PRI_V')sys.tp.priV=safeNum(val,sys.tp.priV);
+      else if(key==='TP_SEC_V')sys.tp.secV=safeNum(val,sys.tp.secV);
       else if(key==='TP_PRI_CONN')sys.tp.priConn=val;
       else if(key==='TP_SEC_CONN')sys.tp.secConn=val;
-      else if(key==='TC_PRI_A')sys.tc.priA=parseFloat(val);
-      else if(key==='TC_SEC_A')sys.tc.secA=parseFloat(val);
+      else if(key==='TC_PRI_A')sys.tc.priA=safeNum(val,sys.tc.priA);
+      else if(key==='TC_SEC_A')sys.tc.secA=safeNum(val,sys.tc.secA);
     }
     else if(section.startsWith('PROT:')&&prot[currentFid]){
       const fn=prot[currentFid];
@@ -154,35 +163,35 @@ export function parseSaveFile(text,currentProt,currentMatrix){
         const idx=parseInt(key.replace('STAGE27_',''));
         const p=val.split('|');if(fn.stages27&&fn.stages27[idx]){
           fn.stages27[idx].id=p[0];fn.stages27[idx].enabled=p[1]==='true';
-          fn.stages27[idx].pickup=parseFloat(p[2]);fn.stages27[idx].timeOp=parseFloat(p[3]);
+          fn.stages27[idx].pickup=safeNum(p[2],fn.stages27[idx].pickup);fn.stages27[idx].timeOp=safeNum(p[3],fn.stages27[idx].timeOp);
         }
       }
       else if(key.startsWith('STAGE59_')){
         const idx=parseInt(key.replace('STAGE59_',''));
         const p=val.split('|');if(fn.stages59&&fn.stages59[idx]){
           fn.stages59[idx].id=p[0];fn.stages59[idx].enabled=p[1]==='true';
-          fn.stages59[idx].pickup=parseFloat(p[2]);fn.stages59[idx].timeOp=parseFloat(p[3]);
+          fn.stages59[idx].pickup=safeNum(p[2],fn.stages59[idx].pickup);fn.stages59[idx].timeOp=safeNum(p[3],fn.stages59[idx].timeOp);
         }
       }
       else if(key.startsWith('STAGE81U_')){
         const idx=parseInt(key.replace('STAGE81U_',''));
         const p=val.split('|');if(fn.stages81u&&fn.stages81u[idx]){
           fn.stages81u[idx].id=p[0];fn.stages81u[idx].enabled=p[1]==='true';
-          fn.stages81u[idx].pickup=parseFloat(p[2]);fn.stages81u[idx].timeOp=parseFloat(p[3]);
+          fn.stages81u[idx].pickup=safeNum(p[2],fn.stages81u[idx].pickup);fn.stages81u[idx].timeOp=safeNum(p[3],fn.stages81u[idx].timeOp);
         }
       }
       else if(key.startsWith('STAGE32R_')){
         const idx=parseInt(key.replace('STAGE32R_',''));
         const p=val.split('|');if(fn.stages32r&&fn.stages32r[idx]){
           fn.stages32r[idx].id=p[0];fn.stages32r[idx].enabled=p[1]==='true';
-          fn.stages32r[idx].pickup=parseFloat(p[2]);fn.stages32r[idx].timeOp=parseFloat(p[3]);
+          fn.stages32r[idx].pickup=safeNum(p[2],fn.stages32r[idx].pickup);fn.stages32r[idx].timeOp=safeNum(p[3],fn.stages32r[idx].timeOp);
         }
       }
       else if(key.startsWith('STAGE32F_')){
         const idx=parseInt(key.replace('STAGE32F_',''));
         const p=val.split('|');if(fn.stages32f&&fn.stages32f[idx]){
           fn.stages32f[idx].id=p[0];fn.stages32f[idx].enabled=p[1]==='true';
-          fn.stages32f[idx].pickup=parseFloat(p[2]);fn.stages32f[idx].timeOp=parseFloat(p[3]);
+          fn.stages32f[idx].pickup=safeNum(p[2],fn.stages32f[idx].pickup);fn.stages32f[idx].timeOp=safeNum(p[3],fn.stages32f[idx].timeOp);
         }
       }
       else if(key==='SHOTS')fn.shots=parseInt(val);
@@ -192,23 +201,24 @@ export function parseSaveFile(text,currentProt,currentMatrix){
         const idx=parseInt(key.replace('STAGE81O_',''));
         const p=val.split('|');if(fn.stages81o&&fn.stages81o[idx]){
           fn.stages81o[idx].id=p[0];fn.stages81o[idx].enabled=p[1]==='true';
-          fn.stages81o[idx].pickup=parseFloat(p[2]);fn.stages81o[idx].timeOp=parseFloat(p[3]);
+          fn.stages81o[idx].pickup=safeNum(p[2],fn.stages81o[idx].pickup);fn.stages81o[idx].timeOp=safeNum(p[3],fn.stages81o[idx].timeOp);
         }
       }
       else if(key.startsWith('STAGE_')){
         const idx=parseInt(key.replace('STAGE_',''));
         const p=val.split('|');if(fn.stages&&fn.stages[idx]){
-          fn.stages[idx].id=p[0];fn.stages[idx].enabled=p[1]==='true';
-          fn.stages[idx].pickup=parseFloat(p[2]);
+          const st=fn.stages[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.pickup=safeNum(p[2],st.pickup);
           if(currentFid==='47'||currentFid==='46'){
-            fn.stages[idx].timeOp=parseFloat(p[3]);
+            st.timeOp=safeNum(p[3],st.timeOp);
           }else if(currentFid==='67'||currentFid==='67N'){
-            fn.stages[idx].timeDial=parseFloat(p[3]);fn.stages[idx].curve=resolveCurveName(p[4]);
-            fn.stages[idx].timeOp=parseFloat(p[5]);fn.stages[idx].mta=parseFloat(p[6]);fn.stages[idx].pol=p[7];
-            if(p[8]!==undefined)fn.stages[idx].minPolV=parseFloat(p[8]);
-            if(p[9]!==undefined)fn.stages[idx].dir=p[9];
+            st.timeDial=safeNum(p[3],st.timeDial);st.curve=resolveCurveName(p[4]);
+            st.timeOp=safeNum(p[5],st.timeOp);st.mta=safeNum(p[6],st.mta);st.pol=p[7];
+            if(p[8]!==undefined)st.minPolV=safeNum(p[8],st.minPolV);
+            if(p[9]!==undefined)st.dir=p[9];
           }else{
-            fn.stages[idx].timeDial=parseFloat(p[3]);fn.stages[idx].curve=resolveCurveName(p[4]);fn.stages[idx].timeOp=parseFloat(p[5]);
+            st.timeDial=safeNum(p[3],st.timeDial);st.curve=resolveCurveName(p[4]);st.timeOp=safeNum(p[5],st.timeOp);
           }
         }
       }

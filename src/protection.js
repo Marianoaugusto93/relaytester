@@ -181,6 +181,25 @@ export const CURVE_ALIASES={
 export function resolveCurveName(name){return CURVE_ALIASES[name]||name}
 
 /**
+ * Evaluate a time-overcurrent curve to its theoretical trip time.
+ * Shared by 51, 51N, 67 and 67N inverse-time paths (IEC/US/IEEE/ANSI/DT).
+ * @param {Object} c — curve coefficients from CURVE_MAP (already resolved)
+ * @param {number} M — operating multiple (I/pickup), already clamped to the max
+ * @param {number} td — time dial / time multiplier
+ * @returns {number} theoretical trip time in seconds; Infinity if invalid/non-operating
+ */
+export function evalCurveTime(c,M,td){
+  if(!c)return Infinity;
+  switch(c.type){
+    case"IEC":{const d=Math.pow(M,c.alpha)-1;return d<=0?Infinity:td*(c.k/d)}
+    case"US":case"IEEE":{const d=Math.pow(M,c.P)-1;return d<=0?Infinity:td*(c.A+c.B/d)}
+    case"ANSI":{const x=M-c.C;if(x<=0)return Infinity;const t=(c.A+c.B/x+c.D/(x*x)+c.E/(x*x*x))*td;return(!Number.isFinite(t)||t<=0)?Infinity:t}
+    case"DT":return(!Number.isFinite(td)||td<=0)?Infinity:td;
+    default:return Infinity;
+  }
+}
+
+/**
  * Calculate theoretical trip time for 51 protection stage using selected time-overcurrent curve.
  * Computes t = f(multiple, curve_type, timeDial) per IEC 60255-151 / ANSI standards.
  * @param {Object} stage — protection stage with {enabled, pickup, curve, timeDial}
@@ -194,14 +213,7 @@ export function calcTheoreticalTripTime(stage,currentMag){
   const M=Math.min(multiple,MAX_OPERATING_MULTIPLE);
   const c=CURVE_MAP[resolveCurveName(stage.curve)];
   if(!c)return Infinity;
-  const td=stage.timeDial;
-  switch(c.type){
-    case"IEC":{const d=Math.pow(M,c.alpha)-1;return d<=0?Infinity:td*(c.k/d)}
-    case"US":case"IEEE":{const d=Math.pow(M,c.P)-1;return d<=0?Infinity:td*(c.A+c.B/d)}
-    case"ANSI":{const x=M-c.C;if(x<=0)return Infinity;const t=(c.A+c.B/x+c.D/(x*x)+c.E/(x*x*x))*td;return(!Number.isFinite(t)||t<=0)?Infinity:t}
-    case"DT":return(!Number.isFinite(td)||td<=0)?Infinity:td;
-    default:return Infinity;
-  }
+  return evalCurveTime(c,M,stage.timeDial);
 }
 
 /**
@@ -236,14 +248,7 @@ export function calc51NTheoreticalTripTime(stage,currentMag){
   const M=Math.min(multiple,P51N_MAX_OPERATING_MULTIPLE);
   const c=CURVE_MAP[resolveCurveName(stage.curve)];
   if(!c)return Infinity;
-  const td=stage.timeDial;
-  switch(c.type){
-    case"IEC":{const d=Math.pow(M,c.alpha)-1;return d<=0?Infinity:td*(c.k/d)}
-    case"US":case"IEEE":{const d=Math.pow(M,c.P)-1;return d<=0?Infinity:td*(c.A+c.B/d)}
-    case"ANSI":{const x=M-c.C;if(x<=0)return Infinity;const t=(c.A+c.B/x+c.D/(x*x)+c.E/(x*x*x))*td;return(!Number.isFinite(t)||t<=0)?Infinity:t}
-    case"DT":return(!Number.isFinite(td)||td<=0)?Infinity:td;
-    default:return Infinity;
-  }
+  return evalCurveTime(c,M,stage.timeDial);
 }
 
 /**
@@ -555,13 +560,7 @@ export function evaluate67Stage(stage,rr){
   const evaluated=valid.map(c=>{
     const multiple=c.iMag/stage.pickup;
     const M=Math.min(multiple,P67_MAX_OPERATING_MULTIPLE);
-    const td=stage.timeDial;
-    let tTheo=Infinity;
-    switch(cv.type){
-      case"IEC":{const d=Math.pow(M,cv.alpha)-1;if(d>0)tTheo=td*(cv.k/d);break}
-      case"US":case"IEEE":{const d=Math.pow(M,cv.P)-1;if(d>0)tTheo=td*(cv.A+cv.B/d);break}
-      case"ANSI":{const x=M-cv.C;if(x>0){const t=(cv.A+cv.B/x+cv.D/(x*x)+cv.E/(x*x*x))*td;if(Number.isFinite(t)&&t>0)tTheo=t}break}
-    }
+    const tTheo=evalCurveTime(cv,M,stage.timeDial);
     if(!Number.isFinite(tTheo)||tTheo<=0)return null;
     return{...c,multiple,tTheo};
   }).filter(Boolean);
@@ -670,13 +669,7 @@ export function evaluate67NStage(stage,rr){
   if(!cv)return{tripped:false,currentUsed:d.i0Mag,theoreticalTime:Infinity,simulatedTime:Infinity,reason:"curve error"};
   const multiple=d.i0Mag/stage.pickup;
   const M=Math.min(multiple,P67N_MAX_OPERATING_MULTIPLE);
-  const td=stage.timeDial;
-  let tTheo=Infinity;
-  switch(cv.type){
-    case"IEC":{const dn=Math.pow(M,cv.alpha)-1;if(dn>0)tTheo=td*(cv.k/dn);break}
-    case"US":case"IEEE":{const dn=Math.pow(M,cv.P)-1;if(dn>0)tTheo=td*(cv.A+cv.B/dn);break}
-    case"ANSI":{const x=M-cv.C;if(x>0){const t=(cv.A+cv.B/x+cv.D/(x*x)+cv.E/(x*x*x))*td;if(Number.isFinite(t)&&t>0)tTheo=t}break}
-  }
+  const tTheo=evalCurveTime(cv,M,stage.timeDial);
   if(!Number.isFinite(tTheo)||tTheo<=0)return{tripped:false,currentUsed:d.i0Mag,theoreticalTime:Infinity,simulatedTime:Infinity,reason:"curve error"};
   const relLimit=tTheo*(P67N_RELATIVE_TIME_ERROR_PCT/100);
   const allowedDev=Math.max(P67N_ABSOLUTE_TIME_ERROR_S,relLimit);
@@ -717,12 +710,13 @@ export function calc67NTripTimeReal(stage,rr){
  */
 export function calcI2(currents){
   const a2r=Math.cos(2*Math.PI/3),a2i=-Math.sin(2*Math.PI/3); // a² = e^(-j120°)
-  const a1r=Math.cos(4*Math.PI/3),a1i=-Math.sin(4*Math.PI/3); // a  = e^(-j240°)
+  const a1r=Math.cos(4*Math.PI/3),a1i=-Math.sin(4*Math.PI/3); // a  = e^(-j240°) = e^(+j120°)
   const Ia=toRect(currents.Ia.mag,currents.Ia.ang);
   const Ib=toRect(currents.Ib.mag,currents.Ib.ang);
   const Ic=toRect(currents.Ic.mag,currents.Ic.ang);
-  const re=(Ia.re+(a1r*Ib.re-a1i*Ib.im)+(a2r*Ic.re-a2i*Ic.im))/3;
-  const im=(Ia.im+(a1r*Ib.im+a1i*Ib.re)+(a2r*Ic.im+a2i*Ic.re))/3;
+  // I2 = (Ia + a²·Ib + a·Ic) / 3 — a² rotaciona Ib, a rotaciona Ic
+  const re=(Ia.re+(a2r*Ib.re-a2i*Ib.im)+(a1r*Ic.re-a1i*Ic.im))/3;
+  const im=(Ia.im+(a2r*Ib.im+a2i*Ib.re)+(a1r*Ic.im+a1i*Ic.re))/3;
   return fromRect(re,im);
 }
 
