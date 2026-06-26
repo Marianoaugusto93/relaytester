@@ -45,6 +45,7 @@ function AppInner(){
   useIframeBridge();
   // ── State ──────────────────────────────────────────────────────────────────
   const[page,setPage]=useState(1);
+  const[faultToast,setFaultToast]=useState(null); // {label,ft,kA,Isec} — falta importada de Manobras
   const[p,setP]=useState(defaultPhasors);const[sys,setSys]=useState(defaultSystem);
   const defaultPreFault={currents:{Ia:{mag:0,ang:0},Ib:{mag:0,ang:-120},Ic:{mag:0,ang:120}},voltages:{Va:{mag:66.4,ang:0},Vb:{mag:66.4,ang:-120},Vc:{mag:66.4,ang:120}}};
   const[pf,setPf]=useState(defaultPreFault);
@@ -173,12 +174,17 @@ function AppInner(){
       const vol={Va:{mag:vf,ang:0},Vb:{mag:vf,ang:-120},Vc:{mag:vf,ang:120}};
       setBalI('manual');setBalV('manual');
       setP({currents:cur,voltages:vol});
-      setPage(1); // aba Relé
+      // Não navega automaticamente: a falta é pré-carregada na injeção do Relé,
+      // mas o usuário permanece na aba atual. Um toast oferece o atalho para o Relé.
       const kA=(Number(payload.If)||0)/1000;
-      setEvts(ev=>[{time:nowShort(),icon:'🔀',text:`Falta importada de Manobras: ${payload.label||payload.at||''} ${ft} ${kA.toFixed(2)}kA → ${Isec.toFixed(1)}A sec`,dt:''},...ev.slice(0,20)]);
+      setFaultToast({label:payload.label||payload.at||'',ft,kA,Isec});
+      setEvts(ev=>[{time:nowShort(),icon:'🔀',text:`Falta importada de Manobras: ${payload.label||payload.at||''} ${ft} ${kA.toFixed(2)}kA → ${Isec.toFixed(1)}A sec (pré-carregada na injeção do Relé)`,dt:''},...ev.slice(0,20)]);
     });
     return unsub;
   },[bus,sys]);
+
+  // Auto-dismiss do toast de falta importada após 12s.
+  useEffect(()=>{ if(!faultToast)return; const id=setTimeout(()=>setFaultToast(null),12000); return ()=>clearTimeout(id); },[faultToast]);
 
   // ── Breaker callback ───────────────────────────────────────────────────────
   /**
@@ -533,6 +539,15 @@ function AppInner(){
       <div className="slide-pg"><SimuladorManobrasPage/></div>
     </div></div>
   </div>
+  {faultToast&&<div role="status" style={{position:'fixed',right:18,bottom:18,zIndex:5000,background:'var(--card,#181b22)',border:'1px solid #f97316',borderRadius:10,padding:'12px 14px',boxShadow:'0 8px 24px rgba(0,0,0,.45)',maxWidth:330,display:'flex',flexDirection:'column',gap:8}}>
+    <div style={{display:'flex',alignItems:'center',gap:8}}>
+      <span style={{fontSize:18}}>🔀</span>
+      <div style={{fontSize:13,fontWeight:600,color:'#f3f4f6'}}>Falta pronta no Relé</div>
+      <button onClick={()=>setFaultToast(null)} title="Dispensar" style={{marginLeft:'auto',background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:16,lineHeight:1}}>×</button>
+    </div>
+    <div style={{fontSize:11,color:'#9ca3af'}}>{[faultToast.label,faultToast.ft,`${faultToast.kA.toFixed(2)}kA`,`→ ${faultToast.Isec.toFixed(1)}A sec`].filter(Boolean).join(' · ')}</div>
+    {page!==1&&<button onClick={()=>{setPage(1);setFaultToast(null);}} style={{background:'#f97316',border:'none',borderRadius:6,padding:'7px 10px',color:'#0e1015',fontWeight:700,fontSize:12,cursor:'pointer'}}>Ir ao Relé →</button>}
+  </div>}
   {wfModalOpen&&<div className="wf-overlay" onClick={()=>{setWfModalOpen(false);setWfSelected(null);}}>
     <div className="wf-modal" onClick={e=>e.stopPropagation()}>
       <div className="wf-title">{t("waveform.title")}</div>
