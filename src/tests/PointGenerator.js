@@ -1,5 +1,6 @@
 import { logspace, linspace, genId } from './testUtils.js';
 import { computeTimeForCurve, mapCurveName } from './CurveModel.js';
+import { calc49TripTime } from '../protection.js';
 
 export function generatePoints(fn, stage, planConfig) {
   if (!fn || !stage) return [];
@@ -65,6 +66,14 @@ export function generatePoints(fn, stage, planConfig) {
       prefaultMult,
       prefaultDur,
     });
+  } else if (fn === '50BF') {
+    points = generateBreakerFailurePoints(stage, { minMult, maxMult, nPoints, spacing, prefaultMult });
+  } else if (fn === '49') {
+    points = generateThermalPoints(stage, { minMult, maxMult, nPoints, spacing, prefaultMult });
+  } else if (fn === '25') {
+    points = generateSyncPoints(stage, { prefaultMult });
+  } else if (fn === '81R') {
+    points = generateRocofPoints(stage, { prefaultMult });
   } else {
     points = generateInversePoints(stage, {
       minMult,
@@ -271,6 +280,78 @@ function generateNegativeSequencePoints(stage, config) {
       expectedBO: stage.boId || 'BO1',
     };
   });
+}
+
+function generateBreakerFailurePoints(stage, config) {
+  const { prefaultMult, minMult = 1.5, maxMult = 5, nPoints = 3, spacing = 'linear' } = config;
+  const pickup = stage.pickup;
+  const tExpected = stage.tBF;
+  const mults = spacing === 'log' ? logspace(minMult, maxMult, nPoints) : linspace(minMult, maxMult, nPoints);
+  return mults.map((mult, idx) => ({
+    id: `P${idx + 1}`,
+    kind: 'definite',
+    IxIpk: mult,
+    Iamps: mult * pickup,
+    tExpected,
+    prefaultMult,
+    prefaultDur: 0, // sem pré-falta: a corrente de carga dispararia o 50BF antes
+    expectedBO: stage.boId || 'BO1',
+  }));
+}
+
+function generateThermalPoints(stage, config) {
+  const { prefaultMult, minMult = 1.5, maxMult = 4, nPoints = 4, spacing = 'log' } = config;
+  const Ith = (stage.k || 1.05) * (stage.Ib || 0); // corrente de operação térmica
+  const mults = spacing === 'log' ? logspace(minMult, maxMult, nPoints) : linspace(minMult, maxMult, nPoints);
+  return mults.map((mult, idx) => {
+    const Iamps = mult * Ith;
+    const tExpected = calc49TripTime(stage, Iamps);
+    return {
+      id: `P${idx + 1}`,
+      kind: 'curve',
+      IxIpk: mult, // múltiplo de Iθ
+      Iamps,
+      tExpected,
+      prefaultMult,
+      prefaultDur: 0,
+      expectedBO: stage.boId || 'BO1',
+    };
+  });
+}
+
+function generateSyncPoints(stage, config) {
+  const { prefaultMult } = config;
+  // Ponto único: lado vivo em sincronismo com a referência → libera em tCheck.
+  return [{
+    id: 'P1',
+    kind: 'definite',
+    IxIpk: 1.0,
+    Iamps: 1.0,
+    VMult: 1.0,
+    tExpected: stage.tCheck,
+    sync: true,
+    prefaultMult,
+    prefaultDur: 0,
+    expectedBO: stage.boId || 'BO1',
+  }];
+}
+
+function generateRocofPoints(stage, config) {
+  const { prefaultMult } = config;
+  const pickup = stage.pickup; // Hz/s
+  const dir = stage.dir || 'both';
+  const sign = dir === 'fall' ? -1 : 1; // 'rise'/'both' → positivo
+  const mults = [1.5, 2.0, 3.0];
+  return mults.map((mult, idx) => ({
+    id: `R${idx + 1}`,
+    kind: 'definite',
+    dfdt: sign * mult * pickup, // injetado via override de proteção no runner
+    IxIpk: mult,
+    tExpected: stage.tOp,
+    prefaultMult,
+    prefaultDur: 0,
+    expectedBO: stage.boId || 'BO1',
+  }));
 }
 
 function generatePickupProbe(stage, direction, range, prefaultMult, prefaultDur) {

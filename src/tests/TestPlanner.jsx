@@ -16,6 +16,10 @@ const FUNC_LIST = [
   { id: '81U', label: '81U', sub: 'Subfreq.' },
   { id: '81O', label: '81O', sub: 'Sobfreq.' },
   { id: '46',  label: '46',  sub: 'Seq. Neg.' },
+  { id: '50BF',label: '50BF',sub: 'Falha DJ' },
+  { id: '49',  label: '49',  sub: 'Térmica' },
+  { id: '25',  label: '25',  sub: 'Sincron.' },
+  { id: '81R', label: '81R', sub: 'df/dt' },
   { id: '79',  label: '79',  sub: 'Religam.' },
   { id: '32R', label: '32R', sub: 'Pot. Rev.' },
   { id: '32F', label: '32F', sub: 'Pot. Fwd.' },
@@ -67,6 +71,10 @@ export default function TestPlanner({ campaign, test, onTestChange, onStartRun, 
     if (selFn === '81O') return fnObj.stages81o?.[0];
     if (selFn === '32R') return fnObj.stages32r?.[0];
     if (selFn === '32F') return fnObj.stages32f?.[0];
+    if (selFn === '50BF') return fnObj.stages50bf?.[0];
+    if (selFn === '49') return fnObj.stages49?.[0];
+    if (selFn === '25') return fnObj.stages25?.[0];
+    if (selFn === '81R') return fnObj.stages81r?.[0];
     return fnObj.stages?.[0];
   })();
 

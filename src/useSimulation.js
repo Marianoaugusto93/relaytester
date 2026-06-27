@@ -21,13 +21,15 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     setEvts(ev=>[{time:nowShort(),icon:"⏹",text:"Stopped.",dt:`T+${stimeRef.current.toFixed(3)}s`},...ev.slice(0,20)]);
   },[stop79,setSs,setSimPhase,setEvts,stimeRef]);
 
-  const runSim=useCallback((injectPhasors)=>{
+  const runSim=useCallback((injectPhasors,protOverride)=>{
     const phasorsToUse=injectPhasors||p;
     setSs("running");setStime(0);stimeRef.current=0;setDiag([]);setMaletaTripped(false);
     setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Simulation started.",dt:"T+0.000s"},...ev.slice(0,20)]);
     let el=0;const iv=10;
     const pfActive=pfEnabled&&pfDuration>0;
-    const rp2=relayProt;
+    // protOverride: ajustes de proteção passados por argumento (ex.: injeção df/dt da
+    // 81R no runner de Testes), evitando depender de propagação de estado assíncrono.
+    const rp2=protOverride||relayProt;
 
     const graph=fieldStateRef.current.electricalGraph||buildElectricalGraph(fieldStateRef.current.connections,fieldStateRef.current.internalConns);
     const faultRR=computeRelayReadings(phasorsToUse,graph);

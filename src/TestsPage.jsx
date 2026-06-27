@@ -137,6 +137,7 @@ export default function TestsPage({
       cancelled: cancelledRef,
       paused: pausedRef,
       sys,
+      relayProt,
       subscribe,
       runSim,
       stopSim,
@@ -168,7 +169,7 @@ export default function TestsPage({
     };
 
     await runCampaign(test, ctx);
-  }, [test, sys, subscribe, runSim, stopSim, setP, setPf, setPfEnabled, setPfDuration, setEvts, startContinuousTimer, stopContinuousTimer]);
+  }, [test, sys, relayProt, subscribe, runSim, stopSim, setP, setPf, setPfEnabled, setPfDuration, setEvts, startContinuousTimer, stopContinuousTimer]);
 
   const handlePause = useCallback(() => {
     const next = !isPaused;

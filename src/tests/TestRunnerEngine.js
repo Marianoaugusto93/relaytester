@@ -27,7 +27,7 @@ export async function runCampaign(test, ctx) {
     onStart, onBeforeInjection, onResult, onComplete,
     runSim, stopSim,
     setPhasors, setPf, setPfEnabled, setPfDuration,
-    subscribe, setEvts, sys,
+    subscribe, setEvts, sys, relayProt,
   } = ctx;
 
   const results = [];
@@ -96,8 +96,13 @@ export async function runCampaign(test, ctx) {
     // Reset elapsed timer right before injection starts
     onBeforeInjection?.();
 
-    // Pass fault phasors directly to runSim (avoid async setState timing issue)
-    runSim(faultPhasors);
+    // Pass fault phasors directly to runSim (avoid async setState timing issue).
+    // Para 81R (df/dt), o relé não responde a fasores: injeta-se o dfdt do ponto
+    // como override de proteção (mesma estratégia dos fasores por argumento).
+    const protOverride = (test.fn === '81R' && relayProt && relayProt['81R'])
+      ? { ...relayProt, '81R': { ...relayProt['81R'], inj81r: { dfdt: point.dfdt ?? 0 } } }
+      : undefined;
+    runSim(faultPhasors, protOverride);
     tripResult = await tripPromise;
     stopSim();
 
