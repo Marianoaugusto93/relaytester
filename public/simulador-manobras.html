@@ -1084,5 +1084,30 @@ function loadSub(id){
 })();
 </script>
 <script src="/relaylab-bridge.js"></script>
+<script>
+/* Ponte Relé → Manobras: recebe o resultado do trip do banco de testes e
+   mostra um badge flutuante (canto inferior direito). Autocontido e seguro:
+   se a ponte não existir (HTML aberto direto), nada acontece. */
+(function(){
+  if(!window.RelayLabBridge||!window.RelayLabBridge.available) return;
+  function showRelayResult(p){
+    p=p||{};
+    var stages=(p.stages&&p.stages.length)?p.stages.join(', '):'—';
+    var time=(typeof p.time==='number'&&isFinite(p.time))?(p.time.toFixed(3)+' s'):'—';
+    var el=document.getElementById('relaylab-trip-toast');
+    if(!el){
+      el=document.createElement('div');
+      el.id='relaylab-trip-toast';
+      el.style.cssText='position:fixed;right:16px;bottom:16px;z-index:99999;background:#181b22;border:1px solid #22d3ee;border-radius:10px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:320px;font:13px system-ui,Segoe UI,sans-serif;color:#f3f4f6';
+      document.body.appendChild(el);
+    }
+    el.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:16px">🛡️</span><b>Relé do banco atuou</b><span id="relaylab-trip-x" style="margin-left:auto;cursor:pointer;color:#9ca3af;font-size:16px;line-height:1">×</span></div><div style="font-size:11px;color:#9ca3af;margin-top:6px">Estágio: '+stages+' · t = '+time+'</div>';
+    el.style.display='block';
+    var x=el.querySelector('#relaylab-trip-x'); if(x) x.onclick=function(){ el.style.display='none'; };
+    clearTimeout(el._t); el._t=setTimeout(function(){ if(el) el.style.display='none'; },12000);
+  }
+  window.RelayLabBridge.subscribe('relay.tripResult', showRelayResult);
+})();
+</script>
 </body>
 </html>

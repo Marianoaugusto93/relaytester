@@ -186,6 +186,22 @@ function AppInner(){
   // Auto-dismiss do toast de falta importada após 12s.
   useEffect(()=>{ if(!faultToast)return; const id=setTimeout(()=>setFaultToast(null),12000); return ()=>clearTimeout(id); },[faultToast]);
 
+  // ── Ponte Relé → Manobras: devolve o resultado do trip ao simulador ─────────
+  // Publica `relay.tripResult` uma única vez na transição para tripado; o
+  // useIframeBridge reencaminha o tópico para o iframe de Manobras.
+  const tripPublishedRef=useRef(false);
+  useEffect(()=>{
+    if(isTripped){
+      if(!tripPublishedRef.current){
+        tripPublishedRef.current=true;
+        const tt=(stimeRef&&stimeRef.current!=null)?Number(stimeRef.current):(Number(stime)||0);
+        bus.publish('relay.tripResult',{stages:trippedStageIds.slice(),time:tt,ts:Date.now()});
+      }
+    }else{
+      tripPublishedRef.current=false;
+    }
+  },[isTripped,trippedStageIds,stime,bus]);
+
   // ── Breaker callback ───────────────────────────────────────────────────────
   /**
    * Handle breaker state changes (open/closed) and automatic reclosing logic.
