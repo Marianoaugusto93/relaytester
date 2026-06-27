@@ -783,6 +783,49 @@ export function getCurrentForFunc(fid,rr){
  * const {dg, allTrips} = evalProtectionsDirect(relayReading, protectionSettings, systemParams);
  * const shortestTripTime = Math.min(...allTrips.map(t => t.time));
  */
+/**
+ * Evaluate an 87 differential stage from its own dual-winding inputs.
+ * The bench injects a single CT set, so 87 carries its own W1/W2 phasors
+ * (worst-phase / single-phase model). Math ported from estudos/engine/
+ * differential.js (dual-slope + 2nd-harmonic block) to keep core self-contained.
+ *
+ * @param {Object} stage - {Ipu, knee, slope1, slope2, thr2h, tOp}
+ * @param {Object} inj87 - {IW1:{mag,ang}, IW2:{mag,ang}, h2pct}
+ * @returns {{tripped:boolean, Idiff:number, Irest:number, Iop:number, blocked:boolean}}
+ */
+export function evaluate87Stage(stage,inj87){
+  if(!stage||!inj87) return {tripped:false,Idiff:0,Irest:0,Iop:0,blocked:false};
+  const IW1=inj87.IW1||{mag:0,ang:0};
+  const IW2=inj87.IW2||{mag:0,ang:0};
+  const r1=toRect(IW1.mag||0,IW1.ang||0);
+  const r2=toRect(IW2.mag||0,IW2.ang||0);
+  const Idiff=fromRect(r1.re-r2.re,r1.im-r2.im).mag;          // |IW1 - IW2|
+  const Irest=((IW1.mag||0)+(IW2.mag||0))/2;                   // restrição (média)
+  const pickup=Number(stage.Ipu)||0, knee=Number(stage.knee)||0;
+  const s1=Number(stage.slope1)||0, s2=Number(stage.slope2)||0;
+  const Iop = Irest<=knee
+    ? pickup+(s1/100)*Irest
+    : pickup+(s1/100)*knee+(s2/100)*(Irest-knee);
+  const thr2h=Number(stage.thr2h)||15;
+  const i2h=((Number(inj87.h2pct)||0)/100)*(IW1.mag||0);
+  const blocked = (IW1.mag||0)>0 ? ((i2h/(IW1.mag||1))*100)>thr2h : false;
+  const tripped = Idiff>Iop && !blocked;
+  return {tripped,Idiff:+Idiff.toFixed(4),Irest:+Irest.toFixed(4),Iop:+Iop.toFixed(4),blocked};
+}
+
+/**
+ * Definite-time operate time for an 87 stage (Infinity if not tripped).
+ * @param {Object} stage - 87 stage settings (uses stage.tOp, default 0.025 s)
+ * @param {Object} inj87 - dual-winding inputs (see evaluate87Stage)
+ * @returns {number} operate time in seconds, or Infinity
+ */
+export function calc87TripTimeReal(stage,inj87){
+  const r=evaluate87Stage(stage,inj87);
+  if(!r.tripped) return Infinity;
+  const t=Number(stage&&stage.tOp);
+  return isFinite(t)&&t>=0 ? t : 0.025;
+}
+
 export function evalProtectionsDirect(rr,relayProt,sys){
   const maxI=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
   const ri3i0=calc3(rr.currents,["Ia","Ib","Ic"]);

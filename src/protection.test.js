@@ -6,12 +6,36 @@ import {
   evaluate27Stage, evaluate59Stage, getVoltagesPu,
   evaluate67Stage, evaluate67NStage,
   getCurrentForFunc, calcTripTime,
+  evaluate87Stage, calc87TripTimeReal,
 } from "./protection.js";
 
 // Helpers
 const ph = (mag, ang) => ({ mag, ang });
 const currents = (a, b, c) => ({ Ia: a, Ib: b, Ic: c });
 const voltages = (a, b, c) => ({ Va: a, Vb: b, Vc: c });
+
+describe("87 differential (evaluate87Stage)", () => {
+  const stage = { Ipu: 0.2, knee: 2, slope1: 25, slope2: 50, thr2h: 15, tOp: 0.025 };
+  it("does not trip on through-fault (IW1 ≈ IW2)", () => {
+    const r = evaluate87Stage(stage, { IW1: ph(5, 0), IW2: ph(5, 0), h2pct: 0 });
+    expect(r.tripped).toBe(false);
+    expect(r.Idiff).toBeCloseTo(0, 3);
+  });
+  it("trips on internal fault (IW2 = 0) above the dual-slope characteristic", () => {
+    const inj = { IW1: ph(5, 0), IW2: ph(0, 0), h2pct: 0 };
+    const r = evaluate87Stage(stage, inj);
+    expect(r.tripped).toBe(true);
+    expect(r.Idiff).toBeCloseTo(5, 3);
+    expect(calc87TripTimeReal(stage, inj)).toBeCloseTo(0.025, 6);
+  });
+  it("is blocked by 2nd-harmonic restraint (inrush) above threshold", () => {
+    const inj = { IW1: ph(5, 0), IW2: ph(0, 0), h2pct: 20 };
+    const r = evaluate87Stage(stage, inj);
+    expect(r.blocked).toBe(true);
+    expect(r.tripped).toBe(false);
+    expect(calc87TripTimeReal(stage, inj)).toBe(Infinity);
+  });
+});
 
 describe("phasor primitives", () => {
   it("toRect/fromRect roundtrip", () => {
