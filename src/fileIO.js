@@ -37,7 +37,7 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
   lines.push('');
 
   // ── PROTECTION FUNCTIONS
-  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79"];
+  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87"];
   protKeys.forEach(fid=>{
     const fn=prot[fid];if(!fn)return;
     lines.push(`[PROT:${fid}]`);
@@ -69,6 +69,10 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
       lines.push(`SHOTS=${fn.shots??3}`);
       lines.push(`DEAD_TIMES=${(fn.deadTimes||[0.5,5.0,15.0]).join(",")}`);
       lines.push(`RECLAIM_TIME=${fn.reclaimTime??3.0}`);
+    }else if(fid==="87"){
+      const j=fn.inj87||{IW1:{mag:0,ang:0},IW2:{mag:0,ang:0},h2pct:0};
+      lines.push(`INJ87=${j.IW1.mag}|${j.IW1.ang}|${j.IW2.mag}|${j.IW2.ang}|${j.h2pct}`);
+      (fn.stages87||[]).forEach((s,i)=>{lines.push(`STAGE87_${i}=${s.id}|${s.enabled}|${s.Ipu}|${s.knee}|${s.slope1}|${s.slope2}|${s.thr2h}|${s.tOp}`);});
     }else if(fid==="67"||fid==="67N"){
       (fn.stages||[]).forEach((s,i)=>{
         lines.push(`STAGE_${i}=${s.id}|${s.enabled}|${s.pickup}|${s.timeDial}|${s.curve}|${s.timeOp}|${s.mta}|${s.pol}|${s.minPolV||1}|${s.dir||"forward"}`);
@@ -192,6 +196,22 @@ export function parseSaveFile(text,currentProt,currentMatrix){
         const p=val.split('|');if(fn.stages32f&&fn.stages32f[idx]){
           fn.stages32f[idx].id=p[0];fn.stages32f[idx].enabled=p[1]==='true';
           fn.stages32f[idx].pickup=safeNum(p[2],fn.stages32f[idx].pickup);fn.stages32f[idx].timeOp=safeNum(p[3],fn.stages32f[idx].timeOp);
+        }
+      }
+      else if(key==='INJ87'){
+        const p=val.split('|');if(!fn.inj87)fn.inj87={IW1:{mag:0,ang:0},IW2:{mag:0,ang:0},h2pct:0};
+        fn.inj87.IW1={mag:safeNum(p[0],fn.inj87.IW1.mag),ang:safeNum(p[1],fn.inj87.IW1.ang)};
+        fn.inj87.IW2={mag:safeNum(p[2],fn.inj87.IW2.mag),ang:safeNum(p[3],fn.inj87.IW2.ang)};
+        fn.inj87.h2pct=safeNum(p[4],fn.inj87.h2pct);
+      }
+      else if(key.startsWith('STAGE87_')){
+        const idx=parseInt(key.replace('STAGE87_',''));
+        const p=val.split('|');if(fn.stages87&&fn.stages87[idx]){
+          const st=fn.stages87[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.Ipu=safeNum(p[2],st.Ipu);st.knee=safeNum(p[3],st.knee);
+          st.slope1=safeNum(p[4],st.slope1);st.slope2=safeNum(p[5],st.slope2);
+          st.thr2h=safeNum(p[6],st.thr2h);st.tOp=safeNum(p[7],st.tOp);
         }
       }
       else if(key==='SHOTS')fn.shots=parseInt(val);

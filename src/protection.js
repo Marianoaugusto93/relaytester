@@ -918,6 +918,14 @@ export function evalProtectionsDirect(rr,relayProt,sys){
       if(!ft32)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:`P3φ=${P3.toFixed(2)}W`})
     }else if(fid==="79"){
       dg.push({fid,label:"79",status:fn.enabled?"enabled":"disabled",stage:"-",time:"-",obs:`Shots:${fn.shots||3} DT:${(fn.deadTimes||[]).join("/")}s Reclaim:${fn.reclaimTime||3.0}s`})
+    }else if(fid==="87"){
+      const inj=fn.inj87||{};let ft=false;
+      (fn.stages87||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate87Stage(s,inj);
+        if(ev.tripped){ft=true;const t=calc87TripTimeReal(s,inj);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Idiff=${ev.Idiff}A > Iop=${ev.Iop}A`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:ev.blocked?`Bloqueio 2ªH (inrush)`:`Idiff=${ev.Idiff}A ≤ Iop=${ev.Iop}A`})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
     }else{dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"Simplified"})}
   });
   return{dg,allTrips};

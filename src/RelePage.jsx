@@ -217,6 +217,7 @@ const FUNC_LABELS = {
   "81":    { sub: "Freq" },
   "32":    { sub: "Pot. Rev." },
   "79":    { sub: "Religam." },
+  "87":    { sub: "Difer." },
 };
 
 function FuncRail({ tab, setTab, setSi, prot }) {
