@@ -259,6 +259,7 @@ export default function TestsPage({
             campaign={campaign}
             test={test}
             prot={relayProt}
+            sys={sys}
             onTestChange={handleTestChange}
             onStartRun={handleStartRun}
           />

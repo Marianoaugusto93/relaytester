@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import TestChart from './TestChart.jsx';
 import { generatePoints } from './PointGenerator.js';
 import { getDefaults } from './testDefaults.js';
+import { runPickupRamp, RAMP_SUPPORTED } from './pickupRamp.js';
 
 const FUNC_LIST = [
   { id: '51',  label: '51',  sub: 'Sobrec. T' },
@@ -39,13 +40,16 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function TestPlanner({ campaign, test, onTestChange, onStartRun, prot }) {
+export default function TestPlanner({ campaign, test, onTestChange, onStartRun, prot, sys }) {
   const [selFn, setSelFn] = useState('51');
   const [planConfig, setPlanConfig] = useState(() => getDefaults('51'));
+  const [rampStep, setRampStep] = useState('');
+  const [rampResult, setRampResult] = useState(null);
 
   // Re-derive defaults when function changes
   useEffect(() => {
     setPlanConfig(getDefaults(selFn));
+    setRampResult(null);
   }, [selFn]);
 
   // Derive stage from prot for selected function
@@ -326,6 +330,69 @@ export default function TestPlanner({ campaign, test, onTestChange, onStartRun, 
             </div>
           </div>
         </div>
+
+        {/* Pickup ramp (Leva 3) */}
+        {RAMP_SUPPORTED.includes(selFn) && (
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--bdr)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tx3)', letterSpacing: 1,
+              textTransform: 'uppercase', marginBottom: 8, fontFamily: 'var(--fm)' }}>
+              Rampa de Pickup
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx3)',
+                  textTransform: 'uppercase', letterSpacing: '.5px', fontFamily: 'var(--fm)' }}>
+                  Degrau (A)
+                </label>
+                <input type="number" step={0.05} placeholder="auto (1%)" value={rampStep}
+                  onChange={e => setRampStep(e.target.value)}
+                  style={{ background: 'var(--card3)', border: '1px solid var(--bdr)',
+                    color: 'var(--cyan)', padding: '8px 10px', borderRadius: 6,
+                    fontSize: 14, fontFamily: 'var(--fm)', width: '100%' }} />
+              </div>
+              <button onClick={() => {
+                if (!stage) return;
+                const step = parseFloat(rampStep);
+                setRampResult(runPickupRamp(selFn, stage, { relayProt: prot, sys, step: step > 0 ? step : undefined }));
+              }} disabled={!stage}
+                style={{ padding: '9px 14px', borderRadius: 7, background: 'var(--orange-dim)',
+                  border: '1px solid rgba(249,115,22,.4)', color: 'var(--orange)',
+                  fontFamily: 'var(--fh)', fontSize: 11, fontWeight: 800, letterSpacing: 1.2,
+                  textTransform: 'uppercase', cursor: stage ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+                Executar
+              </button>
+            </div>
+            {rampResult && (
+              rampResult.ok ? (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {[
+                    ['Pickup ajustado', `${rampResult.pickupSet} A`],
+                    ['Pickup medido', `${rampResult.pickupMeasured} A`],
+                    ['Erro', `${rampResult.errorPct > 0 ? '+' : ''}${rampResult.errorPct}%`],
+                    ['Degrau · nº', `${rampResult.stepA} A · ${rampResult.nSteps}`],
+                  ].map(([lbl, val]) => (
+                    <div key={lbl} style={{ display: 'flex', justifyContent: 'space-between',
+                      padding: '3px 0', fontSize: 13 }}>
+                      <span style={{ color: 'var(--tx3)', fontFamily: 'var(--fm)' }}>{lbl}</span>
+                      <span style={{ color: 'var(--cyan)', fontWeight: 700, fontFamily: 'var(--fm)' }}>{val}</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 4, padding: '4px 8px', borderRadius: 6,
+                    background: Math.abs(rampResult.errorPct) <= 5 ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.1)',
+                    color: Math.abs(rampResult.errorPct) <= 5 ? 'var(--green)' : 'var(--red)',
+                    fontSize: 10, fontWeight: 800, fontFamily: 'var(--fm)', letterSpacing: '.5px',
+                    textAlign: 'center' }}>
+                    {Math.abs(rampResult.errorPct) <= 5 ? 'DENTRO DE ±5%' : 'FORA DE ±5%'}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginTop: 10, fontSize: 12, color: 'var(--red)', fontFamily: 'var(--fm)' }}>
+                  {rampResult.reason || 'Falha na rampa'}
+                </div>
+              )
+            )}
+          </div>
+        )}
 
         {/* Progress card */}
         <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--bdr)' }}>
