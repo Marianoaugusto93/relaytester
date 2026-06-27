@@ -35,6 +35,28 @@ describe("parseSaveFile — round trip", () => {
     expect(out.prot["51"].enabled).toBe(true);
   });
 
+  it("Leva 2 functions (50BF/49/25/81R) survive round trip", () => {
+    const p = prot();
+    p["50BF"].stages50bf[0].pickup = 3.5; p["50BF"].stages50bf[0].tBF = 0.2;
+    p["49"].stages49[0].Ib = 6; p["49"].stages49[0].k = 1.1; p["49"].stages49[0].tau = 8;
+    p["25"].ref25 = { Vmag: 100, Vang: 5, fHz: 60.1 };
+    p["25"].stages25[0].dVmax = 4; p["25"].stages25[0].dAngMax = 8;
+    p["81R"].inj81r = { dfdt: -0.7 };
+    p["81R"].stages81r[0].pickup = 0.8; p["81R"].stages81r[0].dir = "fall";
+    const text = buildSaveContent(sys(), p, matrix(), null);
+    const out = parseSaveFile(text, prot(), matrix());
+    expect(out.prot["50BF"].stages50bf[0].pickup).toBe(3.5);
+    expect(out.prot["50BF"].stages50bf[0].tBF).toBe(0.2);
+    expect(out.prot["49"].stages49[0].Ib).toBe(6);
+    expect(out.prot["49"].stages49[0].tau).toBe(8);
+    expect(out.prot["25"].ref25.Vmag).toBe(100);
+    expect(out.prot["25"].ref25.fHz).toBe(60.1);
+    expect(out.prot["25"].stages25[0].dVmax).toBe(4);
+    expect(out.prot["81R"].inj81r.dfdt).toBe(-0.7);
+    expect(out.prot["81R"].stages81r[0].pickup).toBe(0.8);
+    expect(out.prot["81R"].stages81r[0].dir).toBe("fall");
+  });
+
   it("output matrix mappings survive round trip", () => {
     const m = matrix();
     const firstRow = Object.keys(m)[0];

@@ -1,6 +1,6 @@
 import{useRef,useState,useCallback}from"react";
 import{buildElectricalGraph,computeRelayReadings,checkMaletaTripDetection,checkBreakerTripCoil}from"./CampoPage.jsx";
-import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal}from"./protection.js";
+import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
 import{protOrder,boCols,nowShort,fmtTs}from"./defaults.js";
 
 export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef}){
@@ -162,7 +162,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     const stageStates=[];
     protOrder.forEach(fid=>{
       const fn=rp2[fid];if(!fn||!fn.enabled)return;
-      const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fn.stages||[]);
+      const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fid==="50BF")?(fn.stages50bf||[]):(fid==="49")?(fn.stages49||[]):(fid==="25")?(fn.stages25||[]):(fid==="81R")?(fn.stages81r||[]):(fn.stages||[]);
       stages.forEach(s=>{if(s.enabled){const thr=1.0+(Math.random()*2-1)*0.05;stageStates.push({fid,stage:s,accum:0,tripped:false,tripTime:null,tripThreshold:thr})}});
     });
     const trippedSoFar=[];
@@ -225,6 +225,21 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
           Ttotal=calc87TripTimeReal(ss.stage,rp2["87"].inj87||{});
         }else if(ss.fid==="21"){
           Ttotal=calc21TripTimeReal(ss.stage,currentRR);
+        }else if(ss.fid==="50BF"){
+          const ev=evaluate50BFStage(ss.stage,currentRR);
+          if(!ev.tripped)return;
+          Ttotal=ss.stage.tBF;
+        }else if(ss.fid==="49"){
+          const iMax=Math.max(currentRR.currents.Ia.mag,currentRR.currents.Ib.mag,currentRR.currents.Ic.mag);
+          Ttotal=calc49TripTime(ss.stage,iMax);
+        }else if(ss.fid==="25"){
+          const ev=evaluate25Stage(ss.stage,currentRR,rp2["25"].ref25||{},sys.freq||60);
+          if(!ev.inSync)return;
+          Ttotal=ss.stage.tCheck;
+        }else if(ss.fid==="81R"){
+          const ev=evaluate81RStage(ss.stage,rp2["81R"].inj81r||{});
+          if(!ev.tripped)return;
+          Ttotal=ss.stage.tOp;
         }else{
           const I=getCurrentForFunc(ss.fid,currentRR);
           if(I<ss.stage.pickup)return;
@@ -258,7 +273,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         protOrder.forEach(fid=>{
           const fn=rp2[fid];
           if(!fn||!fn.enabled){dg.push({fid,label:fn?.label||fid,status:"disabled",stage:"-",time:"-",obs:"Function disabled"});return}
-          const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fn.stages||[]);
+          const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fid==="50BF")?(fn.stages50bf||[]):(fid==="49")?(fn.stages49||[]):(fid==="25")?(fn.stages25||[]):(fid==="81R")?(fn.stages81r||[]):(fn.stages||[]);
           let any=false;
           stages.forEach(s=>{
             if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
@@ -291,6 +306,22 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
               const ev=evaluate21Stage(s,currentRR);const Z=ev.Z;
               if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
               else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`Z=${Z.Z_mag}Ω∠${Z.Z_angle}°`});}
+            }else if(fid==="50BF"){
+              const ev=evaluate50BFStage(s,currentRR);
+              if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
+              else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`Imax=${ev.iMax}A`});}
+            }else if(fid==="49"){
+              const ev=evaluate49Stage(s,currentRR);
+              if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
+              else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`I=${ev.iMax}A > Iθ=${ev.Ith}A`});}
+            }else if(fid==="25"){
+              const ev=evaluate25Stage(s,currentRR,fn.ref25||{},sys.freq||60);
+              if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
+              else if(ev.inSync){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`SYNC ΔV=${ev.dV} Δθ=${ev.dAng}°`});}
+            }else if(fid==="81R"){
+              const ev=evaluate81RStage(s,fn.inj81r||{});
+              if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
+              else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`df/dt=${ev.dfdt}Hz/s`});}
             }else{
               const I=getCurrentForFunc(fid,currentRR);
               if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}

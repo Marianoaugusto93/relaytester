@@ -2,10 +2,36 @@
 
 **Data:** 2026-06-27 · **Branch:** master · **Tudo commitado e pushado.**
 
-## ▶️ Tarefa atual: **87 + 21 CONCLUÍDAS** — próximo item da Leva 2 = **50BF** (ou 49/25/81R)
+## ▶️ Tarefa atual: **LEVA 2 CONCLUÍDA** (87 · 21 · 50BF · 49 · 25 · 81R) — próximo = **Leva 3**
+
+Todas as funções da Leva 2 estão **ao vivo no Relé** (schema + UI + wiring + persistência +
+testes). Próximo passo: **Leva 3 — Sequenciador de testes** (rampa de pickup, teste de tempo com
+shots, state sequencer).
+
+### 50BF / 49 / 25 / 81R — feito nesta sessão (2026-06-27)
+- `src/protection.js`: `evaluate50BFStage`/`calc50BFTripTimeReal` (check de corrente + tBF);
+  `calc49TripTime`/`evaluate49Stage`/`calc49TripTimeReal` (imagem térmica IEC, t=τ·ln[(I²−Ip²)/(I²−Iθ²)],
+  Iθ=k·Ib); `evaluate25Stage`/`calc25TripTimeReal` (sincronismo ΔV/Δθ/Δf vs `ref25`);
+  `evaluate81RStage`/`calc81RTripTimeReal` (df/dt via `inj81r`) + branches em `evalProtectionsDirect`.
+- `src/defaults.js`: factories `mk50bf/mk49/mk25/mk81r`; funções em `defaultProtections` (incl. `ref25`
+  na 25 e `inj81r` na 81R); 4 IDs em `protOrder`; rows em `protStageRows`.
+- `src/useSimulation.js`: imports + branches pré-falta (stageStates/Ttotal/diag).
+- `src/RelePage.jsx`: rail (`FUNC_LABELS`). `src/SettingsPanel.jsx`: `is50bf/is49/is25/is81r`, hints,
+  painéis de entrada (barra ref. 25, df/dt 81R) e forms por estágio. `src/App.jsx`: `uSt`.
+- `src/fileIO.js`: `protKeys` + serialização/parse (`STAGE50BF_`,`STAGE49_`,`REF25`+`STAGE25_`,
+  `INJ81R`+`STAGE81R_`). `src/protection.test.js` (+11 testes) e `src/fileIO.test.js` (+1 round-trip).
+- ⚠️ Medição: 50BF/49/25 leem `computeRelayReadings` → exigem cabeamento do Campo (use "Bancada
+  Completa"). 81R injeta df/dt próprio (dispara sem cabeamento, como a 87).
+
+### Validação Leva 2 final
+- `npx vitest run`: **138 passed | 5 skipped**. `npm run build`: OK, **489.52 kB (125.30 kB gzip)**.
+
+---
+
+## (Histórico) 87 + 21
 
 Funções **87 Diferencial** e **21 Distância** estão **ao vivo no Relé** (schema + UI + wiring +
-persistência + testes). Próximo: escolher entre **50BF, 49 (térmica), 25 (sincronismo), 81R (df/dt)**.
+persistência + testes).
 
 > Padrão a seguir (mesmo das 87/21): motor+testes em `protection.js`/`protection.test.js` →
 > schema em `defaults.js` (factory `mkXX`, função em `defaultProtections`, `protOrder`,
@@ -48,10 +74,9 @@ Sem cabos o relé mede 0 → nada dispara. Para validar no navegador: aba **CAMP
 - `f0c56ca` feat(87): 87 ao vivo no Relé (schema + UI + wiring + persistência)
 - `<este commit>` feat(21): 21 Distância ao vivo (mho/quad, zonas Z1/Z2/Z3, Z=V/I)
 
-**Leva 1 (Ponte/Integração) = concluída.** Leva 2 em andamento: **87 ✓ · 21 ✓** · faltam 50BF/49/25/81R.
+**Leva 1 (Ponte/Integração) = concluída.** **Leva 2 = concluída:** 87 ✓ · 21 ✓ · 50BF ✓ · 49 ✓ · 25 ✓ · 81R ✓.
 
 ## Roadmap (próximas levas)
-- Leva 2 (resto): 50BF, 49 (térmica), 25 (sincronismo), 81R (df/dt)
 - Leva 3: Sequenciador de testes (rampa de pickup, teste de tempo com shots, state sequencer)
 - Leva 4: COMTRADE (replay/import de forma de onda externa)
 - Leva 5: UX/UI (sistema de toast global, persistência de sessão completa)

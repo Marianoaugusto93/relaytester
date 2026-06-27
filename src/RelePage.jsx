@@ -219,6 +219,10 @@ const FUNC_LABELS = {
   "79":    { sub: "Religam." },
   "87":    { sub: "Difer." },
   "21":    { sub: "Distância" },
+  "50BF":  { sub: "Falha DJ" },
+  "49":    { sub: "Térmica" },
+  "25":    { sub: "Sincron." },
+  "81R":   { sub: "df/dt" },
 };
 
 function FuncRail({ tab, setTab, setSi, prot }) {

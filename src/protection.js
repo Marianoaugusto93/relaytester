@@ -901,6 +901,152 @@ export function calc21TripTimeReal(stage,rr){
   return isFinite(t)&&t>=0?t:0;
 }
 
+// ── MOTOR 50BF — Falha de disjuntor (breaker failure) ─────────────────────────
+// Elemento de checagem de corrente (verifica que a corrente de fase persiste
+// acima do pickup) com temporização definida tBF. Se a corrente ainda flui após
+// tBF, o 50BF atua (re-trip / trip de barra retaguarda).
+
+/**
+ * Avalia o elemento de corrente do 50BF a partir das leituras do relé.
+ * @param {Object} stage - {pickup, tBF} @param {Object} rr - leituras do relé
+ * @returns {{tripped:boolean, iMax:number}}
+ */
+export function evaluate50BFStage(stage,rr){
+  if(!stage||!rr)return{tripped:false,iMax:0};
+  const iMax=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
+  const pickup=Number(stage.pickup)||0;
+  return{tripped:pickup>0&&iMax>=pickup,iMax:+iMax.toFixed(4)};
+}
+
+/**
+ * Tempo de operação do 50BF (definido pelo timer tBF). Infinity se não atua.
+ * @param {Object} stage - estágio 50BF (usa stage.tBF) @param {Object} rr - leituras
+ * @returns {number}
+ */
+export function calc50BFTripTimeReal(stage,rr){
+  const r=evaluate50BFStage(stage,rr);
+  if(!r.tripped)return Infinity;
+  const t=Number(stage&&stage.tBF);
+  return isFinite(t)&&t>=0?t:0.15;
+}
+
+// ── MOTOR 49 — Imagem térmica (sobrecarga I²t) ────────────────────────────────
+// Modelo térmico IEC 60255-149 (curva quente): t = τ·ln[(I²-Ip²)/(I²-Iθ²)], onde
+// Iθ = k·Ib é a corrente de operação térmica e Ip a corrente de carga prévia.
+// Atua quando I > Iθ. τ em segundos (escala didática).
+
+/**
+ * Tempo térmico para uma dada corrente. Infinity se I ≤ Iθ ou parâmetros inválidos.
+ * @param {Object} stage - {Ib, k, tau, ipPrior} @param {number} I - corrente (A)
+ * @returns {number}
+ */
+export function calc49TripTime(stage,I){
+  const Ib=Number(stage.Ib)||0,k=Number(stage.k)||1.05,tau=Number(stage.tau)||0;
+  const Ith=k*Ib;
+  if(Ib<=0||tau<=0||I<=Ith)return Infinity;
+  const Ip=(Number(stage.ipPrior)||0)*Ib;
+  const num=I*I-Ip*Ip,den=I*I-Ith*Ith;
+  if(den<=0||num<=0)return Infinity;
+  const t=tau*Math.log(num/den);
+  return(!Number.isFinite(t)||t<=0)?Infinity:t;
+}
+
+/**
+ * Avalia o estágio 49 a partir das leituras do relé (usa a maior corrente de fase).
+ * @param {Object} stage - {Ib, k, tau, ipPrior} @param {Object} rr - leituras
+ * @returns {{tripped:boolean, iMax:number, Ith:number, t:number}}
+ */
+export function evaluate49Stage(stage,rr){
+  if(!stage||!rr)return{tripped:false,iMax:0,Ith:0,t:Infinity};
+  const iMax=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
+  const Ith=(Number(stage.k)||1.05)*(Number(stage.Ib)||0);
+  const t=calc49TripTime(stage,iMax);
+  return{tripped:Number.isFinite(t),iMax:+iMax.toFixed(4),Ith:+Ith.toFixed(3),t};
+}
+
+/**
+ * Tempo de operação do 49 com tolerância simulada. Infinity se não atua.
+ * @param {Object} stage - estágio 49 @param {Object} rr - leituras
+ * @returns {number}
+ */
+export function calc49TripTimeReal(stage,rr){
+  const r=evaluate49Stage(stage,rr);
+  if(!r.tripped)return Infinity;
+  return simulateRealOperateTime(r.t);
+}
+
+// ── MOTOR 25 — Verificação de sincronismo ─────────────────────────────────────
+// Compara o lado vivo (medido: Va do relé + frequência do sistema) com a barra de
+// referência (ref25). Permite o fechamento quando ΔV, Δθ e Δf estão dentro dos
+// limites. Tempo definido (tCheck). "Trip" aqui = permissão de sincronismo.
+
+/**
+ * Avalia o estágio 25 (sincronismo) entre o lado vivo e a barra de referência.
+ * @param {Object} stage - {dVmax, dAngMax, dFmax, tCheck}
+ * @param {Object} rr - leituras do relé (lado vivo via Va)
+ * @param {Object} ref25 - barra de referência {Vmag, Vang, fHz}
+ * @param {number} freq - frequência do sistema (Hz)
+ * @returns {{inSync:boolean, dV:number, dAng:number, dF:number}}
+ */
+export function evaluate25Stage(stage,rr,ref25,freq){
+  if(!stage||!rr||!ref25)return{inSync:false,dV:Infinity,dAng:Infinity,dF:Infinity};
+  const vLive=rr.voltages.Va.mag,aLive=rr.voltages.Va.ang;
+  const dV=Math.abs(vLive-(Number(ref25.Vmag)||0));
+  const dAng=Math.abs(normAng(aLive-(Number(ref25.Vang)||0)));
+  const dF=Math.abs((Number(freq)||0)-(Number(ref25.fHz)||0));
+  const inSync=vLive>0&&dV<=(Number(stage.dVmax)||0)&&dAng<=(Number(stage.dAngMax)||0)&&dF<=(Number(stage.dFmax)||0);
+  return{inSync,dV:+dV.toFixed(3),dAng:+dAng.toFixed(2),dF:+dF.toFixed(3)};
+}
+
+/**
+ * Tempo até a permissão de sincronismo (definido por tCheck). Infinity se fora.
+ * @param {Object} stage @param {Object} rr @param {Object} ref25 @param {number} freq
+ * @returns {number}
+ */
+export function calc25TripTimeReal(stage,rr,ref25,freq){
+  const r=evaluate25Stage(stage,rr,ref25,freq);
+  if(!r.inSync)return Infinity;
+  const t=Number(stage&&stage.tCheck);
+  return isFinite(t)&&t>=0?t:0.1;
+}
+
+// ── MOTOR 81R — Taxa de variação de frequência (df/dt, ROCOF) ─────────────────
+// Um snapshot não contém a derivada, então o banco injeta o valor de df/dt (Hz/s)
+// diretamente (inj81r), como a 87 injeta seus enrolamentos. Atua quando |df/dt| ≥
+// pickup conforme a direção (queda/subida/ambas). Tempo definido (tOp).
+
+/**
+ * Avalia o estágio 81R contra o df/dt injetado.
+ * @param {Object} stage - {pickup, tOp, dir:'fall'|'rise'|'both'}
+ * @param {Object} inj81r - {dfdt} em Hz/s (sinalizado)
+ * @returns {{tripped:boolean, dfdt:number}}
+ */
+export function evaluate81RStage(stage,inj81r){
+  if(!stage||!inj81r)return{tripped:false,dfdt:0};
+  const dfdt=Number(inj81r.dfdt)||0;
+  const pickup=Number(stage.pickup)||0;
+  const dir=stage.dir||"both";
+  let tripped=false;
+  if(pickup>0){
+    if(dir==="fall")tripped=dfdt<=-pickup;
+    else if(dir==="rise")tripped=dfdt>=pickup;
+    else tripped=Math.abs(dfdt)>=pickup;
+  }
+  return{tripped,dfdt:+dfdt.toFixed(4)};
+}
+
+/**
+ * Tempo de operação do 81R (definido por tOp). Infinity se não atua.
+ * @param {Object} stage - estágio 81R @param {Object} inj81r - {dfdt}
+ * @returns {number}
+ */
+export function calc81RTripTimeReal(stage,inj81r){
+  const r=evaluate81RStage(stage,inj81r);
+  if(!r.tripped)return Infinity;
+  const t=Number(stage&&stage.tOp);
+  return isFinite(t)&&t>=0?t:0.1;
+}
+
 export function evalProtectionsDirect(rr,relayProt,sys){
   const maxI=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
   const ri3i0=calc3(rr.currents,["Ia","Ib","Ic"]);
@@ -1008,6 +1154,38 @@ export function evalProtectionsDirect(rr,relayProt,sys){
         const ev=evaluate87Stage(s,inj);
         if(ev.tripped){ft=true;const t=calc87TripTimeReal(s,inj);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Idiff=${ev.Idiff}A > Iop=${ev.Iop}A`})}
         else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:ev.blocked?`Bloqueio 2ªH (inrush)`:`Idiff=${ev.Idiff}A ≤ Iop=${ev.Iop}A`})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
+    }else if(fid==="50BF"){
+      let ft=false;
+      (fn.stages50bf||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate50BFStage(s,rr);
+        if(ev.tripped){ft=true;const t=calc50BFTripTimeReal(s,rr);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Imax=${ev.iMax}A ≥ ${s.pickup}A (tBF=${s.tBF}s)`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:`Imax=${ev.iMax}A < ${s.pickup}A`})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
+    }else if(fid==="49"){
+      let ft=false;
+      (fn.stages49||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate49Stage(s,rr);
+        if(ev.tripped){ft=true;const t=calc49TripTimeReal(s,rr);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`I=${ev.iMax}A > Iθ=${ev.Ith}A`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:`I=${ev.iMax}A ≤ Iθ=${ev.Ith}A`})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
+    }else if(fid==="25"){
+      const ref=fn.ref25||{};let ft=false;
+      (fn.stages25||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate25Stage(s,rr,ref,sys.freq||60);
+        if(ev.inSync){ft=true;const t=calc25TripTimeReal(s,rr,ref,sys.freq||60);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`SYNC OK ΔV=${ev.dV} Δθ=${ev.dAng}° Δf=${ev.dF}`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:`Fora: ΔV=${ev.dV} Δθ=${ev.dAng}° Δf=${ev.dF}`})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"Sem sincronismo"})
+    }else if(fid==="81R"){
+      const inj=fn.inj81r||{};let ft=false;
+      (fn.stages81r||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate81RStage(s,inj);
+        if(ev.tripped){ft=true;const t=calc81RTripTimeReal(s,inj);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`df/dt=${ev.dfdt}Hz/s ≥ ${s.pickup} (${s.dir})`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:`df/dt=${ev.dfdt}Hz/s`})}
       });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
     }else{dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"Simplified"})}
   });

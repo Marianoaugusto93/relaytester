@@ -37,7 +37,7 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
   lines.push('');
 
   // ── PROTECTION FUNCTIONS
-  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21"];
+  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21","50BF","49","25","81R"];
   protKeys.forEach(fid=>{
     const fn=prot[fid];if(!fn)return;
     lines.push(`[PROT:${fid}]`);
@@ -75,6 +75,18 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
       (fn.stages87||[]).forEach((s,i)=>{lines.push(`STAGE87_${i}=${s.id}|${s.enabled}|${s.Ipu}|${s.knee}|${s.slope1}|${s.slope2}|${s.thr2h}|${s.tOp}`);});
     }else if(fid==="21"){
       (fn.stages21||[]).forEach((s,i)=>{lines.push(`STAGE21_${i}=${s.id}|${s.enabled}|${s.type}|${s.reach}|${s.mta}|${s.tDelay}|${s.minV}`);});
+    }else if(fid==="50BF"){
+      (fn.stages50bf||[]).forEach((s,i)=>{lines.push(`STAGE50BF_${i}=${s.id}|${s.enabled}|${s.pickup}|${s.tBF}`);});
+    }else if(fid==="49"){
+      (fn.stages49||[]).forEach((s,i)=>{lines.push(`STAGE49_${i}=${s.id}|${s.enabled}|${s.Ib}|${s.k}|${s.tau}|${s.ipPrior}`);});
+    }else if(fid==="25"){
+      const r=fn.ref25||{Vmag:66.4,Vang:0,fHz:60};
+      lines.push(`REF25=${r.Vmag}|${r.Vang}|${r.fHz}`);
+      (fn.stages25||[]).forEach((s,i)=>{lines.push(`STAGE25_${i}=${s.id}|${s.enabled}|${s.dVmax}|${s.dAngMax}|${s.dFmax}|${s.tCheck}`);});
+    }else if(fid==="81R"){
+      const j=fn.inj81r||{dfdt:0};
+      lines.push(`INJ81R=${j.dfdt}`);
+      (fn.stages81r||[]).forEach((s,i)=>{lines.push(`STAGE81R_${i}=${s.id}|${s.enabled}|${s.pickup}|${s.tOp}|${s.dir}`);});
     }else if(fid==="67"||fid==="67N"){
       (fn.stages||[]).forEach((s,i)=>{
         lines.push(`STAGE_${i}=${s.id}|${s.enabled}|${s.pickup}|${s.timeDial}|${s.curve}|${s.timeOp}|${s.mta}|${s.pol}|${s.minPolV||1}|${s.dir||"forward"}`);
@@ -223,6 +235,51 @@ export function parseSaveFile(text,currentProt,currentMatrix){
           st.id=p[0];st.enabled=p[1]==='true';st.type=p[2];
           st.reach=safeNum(p[3],st.reach);st.mta=safeNum(p[4],st.mta);
           st.tDelay=safeNum(p[5],st.tDelay);st.minV=safeNum(p[6],st.minV);
+        }
+      }
+      else if(key.startsWith('STAGE50BF_')){
+        const idx=parseInt(key.replace('STAGE50BF_',''));
+        const p=val.split('|');if(fn.stages50bf&&fn.stages50bf[idx]){
+          const st=fn.stages50bf[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.pickup=safeNum(p[2],st.pickup);st.tBF=safeNum(p[3],st.tBF);
+        }
+      }
+      else if(key.startsWith('STAGE49_')){
+        const idx=parseInt(key.replace('STAGE49_',''));
+        const p=val.split('|');if(fn.stages49&&fn.stages49[idx]){
+          const st=fn.stages49[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.Ib=safeNum(p[2],st.Ib);st.k=safeNum(p[3],st.k);
+          st.tau=safeNum(p[4],st.tau);st.ipPrior=safeNum(p[5],st.ipPrior);
+        }
+      }
+      else if(key==='REF25'){
+        const p=val.split('|');if(!fn.ref25)fn.ref25={Vmag:66.4,Vang:0,fHz:60};
+        fn.ref25.Vmag=safeNum(p[0],fn.ref25.Vmag);
+        fn.ref25.Vang=safeNum(p[1],fn.ref25.Vang);
+        fn.ref25.fHz=safeNum(p[2],fn.ref25.fHz);
+      }
+      else if(key.startsWith('STAGE25_')){
+        const idx=parseInt(key.replace('STAGE25_',''));
+        const p=val.split('|');if(fn.stages25&&fn.stages25[idx]){
+          const st=fn.stages25[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.dVmax=safeNum(p[2],st.dVmax);st.dAngMax=safeNum(p[3],st.dAngMax);
+          st.dFmax=safeNum(p[4],st.dFmax);st.tCheck=safeNum(p[5],st.tCheck);
+        }
+      }
+      else if(key==='INJ81R'){
+        const p=val.split('|');if(!fn.inj81r)fn.inj81r={dfdt:0};
+        fn.inj81r.dfdt=safeNum(p[0],fn.inj81r.dfdt);
+      }
+      else if(key.startsWith('STAGE81R_')){
+        const idx=parseInt(key.replace('STAGE81R_',''));
+        const p=val.split('|');if(fn.stages81r&&fn.stages81r[idx]){
+          const st=fn.stages81r[idx];
+          st.id=p[0];st.enabled=p[1]==='true';
+          st.pickup=safeNum(p[2],st.pickup);st.tOp=safeNum(p[3],st.tOp);
+          if(p[4]!==undefined)st.dir=p[4];
         }
       }
       else if(key==='SHOTS')fn.shots=parseInt(val);

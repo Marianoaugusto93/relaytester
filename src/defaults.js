@@ -8,6 +8,10 @@ export const mkF=(id,en=true,pu=59.5,top=1.0)=>({id,enabled:en,pickup:pu,timeOp:
 export const mkP=(id,en=true,pu=5,top=1.0)=>({id,enabled:en,pickup:pu,timeOp:top});
 export const mk87=(id,en=true,Ipu=0.2,knee=2,slope1=25,slope2=50,thr2h=15,tOp=0.025)=>({id,enabled:en,Ipu,knee,slope1,slope2,thr2h,tOp});
 export const mk21=(id,en=true,type="mho",reach=8,mta=75,tDelay=0,minV=0)=>({id,enabled:en,type,reach,mta,tDelay,minV});
+export const mk50bf=(id,en=true,pickup=1,tBF=0.15)=>({id,enabled:en,pickup,tBF});
+export const mk49=(id,en=true,Ib=5,k=1.05,tau=10,ipPrior=0)=>({id,enabled:en,Ib,k,tau,ipPrior});
+export const mk25=(id,en=true,dVmax=5,dAngMax=10,dFmax=0.1,tCheck=0.1)=>({id,enabled:en,dVmax,dAngMax,dFmax,tCheck});
+export const mk81r=(id,en=true,pickup=0.5,tOp=0.1,dir="both")=>({id,enabled:en,pickup,tOp,dir});
 export const defaultPhasors={currents:{Ia:{mag:0,ang:0},Ib:{mag:0,ang:-120},Ic:{mag:0,ang:120}},voltages:{Va:{mag:66.4,ang:0},Vb:{mag:66.4,ang:-120},Vc:{mag:66.4,ang:120}}};
 export const defaultSystem={tp:{priV:13800,secV:115,priConn:"estrela",secConn:"estrela"},tc:{priA:600,secA:5},freq:60};
 export const defaultProtections={
@@ -25,13 +29,17 @@ export const defaultProtections={
   "79":{label:"79",name:"Religamento Automático",enabled:false,shots:3,deadTimes:[0.5,5.0,15.0],reclaimTime:3.0},
   "87":{label:"87",name:"Diferencial",enabled:false,base:"secundario",inj87:{IW1:{mag:5,ang:0},IW2:{mag:5,ang:0},h2pct:0},stages87:[mk87("87-1",true,0.2,2,25,50,15,0.025),mk87("87-2",false,1.0,5,30,70,15,0.025)]},
   "21":{label:"21",name:"Distância",enabled:false,base:"secundario",stages21:[mk21("21-Z1",true,"mho",8,75,0,0),mk21("21-Z2",false,"mho",12,75,0.4,0),mk21("21-Z3",false,"mho",18,75,1.0,0)]},
+  "50BF":{label:"50BF",name:"Falha de Disjuntor",enabled:false,base:"secundario",stages50bf:[mk50bf("50BF-1",true,1,0.15),mk50bf("50BF-2",false,2,0.25)]},
+  "49":{label:"49",name:"Imagem Térmica",enabled:false,base:"secundario",stages49:[mk49("49-1",true,5,1.05,10,0),mk49("49-2",false,5,1.2,10,0)]},
+  "25":{label:"25",name:"Verificação de Sincronismo",enabled:false,base:"secundario",ref25:{Vmag:66.4,Vang:0,fHz:60},stages25:[mk25("25-1",true,5,10,0.1,0.1)]},
+  "81R":{label:"81R",name:"Taxa de Var. de Frequência (df/dt)",enabled:false,inj81r:{dfdt:0},stages81r:[mk81r("81R-1",true,0.5,0.1,"both"),mk81r("81R-2",false,1.0,0.1,"fall")]},
 };
-export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21"];
+export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21","50BF","49","25","81R"];
 export const biRows=["BI1","BI2","BI3","BI4","BI5","BI6"];
 export const cbStatusRows=["CB_Opened","CB_Closed"];
 export const cbCmdRows=["CLOSE_CB","OPEN_CB"];
 export const protStageRows=[];
-protOrder.forEach(fid=>{const f=defaultProtections[fid];if(fid==="27/59"){(f.stages27||[]).forEach(s=>protStageRows.push(s.id));(f.stages59||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="81"){(f.stages81u||[]).forEach(s=>protStageRows.push(s.id));(f.stages81o||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="32"){(f.stages32r||[]).forEach(s=>protStageRows.push(s.id));(f.stages32f||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="79"){}else if(fid==="87"){(f.stages87||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="21"){(f.stages21||[]).forEach(s=>protStageRows.push(s.id))}else{(f.stages||[]).forEach(s=>protStageRows.push(s.id))}});
+protOrder.forEach(fid=>{const f=defaultProtections[fid];if(fid==="27/59"){(f.stages27||[]).forEach(s=>protStageRows.push(s.id));(f.stages59||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="81"){(f.stages81u||[]).forEach(s=>protStageRows.push(s.id));(f.stages81o||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="32"){(f.stages32r||[]).forEach(s=>protStageRows.push(s.id));(f.stages32f||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="79"){}else if(fid==="87"){(f.stages87||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="21"){(f.stages21||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="50BF"){(f.stages50bf||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="49"){(f.stages49||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="25"){(f.stages25||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="81R"){(f.stages81r||[]).forEach(s=>protStageRows.push(s.id))}else{(f.stages||[]).forEach(s=>protStageRows.push(s.id))}});
 export const allRows=[...biRows,...cbStatusRows,...cbCmdRows,...protStageRows];
 export const boCols=["BO1","BO2","BO3","BO4","BO5","BO6"];
 export const ledCols=["L1","L2","L3","L4","L5","L6","L7","L8"];

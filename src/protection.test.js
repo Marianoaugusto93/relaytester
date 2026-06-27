@@ -8,6 +8,10 @@ import {
   getCurrentForFunc, calcTripTime,
   evaluate87Stage, calc87TripTimeReal,
   calc21Impedance, evaluate21Stage, calc21TripTimeReal, isMho21,
+  evaluate50BFStage, calc50BFTripTimeReal,
+  calc49TripTime, evaluate49Stage,
+  evaluate25Stage, calc25TripTimeReal,
+  evaluate81RStage, calc81RTripTimeReal,
 } from "./protection.js";
 
 // Helpers
@@ -76,6 +80,79 @@ describe("21 distance (evaluate21Stage)", () => {
   it("mho geometry: point at center is inside, far point is outside", () => {
     expect(isMho21(4, 0, 8, 0)).toBe(true);
     expect(isMho21(20, 0, 8, 0)).toBe(false);
+  });
+});
+
+describe("50BF breaker failure (evaluate50BFStage)", () => {
+  const rrHigh = { currents: currents(ph(6, 0), ph(0.1, -120), ph(0.1, 120)), voltages: voltages(ph(0, 0), ph(0, 0), ph(0, 0)) };
+  const rrLow = { currents: currents(ph(0.2, 0), ph(0.2, -120), ph(0.2, 120)), voltages: voltages(ph(66, 0), ph(66, -120), ph(66, 120)) };
+  const stage = { pickup: 1, tBF: 0.15 };
+  it("trips when phase current persists above pickup", () => {
+    const r = evaluate50BFStage(stage, rrHigh);
+    expect(r.tripped).toBe(true);
+    expect(r.iMax).toBeCloseTo(6, 3);
+    expect(calc50BFTripTimeReal(stage, rrHigh)).toBeCloseTo(0.15, 6);
+  });
+  it("does not trip when current is below the check element", () => {
+    const r = evaluate50BFStage(stage, rrLow);
+    expect(r.tripped).toBe(false);
+    expect(calc50BFTripTimeReal(stage, rrLow)).toBe(Infinity);
+  });
+});
+
+describe("49 thermal image (calc49TripTime / evaluate49Stage)", () => {
+  const stage = { Ib: 5, k: 1.05, tau: 10, ipPrior: 0 };
+  it("does not trip at or below the thermal threshold Iθ = k·Ib", () => {
+    expect(calc49TripTime(stage, 5)).toBe(Infinity); // 5 < 5.25
+    expect(calc49TripTime(stage, 5.25)).toBe(Infinity);
+  });
+  it("computes finite trip time above Iθ (cold curve)", () => {
+    // t = τ·ln(I²/(I²-Iθ²)), Iθ=5.25, I=10 → 10·ln(100/72.4375)=3.225s
+    const t = calc49TripTime(stage, 10);
+    expect(t).toBeCloseTo(3.225, 2);
+    const ev = evaluate49Stage(stage, { currents: currents(ph(10, 0), ph(1, -120), ph(1, 120)), voltages: voltages(ph(0,0),ph(0,0),ph(0,0)) });
+    expect(ev.tripped).toBe(true);
+    expect(ev.Ith).toBeCloseTo(5.25, 3);
+  });
+  it("higher current trips faster (inverse behaviour)", () => {
+    expect(calc49TripTime(stage, 20)).toBeLessThan(calc49TripTime(stage, 10));
+  });
+});
+
+describe("25 synchronism check (evaluate25Stage)", () => {
+  const ref = { Vmag: 66.4, Vang: 0, fHz: 60 };
+  const stage = { dVmax: 5, dAngMax: 10, dFmax: 0.1, tCheck: 0.1 };
+  const mkRR = (vmag, vang) => ({ currents: currents(ph(0,0),ph(0,0),ph(0,0)), voltages: voltages(ph(vmag, vang), ph(66.4, -120), ph(66.4, 120)) });
+  it("permits closing when ΔV, Δθ and Δf are within limits", () => {
+    const r = evaluate25Stage(stage, mkRR(66.4, 3), ref, 60.05);
+    expect(r.inSync).toBe(true);
+    expect(calc25TripTimeReal(stage, mkRR(66.4, 3), ref, 60.05)).toBeCloseTo(0.1, 6);
+  });
+  it("blocks when angle difference exceeds the limit", () => {
+    const r = evaluate25Stage(stage, mkRR(66.4, 30), ref, 60);
+    expect(r.inSync).toBe(false);
+    expect(r.dAng).toBeCloseTo(30, 1);
+  });
+  it("blocks when there is no live voltage (no wiring)", () => {
+    expect(evaluate25Stage(stage, mkRR(0, 0), ref, 60).inSync).toBe(false);
+  });
+});
+
+describe("81R rate-of-change of frequency (evaluate81RStage)", () => {
+  const fall = { pickup: 0.5, tOp: 0.1, dir: "fall" };
+  it("trips on fast frequency decline (df/dt ≤ -pickup)", () => {
+    const r = evaluate81RStage(fall, { dfdt: -0.8 });
+    expect(r.tripped).toBe(true);
+    expect(calc81RTripTimeReal(fall, { dfdt: -0.8 })).toBeCloseTo(0.1, 6);
+  });
+  it("does not trip on a rising df/dt when dir=fall", () => {
+    expect(evaluate81RStage(fall, { dfdt: 0.8 }).tripped).toBe(false);
+  });
+  it("dir=both trips on either sign above the magnitude pickup", () => {
+    const both = { pickup: 0.5, tOp: 0.1, dir: "both" };
+    expect(evaluate81RStage(both, { dfdt: 0.6 }).tripped).toBe(true);
+    expect(evaluate81RStage(both, { dfdt: -0.6 }).tripped).toBe(true);
+    expect(evaluate81RStage(both, { dfdt: 0.3 }).tripped).toBe(false);
   });
 });
 
