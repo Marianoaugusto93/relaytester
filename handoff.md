@@ -2,36 +2,39 @@
 
 **Data:** 2026-06-27 · **Branch:** master · **Tudo commitado e pushado.**
 
-## ▶️ Tarefa atual: **87 Diferencial CONCLUÍDA** — próximo item da Leva 2
+## ▶️ Tarefa atual: **87 + 21 CONCLUÍDAS** — próximo item da Leva 2 = **50BF** (ou 49/25/81R)
 
-A 87 está **ao vivo no Relé** (schema + UI + wiring + persistência). Suíte 121 passed, build verde.
-Próximo: itens restantes da Leva 2 (21 Distância, 50BF, 49, 25, 81R — ver Roadmap abaixo).
+Funções **87 Diferencial** e **21 Distância** estão **ao vivo no Relé** (schema + UI + wiring +
+persistência + testes). Próximo: escolher entre **50BF, 49 (térmica), 25 (sincronismo), 81R (df/dt)**.
 
-> Plano detalhado/checklist: **`.omc/plans/leva2-87-diferencial.md`** (todos os itens core marcados).
+> Padrão a seguir (mesmo das 87/21): motor+testes em `protection.js`/`protection.test.js` →
+> schema em `defaults.js` (factory `mkXX`, função em `defaultProtections`, `protOrder`,
+> `protStageRows`) → branch em `evalProtectionsDirect` → branches em `useSimulation.js`
+> (caminho pré-falta: stageStates/avaliação/diag) → rail em `RelePage.jsx` (`FUNC_LABELS`) →
+> form em `SettingsPanel.jsx` (`isXX`, `getStages`/`getCur`, campos) → `uSt` em `App.jsx` →
+> persistência em `fileIO.js` (`protKeys` + serialização/parse).
 
-### Feito nesta sessão (87 ao vivo) — ainda NÃO commitado
-- `src/defaults.js`: `mk87`; função `"87"` em `defaultProtections` (com `inj87` IW1/IW2/h2pct e
-  `stages87` 87-1/87-2); `"87"` em `protOrder`; `87-1/87-2` em `protStageRows`.
-- `src/protection.js`: branch `fid==="87"` em `evalProtectionsDirect` (usa `fn.inj87`).
-- `src/useSimulation.js`: importa `evaluate87Stage`/`calc87TripTimeReal`; branches 87 no
-  caminho com pré-falta (stageStates + avaliação + diag).
-- `src/RelePage.jsx`: `FUNC_LABELS["87"]={sub:"Difer."}` (rail).
-- `src/SettingsPanel.jsx`: `is87` + `getStages`/`getCur`; bloco de injeção IW1/IW2/%2h; campos
-  de stage (Ipu/knee/slope1/slope2/thr2h/tOp); helpers `u87w`/`u87h`.
-- `src/App.jsx`: `uSt` roteia `id==="87"`→`stages87`.
-- `src/fileIO.js`: persiste `INJ87` + `STAGE87_i` no save/load.
+### 21 Distância — feito nesta sessão (commitado)
+- `src/protection.js`: `isMho21`, `isQuad21`, `calc21Impedance`, `evaluate21Stage`,
+  `calc21TripTimeReal` (portado de `estudos/engine/distance.js`) + branch `fid==="21"` em
+  `evalProtectionsDirect`. Mede **Z=V/I no loop de fase com maior corrente** (fase faltosa).
+- `src/defaults.js`: `mk21`; função `"21"` (zonas `21-Z1/Z2/Z3`, mho/quad, reach Ω, MTA, tDelay,
+  minV); `"21"` em `protOrder`; rows em `protStageRows`.
+- `src/useSimulation.js`: branches 21; `src/RelePage.jsx`: rail "21" (`FUNC_LABELS`);
+  `src/SettingsPanel.jsx`: `is21` + form de zona + hint; `src/App.jsx`: `uSt`→`stages21`;
+  `src/fileIO.js`: `STAGE21_i`.
+- `src/protection.test.js`: 5 testes da 21.
 
-### Validação feita
-- `npx vitest run`: 121 passed | 5 skipped.
-- `npm run build`: OK, 469.57 kB (120.90 kB gzip).
-- Check Node de integração (evalProtectionsDirect): falta interna IW1=5/IW2=0 → trip 87-1 @0.025s;
-  passante IW1≈IW2 → sem trip; inrush 20% 2ª harm. → bloqueio. matriz tem 87-1/87-2.
-- **Pendente (opcional):** validação visual no navegador (`npm run dev`) — selecionar 87 no rail,
-  injetar e confirmar trip/LED/disjuntor.
+### ⚠️ Aprendizado-chave (vale para TODA função baseada em medição: 21/50/51/etc.)
+A 21 lê as **medições do relé** (`computeRelayReadings`), que dependem do **cabeamento do Campo**.
+Sem cabos o relé mede 0 → nada dispara. Para validar no navegador: aba **CAMPO** →
+**PREDEFINIÇÕES → "Bancada Completa"** (cabeia I+V+CB), depois injeta no Relé.
+(A 87 é exceção: usa inputs próprios `inj87`, dispara mesmo sem cabeamento.)
 
-### Abordagem-chave (mantida)
-A 87 carrega **inputs próprios** (IW1/IW2/%2h) no form da função — a banda de injeção global
-(`src/relay/InjectionBand.jsx`) **não foi tocada** (sem regressão nas demais funções).
+### Validação (87 e 21)
+- `npx vitest run`: **126 passed | 5 skipped**.
+- `npm run build`: OK, **474.31 kB (122.23 kB gzip)**.
+- Navegador: 87 → TRIP 87-1 (IW1=5/IW2=0); 21 → TRIP 21-Z1 (Ia=5∠0, Va=20∠75 → Z=4Ω∠75 ⊂ Mho 8Ω).
 
 ## Contexto do projeto
 - App React 18 (Vite, JSX, sem TS). Banco de testes de relé de proteção (didático).
@@ -40,17 +43,15 @@ A 87 carrega **inputs próprios** (IW1/IW2/%2h) no form da função — a banda 
   Padrão por função: `evaluateXStage` / `calcXTripTimeReal` / `CURVE_MAP`.
 - Motor diferencial de referência (reaproveitado): `src/estudos/engine/differential.js`.
 
-## Histórico recente desta sessão (já no master)
-- `5f6b914` chore: redução do footprint (removeu ProtecView/dist/docs legados; archive organizado)
-- `49b8358` feat: ponte Manobras→Relé **não troca de aba**; toast "Falta pronta → Ir ao Relé"
-- `78e9018` feat: ponte bidirecional Relé→Manobras (badge "Relé do banco atuou")
-- `a5dd16e` feat: cadeia Estudos→Relé via contrato `fault.currents`
-- `e02d1df` feat(87): motor da diferencial (este handoff continua daqui)
+## Histórico recente (já no master)
+- `e02d1df` feat(87): motor da diferencial (dual-slope + bloqueio 2ª harmônica)
+- `f0c56ca` feat(87): 87 ao vivo no Relé (schema + UI + wiring + persistência)
+- `<este commit>` feat(21): 21 Distância ao vivo (mho/quad, zonas Z1/Z2/Z3, Z=V/I)
 
-**Leva 1 (Ponte/Integração) = concluída.** Leva 2 em andamento (87 é o 1º item).
+**Leva 1 (Ponte/Integração) = concluída.** Leva 2 em andamento: **87 ✓ · 21 ✓** · faltam 50BF/49/25/81R.
 
-## Roadmap (próximas levas, depois da 87)
-- Leva 2 (resto): 21 Distância, 50BF, 49, 25, 81R
+## Roadmap (próximas levas)
+- Leva 2 (resto): 50BF, 49 (térmica), 25 (sincronismo), 81R (df/dt)
 - Leva 3: Sequenciador de testes (rampa de pickup, teste de tempo com shots, state sequencer)
 - Leva 4: COMTRADE (replay/import de forma de onda externa)
 - Leva 5: UX/UI (sistema de toast global, persistência de sessão completa)

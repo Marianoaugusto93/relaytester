@@ -7,6 +7,7 @@ export const mkV=(id,en=true,pu=0.8,top=0.5)=>({id,enabled:en,pickup:pu,timeOp:t
 export const mkF=(id,en=true,pu=59.5,top=1.0)=>({id,enabled:en,pickup:pu,timeOp:top});
 export const mkP=(id,en=true,pu=5,top=1.0)=>({id,enabled:en,pickup:pu,timeOp:top});
 export const mk87=(id,en=true,Ipu=0.2,knee=2,slope1=25,slope2=50,thr2h=15,tOp=0.025)=>({id,enabled:en,Ipu,knee,slope1,slope2,thr2h,tOp});
+export const mk21=(id,en=true,type="mho",reach=8,mta=75,tDelay=0,minV=0)=>({id,enabled:en,type,reach,mta,tDelay,minV});
 export const defaultPhasors={currents:{Ia:{mag:0,ang:0},Ib:{mag:0,ang:-120},Ic:{mag:0,ang:120}},voltages:{Va:{mag:66.4,ang:0},Vb:{mag:66.4,ang:-120},Vc:{mag:66.4,ang:120}}};
 export const defaultSystem={tp:{priV:13800,secV:115,priConn:"estrela",secConn:"estrela"},tc:{priA:600,secA:5},freq:60};
 export const defaultProtections={
@@ -23,13 +24,14 @@ export const defaultProtections={
   "32":{label:"32",name:"Potência Direcional/Reversa",enabled:false,stages32r:[mkP("32R-1",true,5,1.0),mkP("32R-2",false,10,0.5)],stages32f:[mkP("32F-1",false,5,1.0),mkP("32F-2",false,10,0.5)]},
   "79":{label:"79",name:"Religamento Automático",enabled:false,shots:3,deadTimes:[0.5,5.0,15.0],reclaimTime:3.0},
   "87":{label:"87",name:"Diferencial",enabled:false,base:"secundario",inj87:{IW1:{mag:5,ang:0},IW2:{mag:5,ang:0},h2pct:0},stages87:[mk87("87-1",true,0.2,2,25,50,15,0.025),mk87("87-2",false,1.0,5,30,70,15,0.025)]},
+  "21":{label:"21",name:"Distância",enabled:false,base:"secundario",stages21:[mk21("21-Z1",true,"mho",8,75,0,0),mk21("21-Z2",false,"mho",12,75,0.4,0),mk21("21-Z3",false,"mho",18,75,1.0,0)]},
 };
-export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87"];
+export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21"];
 export const biRows=["BI1","BI2","BI3","BI4","BI5","BI6"];
 export const cbStatusRows=["CB_Opened","CB_Closed"];
 export const cbCmdRows=["CLOSE_CB","OPEN_CB"];
 export const protStageRows=[];
-protOrder.forEach(fid=>{const f=defaultProtections[fid];if(fid==="27/59"){(f.stages27||[]).forEach(s=>protStageRows.push(s.id));(f.stages59||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="81"){(f.stages81u||[]).forEach(s=>protStageRows.push(s.id));(f.stages81o||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="32"){(f.stages32r||[]).forEach(s=>protStageRows.push(s.id));(f.stages32f||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="79"){}else if(fid==="87"){(f.stages87||[]).forEach(s=>protStageRows.push(s.id))}else{(f.stages||[]).forEach(s=>protStageRows.push(s.id))}});
+protOrder.forEach(fid=>{const f=defaultProtections[fid];if(fid==="27/59"){(f.stages27||[]).forEach(s=>protStageRows.push(s.id));(f.stages59||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="81"){(f.stages81u||[]).forEach(s=>protStageRows.push(s.id));(f.stages81o||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="32"){(f.stages32r||[]).forEach(s=>protStageRows.push(s.id));(f.stages32f||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="79"){}else if(fid==="87"){(f.stages87||[]).forEach(s=>protStageRows.push(s.id))}else if(fid==="21"){(f.stages21||[]).forEach(s=>protStageRows.push(s.id))}else{(f.stages||[]).forEach(s=>protStageRows.push(s.id))}});
 export const allRows=[...biRows,...cbStatusRows,...cbCmdRows,...protStageRows];
 export const boCols=["BO1","BO2","BO3","BO4","BO5","BO6"];
 export const ledCols=["L1","L2","L3","L4","L5","L6","L7","L8"];

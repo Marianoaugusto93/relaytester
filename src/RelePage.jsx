@@ -218,6 +218,7 @@ const FUNC_LABELS = {
   "32":    { sub: "Pot. Rev." },
   "79":    { sub: "Religam." },
   "87":    { sub: "Difer." },
+  "21":    { sub: "Distância" },
 };
 
 function FuncRail({ tab, setTab, setSi, prot }) {

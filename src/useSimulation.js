@@ -1,6 +1,6 @@
 import{useRef,useState,useCallback}from"react";
 import{buildElectricalGraph,computeRelayReadings,checkMaletaTripDetection,checkBreakerTripCoil}from"./CampoPage.jsx";
-import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal}from"./protection.js";
+import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal}from"./protection.js";
 import{protOrder,boCols,nowShort,fmtTs}from"./defaults.js";
 
 export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef}){
@@ -162,7 +162,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     const stageStates=[];
     protOrder.forEach(fid=>{
       const fn=rp2[fid];if(!fn||!fn.enabled)return;
-      const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fn.stages||[]);
+      const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fn.stages||[]);
       stages.forEach(s=>{if(s.enabled){const thr=1.0+(Math.random()*2-1)*0.05;stageStates.push({fid,stage:s,accum:0,tripped:false,tripTime:null,tripThreshold:thr})}});
     });
     const trippedSoFar=[];
@@ -223,6 +223,8 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
           Ttotal=calc67NTheoreticalTripTime(ss.stage,currentRR);
         }else if(ss.fid==="87"){
           Ttotal=calc87TripTimeReal(ss.stage,rp2["87"].inj87||{});
+        }else if(ss.fid==="21"){
+          Ttotal=calc21TripTimeReal(ss.stage,currentRR);
         }else{
           const I=getCurrentForFunc(ss.fid,currentRR);
           if(I<ss.stage.pickup)return;
@@ -256,7 +258,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         protOrder.forEach(fid=>{
           const fn=rp2[fid];
           if(!fn||!fn.enabled){dg.push({fid,label:fn?.label||fid,status:"disabled",stage:"-",time:"-",obs:"Function disabled"});return}
-          const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fn.stages||[]);
+          const stages=(fid==="27/59")?[...(fn.stages27||[]),...(fn.stages59||[])]:(fid==="81")?[...(fn.stages81u||[]),...(fn.stages81o||[])]:(fid==="32")?[...(fn.stages32r||[]),...(fn.stages32f||[])]:(fid==="79")?[]:(fid==="87")?(fn.stages87||[]):(fid==="21")?(fn.stages21||[]):(fn.stages||[]);
           let any=false;
           stages.forEach(s=>{
             if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
@@ -285,6 +287,10 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
               const ev=evaluate87Stage(s,fn.inj87||{});
               if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
               else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`Idiff=${ev.Idiff}A > Iop=${ev.Iop}A`});}
+            }else if(fid==="21"){
+              const ev=evaluate21Stage(s,currentRR);const Z=ev.Z;
+              if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}
+              else if(ev.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:`${(ss2.accum*100).toFixed(0)}%`,obs:`Z=${Z.Z_mag}Ω∠${Z.Z_angle}°`});}
             }else{
               const I=getCurrentForFunc(fid,currentRR);
               if(ss2.tripped){any=true;dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:ss2.tripTime!==null?ss2.tripTime.toFixed(3):"PF",obs:"Accum=100%"});}

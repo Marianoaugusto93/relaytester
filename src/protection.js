@@ -826,6 +826,81 @@ export function calc87TripTimeReal(stage,inj87){
   return isFinite(t)&&t>=0 ? t : 0.025;
 }
 
+// ── MOTOR 21 — Distância (impedância de zona) ────────────────────────────────
+// Mede Z=V/I no loop de fase com maior corrente (fase faltosa) e checa se o ponto
+// cai na característica mho (polarizada por MTA) ou quadrilátero. Tempo definido
+// por zona. Portado de estudos/engine/distance.js para manter o core auto-contido.
+
+/**
+ * Mho: ponto Z dentro do círculo de diâmetro=reach na direção MTA (centro reach/2).
+ * @param {number} Z_r - parte real medida (Ω) @param {number} Z_i - parte imag (Ω)
+ * @param {number} reach - alcance da zona (Ω) @param {number} mta - ângulo de torque máx (°)
+ * @returns {boolean}
+ */
+export function isMho21(Z_r,Z_i,reach,mta=75){
+  if(reach<=0)return false;
+  const a=-mta*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+  const rr=Z_r*c-Z_i*s,ri=Z_r*s+Z_i*c;
+  const cr=reach/2;
+  return (rr-cr)*(rr-cr)+ri*ri<=(reach/2)*(reach/2);
+}
+
+/**
+ * Quadrilátero: caixa R∈[-0.1,1.1]·reach, X∈[-0.5,0.5]·reach (rotacionada por MTA).
+ * @returns {boolean}
+ */
+export function isQuad21(Z_r,Z_i,reach,mta=75){
+  if(reach<=0)return false;
+  const a=-mta*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+  const rr=Z_r*c-Z_i*s,ri=Z_r*s+Z_i*c;
+  return rr>=-0.1*reach&&rr<=1.1*reach&&ri>=-0.5*reach&&ri<=0.5*reach;
+}
+
+/**
+ * Impedância vista pelo relé no loop de fase com maior corrente (fase faltosa).
+ * @param {Object} rr - leituras do relé {currents:{Ia,Ib,Ic}, voltages:{Va,Vb,Vc}}
+ * @returns {{Z_r,Z_i,Z_mag,Z_angle,loop,imag,vmag}}
+ */
+export function calc21Impedance(rr){
+  const ph=[["Ia","Va"],["Ib","Vb"],["Ic","Vc"]];
+  let best=null,maxI=-1;
+  ph.forEach(([ik,vk])=>{const I=rr.currents[ik],V=rr.voltages[vk];if(I.mag>maxI){maxI=I.mag;best={I,V,loop:ik.charAt(1).toUpperCase()}}});
+  if(!best||best.I.mag<=0)return{Z_r:0,Z_i:0,Z_mag:Infinity,Z_angle:0,loop:best?best.loop:"-",imag:0,vmag:best?best.V.mag:0};
+  const v=toRect(best.V.mag,best.V.ang),i=toRect(best.I.mag,best.I.ang);
+  const den=i.re*i.re+i.im*i.im;
+  const Z_r=(v.re*i.re+v.im*i.im)/den,Z_i=(v.im*i.re-v.re*i.im)/den;
+  return{Z_r:+Z_r.toFixed(4),Z_i:+Z_i.toFixed(4),Z_mag:+Math.hypot(Z_r,Z_i).toFixed(4),Z_angle:+(Math.atan2(Z_i,Z_r)*180/Math.PI).toFixed(2),loop:best.loop,imag:best.I.mag,vmag:best.V.mag};
+}
+
+/**
+ * Avalia uma zona 21 (stage) a partir das leituras do relé.
+ * @param {Object} stage - {type:'mho'|'quad', reach, mta, tDelay, minV}
+ * @param {Object} rr - leituras do relé
+ * @returns {{tripped:boolean, inside:boolean, blocked?:boolean, Z:Object|null}}
+ */
+export function evaluate21Stage(stage,rr){
+  if(!stage||!rr)return{tripped:false,inside:false,Z:null};
+  const Z=calc21Impedance(rr);
+  const reach=Number(stage.reach)||0,mta=Number(stage.mta)||75;
+  const minV=Number(stage.minV)||0;
+  if(Z.imag<=0)return{tripped:false,inside:false,Z};
+  if(minV>0&&Z.vmag<minV)return{tripped:false,inside:false,blocked:true,Z};
+  const inside=stage.type==="quad"?isQuad21(Z.Z_r,Z.Z_i,reach,mta):isMho21(Z.Z_r,Z.Z_i,reach,mta);
+  return{tripped:inside,inside,Z};
+}
+
+/**
+ * Tempo de operação por zona (definido). Infinity se a zona não atua.
+ * @param {Object} stage - zona 21 (usa stage.tDelay) @param {Object} rr - leituras
+ * @returns {number}
+ */
+export function calc21TripTimeReal(stage,rr){
+  const r=evaluate21Stage(stage,rr);
+  if(!r.tripped)return Infinity;
+  const t=Number(stage&&stage.tDelay);
+  return isFinite(t)&&t>=0?t:0;
+}
+
 export function evalProtectionsDirect(rr,relayProt,sys){
   const maxI=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
   const ri3i0=calc3(rr.currents,["Ia","Ib","Ic"]);
@@ -918,6 +993,14 @@ export function evalProtectionsDirect(rr,relayProt,sys){
       if(!ft32)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:`P3φ=${P3.toFixed(2)}W`})
     }else if(fid==="79"){
       dg.push({fid,label:"79",status:fn.enabled?"enabled":"disabled",stage:"-",time:"-",obs:`Shots:${fn.shots||3} DT:${(fn.deadTimes||[]).join("/")}s Reclaim:${fn.reclaimTime||3.0}s`})
+    }else if(fid==="21"){
+      let ft=false;
+      (fn.stages21||[]).forEach(s=>{
+        if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
+        const ev=evaluate21Stage(s,rr);const Z=ev.Z;
+        if(ev.tripped){ft=true;const t=calc21TripTimeReal(s,rr);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Z=${Z.Z_mag}Ω∠${Z.Z_angle}° (loop ${Z.loop}) ⊂ ${s.type} ${s.reach}Ω`})}
+        else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:ev.blocked?`Bloq. subtensão (V<${s.minV})`:Z&&isFinite(Z.Z_mag)?`Z=${Z.Z_mag}Ω∠${Z.Z_angle}° fora de ${s.reach}Ω`:"Sem corrente"})}
+      });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
     }else if(fid==="87"){
       const inj=fn.inj87||{};let ft=false;
       (fn.stages87||[]).forEach(s=>{

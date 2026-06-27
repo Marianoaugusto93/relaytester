@@ -37,7 +37,7 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
   lines.push('');
 
   // ── PROTECTION FUNCTIONS
-  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87"];
+  const protKeys=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21"];
   protKeys.forEach(fid=>{
     const fn=prot[fid];if(!fn)return;
     lines.push(`[PROT:${fid}]`);
@@ -73,6 +73,8 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
       const j=fn.inj87||{IW1:{mag:0,ang:0},IW2:{mag:0,ang:0},h2pct:0};
       lines.push(`INJ87=${j.IW1.mag}|${j.IW1.ang}|${j.IW2.mag}|${j.IW2.ang}|${j.h2pct}`);
       (fn.stages87||[]).forEach((s,i)=>{lines.push(`STAGE87_${i}=${s.id}|${s.enabled}|${s.Ipu}|${s.knee}|${s.slope1}|${s.slope2}|${s.thr2h}|${s.tOp}`);});
+    }else if(fid==="21"){
+      (fn.stages21||[]).forEach((s,i)=>{lines.push(`STAGE21_${i}=${s.id}|${s.enabled}|${s.type}|${s.reach}|${s.mta}|${s.tDelay}|${s.minV}`);});
     }else if(fid==="67"||fid==="67N"){
       (fn.stages||[]).forEach((s,i)=>{
         lines.push(`STAGE_${i}=${s.id}|${s.enabled}|${s.pickup}|${s.timeDial}|${s.curve}|${s.timeOp}|${s.mta}|${s.pol}|${s.minPolV||1}|${s.dir||"forward"}`);
@@ -212,6 +214,15 @@ export function parseSaveFile(text,currentProt,currentMatrix){
           st.Ipu=safeNum(p[2],st.Ipu);st.knee=safeNum(p[3],st.knee);
           st.slope1=safeNum(p[4],st.slope1);st.slope2=safeNum(p[5],st.slope2);
           st.thr2h=safeNum(p[6],st.thr2h);st.tOp=safeNum(p[7],st.tOp);
+        }
+      }
+      else if(key.startsWith('STAGE21_')){
+        const idx=parseInt(key.replace('STAGE21_',''));
+        const p=val.split('|');if(fn.stages21&&fn.stages21[idx]){
+          const st=fn.stages21[idx];
+          st.id=p[0];st.enabled=p[1]==='true';st.type=p[2];
+          st.reach=safeNum(p[3],st.reach);st.mta=safeNum(p[4],st.mta);
+          st.tDelay=safeNum(p[5],st.tDelay);st.minV=safeNum(p[6],st.minV);
         }
       }
       else if(key==='SHOTS')fn.shots=parseInt(val);

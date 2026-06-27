@@ -7,6 +7,7 @@ import {
   evaluate67Stage, evaluate67NStage,
   getCurrentForFunc, calcTripTime,
   evaluate87Stage, calc87TripTimeReal,
+  calc21Impedance, evaluate21Stage, calc21TripTimeReal, isMho21,
 } from "./protection.js";
 
 // Helpers
@@ -34,6 +35,47 @@ describe("87 differential (evaluate87Stage)", () => {
     expect(r.blocked).toBe(true);
     expect(r.tripped).toBe(false);
     expect(calc87TripTimeReal(stage, inj)).toBe(Infinity);
+  });
+});
+
+describe("21 distance (evaluate21Stage)", () => {
+  // Falta na fase A: V=20∠0, I=5∠-75 → Z = 4Ω∠75° (loop A)
+  const faultRR = {
+    currents: currents(ph(5, -75), ph(0.05, -195), ph(0.05, 45)),
+    voltages: voltages(ph(20, 0), ph(66.4, -120), ph(66.4, 120)),
+  };
+  // Carga normal: V nominal, I de carga pequena → Z grande, fora das zonas
+  const loadRR = {
+    currents: currents(ph(1, -30), ph(1, -150), ph(1, 90)),
+    voltages: voltages(ph(66.4, 0), ph(66.4, -120), ph(66.4, 120)),
+  };
+  it("measures Z = V/I on the faulted-phase loop", () => {
+    const Z = calc21Impedance(faultRR);
+    expect(Z.loop).toBe("A");
+    expect(Z.Z_mag).toBeCloseTo(4, 1);
+    expect(Z.Z_angle).toBeCloseTo(75, 0);
+  });
+  it("trips when impedance falls inside the mho zone", () => {
+    const z1 = { id: "21-Z1", type: "mho", reach: 8, mta: 75, tDelay: 0, minV: 0 };
+    const r = evaluate21Stage(z1, faultRR);
+    expect(r.tripped).toBe(true);
+    expect(calc21TripTimeReal(z1, faultRR)).toBe(0);
+  });
+  it("does not trip on load (Z outside the zone)", () => {
+    const z1 = { id: "21-Z1", type: "mho", reach: 8, mta: 75, tDelay: 0, minV: 0 };
+    const r = evaluate21Stage(z1, loadRR);
+    expect(r.tripped).toBe(false);
+    expect(calc21TripTimeReal(z1, loadRR)).toBe(Infinity);
+  });
+  it("blocks on undervoltage blinder when minV set above measured V", () => {
+    const z1 = { id: "21-Z1", type: "mho", reach: 8, mta: 75, tDelay: 0, minV: 30 };
+    const r = evaluate21Stage(z1, faultRR); // Vmag=20 < 30 → blocked
+    expect(r.blocked).toBe(true);
+    expect(r.tripped).toBe(false);
+  });
+  it("mho geometry: point at center is inside, far point is outside", () => {
+    expect(isMho21(4, 0, 8, 0)).toBe(true);
+    expect(isMho21(20, 0, 8, 0)).toBe(false);
   });
 });
 
