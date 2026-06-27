@@ -30,6 +30,21 @@ export default function SendToRelayButton({ faultResult, faultType }) {
 
     bus.publish("artifact.sendToRele", payload);
 
+    // Cadeia Estudos → (contrato `fault.currents` de Manobras) → injeção do Relé.
+    // Reusa o mesmo tópico que o Simulador de Manobras usa, de modo que a falta
+    // calculada pré-carrega a injeção do Relé e dispara o toast "Falta pronta".
+    const c = faultResult.currents || {};
+    const mags = [c.Ia?.mag, c.Ib?.mag, c.Ic?.mag].map(Number).filter((n) => isFinite(n));
+    const If = mags.length ? Math.max(...mags) : 0;
+    bus.publish("fault.currents", {
+      kind: "estudo",
+      ftype: mapFtype(faultType),
+      If,
+      kV: Number(faultResult.kV ?? faultResult.kVf ?? 0),
+      at: "estudo",
+      label: `Estudo: ${faultType}`,
+    });
+
     setSent(true);
     setTimeout(() => setSent(false), 2000);
   };
@@ -91,6 +106,19 @@ function formatProtections(isc_secondary) {
       ],
     },
   };
+}
+
+/**
+ * Map a study fault-type code to the ftype string understood by App.jsx's
+ * `fault.currents` listener (which keys on "1"/"2" substrings, else 3φ).
+ * @param {string} ft - e.g. "ABC", "AG", "BC", "ABG"
+ * @returns {"1ph"|"2ph"|"3ph"}
+ */
+function mapFtype(ft) {
+  ft = String(ft || "").toUpperCase();
+  if (/^[ABC]G$/.test(ft) || ft === "SLG" || ft === "LG") return "1ph";   // L-G
+  if (/^[ABC]{2}G?$/.test(ft) || ft === "LL" || ft === "LLG") return "2ph"; // L-L / L-L-G
+  return "3ph";
 }
 
 const styles = {
