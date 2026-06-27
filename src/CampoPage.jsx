@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import BorneStatusPanel from "./BorneStatusPanel.jsx";
 import BorneGuideModal from "./BorneGuideModal.jsx";
-import { BORNE_DESCRIPTIONS } from "./BorneDescriptions.js";
+import { useBorneDescriptions } from "./BorneDescriptions.js";
 import { useTranslation } from "./i18n/useTranslation.js";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -763,6 +763,7 @@ function BorneOpening({n,side,pending,onTClick,onTDbl}){
 
 function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
   const t=BORNE_TYPE[n];
+  const BORNE_DESCRIPTIONS=useBorneDescriptions();
   const desc=BORNE_DESCRIPTIONS?.[n];
   const tooltip=desc?`${desc.label} - ${desc.desc}`:null;
   return(

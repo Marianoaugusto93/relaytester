@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { BORNE_DESCRIPTIONS, BORNE_GROUPS } from "./BorneDescriptions.js";
+import { useBorneDescriptions } from "./BorneDescriptions.js";
 import { useTranslation } from "./i18n/useTranslation.js";
 
 export default function BorneGuideModal({ open, onClose }) {
   const { t } = useTranslation();
+  const BORNE_DESCRIPTIONS = useBorneDescriptions();
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!open) return null;
