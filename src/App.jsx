@@ -491,17 +491,27 @@ function AppInner(){
   };
 
   // ── JSX ────────────────────────────────────────────────────────────────────
+  // Lembra a última sub-aba da Bancada (Relé 360): 0=Campo 1=Relé 2=Painel 3=Testes
+  const benchLastRef=useRef(0);
   return(<><style>{S}</style><div className="app">
     <div className="topbar">
       <div className="tb-l"><div className="tb-ico"><svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="9" fill="#181b22"/><circle cx="18" cy="18" r="13" fill="none" stroke="#f97316" strokeWidth="1.8"/><circle cx="18" cy="18" r="9.5" fill="#0e1015"/><line x1="18" y1="5" x2="18" y2="8" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="18" y1="28" x2="18" y2="31" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="5" y1="18" x2="8" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="28" y1="18" x2="31" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 18 Q12.5 13 15 18 Q17.5 23 20 18" fill="none" stroke="#f3f4f6" strokeWidth="1.5" strokeLinecap="round"/><path d="M20 18 L22 14 L24 22 L26 16" fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div><div className="tb-t">RelayLab <span>360</span></div><div className="tb-s">{t("topbar.subtitle")}</div></div></div>
       <div className="tb-r">
-        <div className="nav-pills"><button data-tutorial-target="nav-campo" className={`nav-pill ${page===0?"on":""}`} onClick={()=>setPage(0)}>{t("nav.campo")}</button><button data-tutorial-target="nav-relay" className={`nav-pill ${page===1?"on":""}`} onClick={()=>setPage(1)}>{t("nav.rele")}</button><button data-tutorial-target="nav-panel" className={`nav-pill ${page===2?"on":""}`} onClick={()=>setPage(2)}>{t("nav.painel")}{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button><button className={`nav-pill ${page===3?"on":""}`} onClick={()=>setPage(3)}>Testes</button><button className={`nav-pill ${page===4?"on":""}`} onClick={()=>setPage(4)}>{t("nav.estudos")}</button><button className={`nav-pill ${page===5?"on":""}`} onClick={()=>setPage(5)}>⚡ Simulador NR</button><button className={`nav-pill ${page===6?"on":""}`} onClick={()=>setPage(6)}>📊 Coordenograma</button><button className={`nav-pill ${page===7?"on":""}`} onClick={()=>setPage(7)}>🔀 Manobras</button></div>
+        <div className="nav-pills"><button data-tutorial-target="nav-bench" className={`nav-pill ${page<=3?"on":""}`} onClick={()=>setPage(page<=3?page:benchLastRef.current)}>Relé <span style={{color:'var(--orange)'}}>360</span>{bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}</button><button className={`nav-pill ${page===4?"on":""}`} onClick={()=>setPage(4)}>{t("nav.estudos")}</button><button className={`nav-pill ${page===5?"on":""}`} onClick={()=>setPage(5)}>⚡ Simulador NR</button><button className={`nav-pill ${page===6?"on":""}`} onClick={()=>setPage(6)}>📊 Coordenograma</button><button className={`nav-pill ${page===7?"on":""}`} onClick={()=>setPage(7)}>🔀 Manobras</button></div>
         {/* Layout toggle removed - keeping legacy layout only */}
         <div className="tb-status"><div className="tb-dot"/>{t("nav.online")}</div>
         <LanguageSelector/>
         <button className="help-btn" onClick={()=>openHelp("getting-started")} title="Help &amp; Reference">?</button>
       </div>
     </div>
+    {page<=3&&<div className="bench-subnav" style={{display:'flex',gap:4,padding:'6px 14px',background:'var(--card2)',borderBottom:'1px solid var(--bdr)',flexShrink:0}}>
+      {[[0,t("nav.campo")],[1,t("nav.rele")],[2,t("nav.painel")],[3,"Testes"]].map(([i,lbl])=>(
+        <button key={i} onClick={()=>{benchLastRef.current=i;setPage(i);}}
+          style={{padding:'6px 16px',borderRadius:6,border:`1px solid ${page===i?'var(--orange)':'var(--bdr)'}`,background:page===i?'var(--orange-dim)':'transparent',color:page===i?'var(--orange)':'var(--tx2)',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'var(--fh)',letterSpacing:.5,textTransform:'uppercase',transition:'all .15s'}}>
+          {lbl}{i===2&&bkTripLatch&&<span style={{marginLeft:5,display:'inline-block',width:6,height:6,borderRadius:'50%',background:'var(--red)',verticalAlign:'middle',boxShadow:'0 0 6px var(--red)'}}/>}
+        </button>
+      ))}
+    </div>}
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
       {/* CAMPO */}
       <div className="slide-pg"><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>

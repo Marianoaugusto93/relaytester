@@ -5,9 +5,9 @@ import { useLanguage } from "./i18n/LanguageContext.jsx";
 
 const STEP_SELECTORS = [
   null,
-  '[data-tutorial-target="nav-campo"]',
-  '[data-tutorial-target="nav-relay"]',
-  '[data-tutorial-target="nav-panel"]',
+  '[data-tutorial-target="nav-bench"]',
+  '[data-tutorial-target="nav-bench"]',
+  '[data-tutorial-target="nav-bench"]',
   null,
   null,
 ];
