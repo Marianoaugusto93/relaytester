@@ -286,6 +286,7 @@ export default function TestPlanner({ campaign, test, onTestChange, onStartRun, 
               { key: 'defaultMinMult', label: 'Mín (×Ipk)', type: 'number', step: 0.5 },
               { key: 'defaultMaxMult', label: 'Máx (×Ipk)', type: 'number', step: 1 },
               { key: 'defaultNPoints', label: 'N pontos', type: 'number', step: 1 },
+              { key: 'shots', label: 'Shots', type: 'number', step: 1 },
             ].map(({ key, label, type, step }) => (
               <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--tx3)',

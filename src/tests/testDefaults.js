@@ -176,5 +176,5 @@ export const testDefaults = {
 };
 
 export function getDefaults(fn) {
-  return testDefaults[fn] || testDefaults['51'];
+  return { shots: 1, ...(testDefaults[fn] || testDefaults['51']) };
 }

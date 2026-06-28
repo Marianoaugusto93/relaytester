@@ -3,6 +3,23 @@ import { evaluate } from './PassFailEvaluator.js';
 
 const INTER_POINT_DELAY_MS = 3000;
 const POINT_TIMEOUT_MS = 60000;
+const SHOT_DELAY_MS = 800; // folga entre repetições (shots) do mesmo ponto
+
+/**
+ * Agrega os tempos medidos de N shots de um mesmo ponto.
+ * @param {Array<number|null>} shotTimes - tempos por shot (null = sem trip)
+ * @returns {{tAvg:number|null,tMin:number|null,tMax:number|null,tScatterPct:number|null,nValid:number,nTotal:number}}
+ */
+export function aggregateShots(shotTimes) {
+  const valid = (shotTimes || []).filter(t => t != null && Number.isFinite(t));
+  const nTotal = (shotTimes || []).length;
+  if (!valid.length) return { tAvg: null, tMin: null, tMax: null, tScatterPct: null, nValid: 0, nTotal };
+  const tAvg = valid.reduce((a, b) => a + b, 0) / valid.length;
+  const tMin = Math.min(...valid);
+  const tMax = Math.max(...valid);
+  const tScatterPct = tAvg > 0 ? ((tMax - tMin) / tAvg) * 100 : 0;
+  return { tAvg, tMin, tMax, tScatterPct, nValid: valid.length, nTotal };
+}
 
 /**
  * Run a test campaign sequentially through all test.points.
@@ -61,63 +78,83 @@ export async function runCampaign(test, ctx) {
     console.log(`[Test ${i+1}] Point:`, point.id, 'fn:', test.fn, 'IxIpk:', point.IxIpk, 'tExpected:', point.tExpected, 'Iamps:', point.Iamps);
     console.log(`  Phasors:`, faultPhasors.currents.Ia, faultPhasors.voltages.Va);
 
-    // Apply pre-fault settings
-    const hasPrefault = point.prefaultDur > 0;
-    if (hasPrefault) {
-      setPf(prefaultPhasors);
-      setPfEnabled(true);
-      setPfDuration(point.prefaultDur || 0.2);
-      await sleep(point.prefaultDur * 1000 + 100);
-    } else {
-      setPfEnabled(false);
-      setPfDuration(0.2);
-    }
-
-    // Update global phasors state so medidores (meters) display correct values
-    setPhasors(faultPhasors);
-
-    // Run simulation and wait for trip or timeout
-    let tripResult = null;
-    const tripPromise = new Promise(resolve => {
-      let unsub;
-      const handler = (evt) => {
-        // Defense-in-depth: reject invalid shapes, snapshots, and undefined times
-        if (evt && evt.tripTime != null && Array.isArray(evt.stages) &&
-            evt.stages.length > 0 && evt.stages[0] !== 'SNAPSHOT') {
-          unsub?.();
-          resolve(evt);
-        }
-      };
-      unsub = subscribe?.(handler) || (() => {});
-      // Also set timeout
-      setTimeout(() => { unsub?.(); resolve(null); }, POINT_TIMEOUT_MS);
-    });
-
-    // Reset elapsed timer right before injection starts
-    onBeforeInjection?.();
-
-    // Pass fault phasors directly to runSim (avoid async setState timing issue).
     // Para 81R (df/dt), o relé não responde a fasores: injeta-se o dfdt do ponto
     // como override de proteção (mesma estratégia dos fasores por argumento).
     const protOverride = (test.fn === '81R' && relayProt && relayProt['81R'])
       ? { ...relayProt, '81R': { ...relayProt['81R'], inj81r: { dfdt: point.dfdt ?? 0 } } }
       : undefined;
-    runSim(faultPhasors, protOverride);
-    tripResult = await tripPromise;
-    stopSim();
 
-    console.log(`[Test ${i+1}] TripResult:`, tripResult);
+    // ── Shots: repete a injeção N vezes e agrega (Leva 3) ────────────────────
+    const shotsN = Math.max(1, Math.round(test.planConfig?.shots || 1));
+    const shotTimes = [];
 
-    // Evaluate result
-    const measured = tripResult
-      ? { tMeasured: tripResult.tripTime, tripDetected: true }
-      : { tMeasured: null, tripDetected: false };
+    for (let s = 0; s < shotsN; s++) {
+      if (cancelled.current) break;
+      while (paused.current && !cancelled.current) await sleep(200);
+      if (cancelled.current) break;
+
+      if (setEvts && shotsN > 1) {
+        setEvts(ev => [{
+          time: new Date().toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          icon: '●', text: `  shot ${s + 1}/${shotsN}`, dt: ''
+        }, ...(ev || []).slice(0, 49)]);
+      }
+
+      // Apply pre-fault settings
+      const hasPrefault = point.prefaultDur > 0;
+      if (hasPrefault) {
+        setPf(prefaultPhasors);
+        setPfEnabled(true);
+        setPfDuration(point.prefaultDur || 0.2);
+        await sleep(point.prefaultDur * 1000 + 100);
+      } else {
+        setPfEnabled(false);
+        setPfDuration(0.2);
+      }
+
+      // Update global phasors state so medidores (meters) display correct values
+      setPhasors(faultPhasors);
+
+      // Run simulation and wait for trip or timeout
+      const tripPromise = new Promise(resolve => {
+        let unsub;
+        const handler = (evt) => {
+          if (evt && evt.tripTime != null && Array.isArray(evt.stages) &&
+              evt.stages.length > 0 && evt.stages[0] !== 'SNAPSHOT') {
+            unsub?.();
+            resolve(evt);
+          }
+        };
+        unsub = subscribe?.(handler) || (() => {});
+        setTimeout(() => { unsub?.(); resolve(null); }, POINT_TIMEOUT_MS);
+      });
+
+      // Reset elapsed timer right before injection starts
+      onBeforeInjection?.();
+      runSim(faultPhasors, protOverride);
+      const tripResult = await tripPromise;
+      stopSim();
+
+      shotTimes.push(tripResult ? tripResult.tripTime : null);
+      console.log(`[Test ${i+1}] shot ${s+1}/${shotsN} →`, tripResult ? tripResult.tripTime : 'no-trip');
+
+      if (s < shotsN - 1 && !cancelled.current) await sleep(SHOT_DELAY_MS);
+    }
+
+    // Agrega os shots e avalia (pass/fail sobre a média)
+    const agg = aggregateShots(shotTimes);
+    const measured = { tMeasured: agg.tAvg, tripDetected: agg.nValid > 0, shots: shotTimes };
 
     const evalResult = evaluate(test.fn || '51', point, measured);
     const result = {
       ...point,
       ...evalResult,
-      tMeasured: measured.tMeasured,
+      tMeasured: agg.tAvg,
+      tMin: agg.tMin,
+      tMax: agg.tMax,
+      tScatterPct: agg.tScatterPct,
+      shots: shotTimes,
+      shotsN,
       pointIndex: i,
       completedAt: Date.now(),
     };
