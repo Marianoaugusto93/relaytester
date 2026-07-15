@@ -965,6 +965,27 @@ export function calc21TripTimeReal(stage,rr){
   return isFinite(t)&&t>=0?t:0;
 }
 
+/**
+ * Estimate fault distance in km for a 21 distance relay.
+ * Uses the reactive component (X) of the measured loop impedance as a proxy for
+ * distance: distKm = (X_measured / xLineTotal) * lineLen, clamped to [0, 1.2 * lineLen].
+ * Returns null when the measurement is invalid (no current, non-finite Z, or
+ * line parameters not configured).
+ * @param {Object} rr — relay reading {currents:{Ia,Ib,Ic}, voltages:{Va,Vb,Vc}}
+ * @param {Object} fn21 — function-level 21 settings {lineLen, xLineTotal}
+ * @returns {number|null} distance in km, or null
+ */
+export function calc21FaultDistance(rr, fn21) {
+  const lineLen   = Number(fn21?.lineLen);
+  const xLineTotal = Number(fn21?.xLineTotal);
+  if (!lineLen || !xLineTotal || lineLen <= 0 || xLineTotal <= 0) return null;
+  const Z = calc21Impedance(rr);
+  if (!isFinite(Z.Z_mag) || Z.imag <= 0) return null;
+  const distKm = (Z.Z_i / xLineTotal) * lineLen;
+  if (!isFinite(distKm)) return null;
+  return Math.min(Math.max(distKm, 0), 1.2 * lineLen);
+}
+
 // ── MOTOR 50BF — Falha de disjuntor (breaker failure) ─────────────────────────
 // Elemento de checagem de corrente (verifica que a corrente de fase persiste
 // acima do pickup) com temporização definida tBF. Se a corrente ainda flui após
@@ -1218,7 +1239,7 @@ export function evalProtectionsDirect(rr,relayProt,sys){
       (fn.stages21||[]).forEach(s=>{
         if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
         const ev=evaluate21Stage(s,rr);const Z=ev.Z;
-        if(ev.tripped){ft=true;const t=calc21TripTimeReal(s,rr);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Z=${Z.Z_mag}Ω∠${Z.Z_angle}° (loop ${Z.loop}) ⊂ ${s.type} ${s.reach}Ω`})}
+        if(ev.tripped){ft=true;const t=calc21TripTimeReal(s,rr);const distKm=calc21FaultDistance(rr,fn);allTrips.push({func:fid,stage:s.id,time:t,distKm});const distObs=distKm!==null?` — falta a ${distKm.toFixed(1)} km`:"";dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`Z=${Z.Z_mag}Ω∠${Z.Z_angle}° (loop ${Z.loop}) ⊂ ${s.type} ${s.reach}Ω${distObs}`})}
         else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:ev.blocked?`Bloq. subtensão (V<${s.minV})`:Z&&isFinite(Z.Z_mag)?`Z=${Z.Z_mag}Ω∠${Z.Z_angle}° fora de ${s.reach}Ω`:"Sem corrente"})}
       });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
     }else if(fid==="87"){

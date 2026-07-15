@@ -52,7 +52,8 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
       setIsTripped(true);
       setFaultRecord({stages:[...trippedSoFar],timestamp:fmtTs(),...buildFaultBase(rr)});
       const dtLabel=latest.time!==null?`T+${latest.time.toFixed(3)}s`:phaseLabel;
-      setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP,icon:"⚡",text:`Relay trip: ${latest.stage}`,dt:dtLabel})));
+      const distSuffix=latest.distKm!=null?` — falta a ${latest.distKm.toFixed(1)} km`:"";
+      setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP,icon:"⚡",text:`Relay trip: ${latest.stage}${distSuffix}`,dt:dtLabel})));
 
       if(!firstTripRecorded){
         firstTripRecorded=true;

@@ -28,7 +28,7 @@ export const defaultProtections={
   "32":{label:"32",name:"Potência Direcional/Reversa",enabled:false,stages32r:[mkP("32R-1",true,5,1.0),mkP("32R-2",false,10,0.5)],stages32f:[mkP("32F-1",false,5,1.0),mkP("32F-2",false,10,0.5)]},
   "79":{label:"79",name:"Religamento Automático",enabled:false,shots:3,deadTimes:[0.5,5.0,15.0],reclaimTime:3.0},
   "87":{label:"87",name:"Diferencial",enabled:false,base:"secundario",inj87:{IW1:{mag:5,ang:0},IW2:{mag:5,ang:0},h2pct:0},stages87:[mk87("87-1",true,0.2,2,25,50,15,0.025),mk87("87-2",false,1.0,5,30,70,15,0.025)]},
-  "21":{label:"21",name:"Distância",enabled:false,base:"secundario",stages21:[mk21("21-Z1",true,"mho",8,75,0,0),mk21("21-Z2",false,"mho",12,75,0.4,0),mk21("21-Z3",false,"mho",18,75,1.0,0)]},
+  "21":{label:"21",name:"Distância",enabled:false,base:"secundario",lineLen:10,xLineTotal:10,stages21:[mk21("21-Z1",true,"mho",8,75,0,0),mk21("21-Z2",false,"mho",12,75,0.4,0),mk21("21-Z3",false,"mho",18,75,1.0,0)]},
   "50BF":{label:"50BF",name:"Falha de Disjuntor",enabled:false,base:"secundario",stages50bf:[mk50bf("50BF-1",true,1,0.15),mk50bf("50BF-2",false,2,0.25)]},
   "49":{label:"49",name:"Imagem Térmica",enabled:false,base:"secundario",stages49:[mk49("49-1",true,5,1.05,10,0),mk49("49-2",false,5,1.2,10,0)]},
   "25":{label:"25",name:"Verificação de Sincronismo",enabled:false,base:"secundario",ref25:{Vmag:66.4,Vang:0,fHz:60},stages25:[mk25("25-1",true,5,10,0.1,0.1)]},

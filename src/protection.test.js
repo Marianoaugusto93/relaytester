@@ -12,6 +12,7 @@ import {
   calc49TripTime, evaluate49Stage,
   evaluate25Stage, calc25TripTimeReal,
   evaluate81RStage, calc81RTripTimeReal,
+  calc21FaultDistance,
 } from "./protection.js";
 
 // Helpers
@@ -372,5 +373,65 @@ describe("calcTripTime routing (50/50N/46)", () => {
   });
   it("below pickup => Infinity", () => {
     expect(calcTripTime("50", { enabled: true, pickup: 10, timeOp: 0 }, 5)).toBe(Infinity);
+  });
+});
+
+// ── calc21FaultDistance ───────────────────────────────────────────────────────
+describe("calc21FaultDistance", () => {
+  // Build a relay reading: V=40V@0°, I=8A@-75° → Z ≈ 5Ω∠75° → X ≈ 4.83Ω
+  // With xLineTotal=10, lineLen=10 → distKm ≈ 4.83 km
+  const fn21base = { lineLen: 10, xLineTotal: 10 };
+  const mkRR21 = (Imag, Iang, Vmag, Vang) => ({
+    currents: { Ia: ph(Imag, Iang), Ib: ph(0.01, -120), Ic: ph(0.01, 120) },
+    voltages: { Va: ph(Vmag, Vang), Vb: ph(66.4, -120), Vc: ph(66.4, 120) },
+  });
+
+  it("returns ~5 km when X_measured ≈ 5 Ω with xLineTotal=10, lineLen=10", () => {
+    // Z = V/I = (50∠0°) / (10∠-90°) = 5∠90° → X = 5 Ω
+    const rr = mkRR21(10, -90, 50, 0);
+    const d = calc21FaultDistance(rr, fn21base);
+    expect(d).not.toBeNull();
+    expect(d).toBeCloseTo(5.0, 0); // within ±0.5 km
+  });
+
+  it("returns ~5 km proportionally (Z with real and imaginary part)", () => {
+    // I = 8A@-75°, V = 40V@0° → Z = 5∠75° → X = Z_i = 5·sin(75°) ≈ 4.83
+    const rr = mkRR21(8, -75, 40, 0);
+    const d = calc21FaultDistance(rr, rr.fn21 ?? fn21base);
+    const fn = fn21base;
+    const d2 = calc21FaultDistance(rr, fn);
+    expect(d2).not.toBeNull();
+    expect(d2).toBeGreaterThan(4);
+    expect(d2).toBeLessThan(6);
+  });
+
+  it("clamps to 1.2 × lineLen when X_measured > xLineTotal", () => {
+    // Z = 100Ω∠90° → X = 100, distKm = (100/10)×10 = 100 → clamp to 12
+    const rr = mkRR21(1, -90, 100, 0);
+    const d = calc21FaultDistance(rr, fn21base);
+    expect(d).toBeCloseTo(12.0, 1);
+  });
+
+  it("returns null when current is zero", () => {
+    const rr = {
+      currents: { Ia: ph(0, 0), Ib: ph(0, -120), Ic: ph(0, 120) },
+      voltages: { Va: ph(66.4, 0), Vb: ph(66.4, -120), Vc: ph(66.4, 120) },
+    };
+    expect(calc21FaultDistance(rr, fn21base)).toBeNull();
+  });
+
+  it("returns null when lineLen is 0", () => {
+    const rr = mkRR21(8, -75, 40, 0);
+    expect(calc21FaultDistance(rr, { lineLen: 0, xLineTotal: 10 })).toBeNull();
+  });
+
+  it("returns null when xLineTotal is 0", () => {
+    const rr = mkRR21(8, -75, 40, 0);
+    expect(calc21FaultDistance(rr, { lineLen: 10, xLineTotal: 0 })).toBeNull();
+  });
+
+  it("returns null when fn21 is missing", () => {
+    const rr = mkRR21(8, -75, 40, 0);
+    expect(calc21FaultDistance(rr, {})).toBeNull();
   });
 });

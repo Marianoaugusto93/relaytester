@@ -2,6 +2,7 @@ import{useState}from"react";
 import{Tgl,IB}from"./widgets.jsx";
 import{protOrder,curveTypes,TEST_PRESETS,biRows,cbStatusRows,cbCmdRows,protStageRows,allRows,boCols,ledCols,allCols,inMatrixRows}from"./defaults.js";
 import{useTranslation}from"./i18n/useTranslation.js";
+import{calc21FaultDistance}from"./protection.js";
 import ScenariosSidebar from"./relay/ScenariosSidebar.jsx";
 
 // ── Main SettingsPanel export ─────────────────────────────────────────────────
@@ -50,7 +51,22 @@ export default function SettingsPanel({prot,outMatrix,inMatrix,sys,tab,si,mainTa
     {is46&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>{t("customScenarios.info46")}</div>}
     {is81&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>{t("customScenarios.info81")}</div>}
     {is32&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>{t("customScenarios.info32")}</div>}
-    {is21&&<div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>A 21 mede Z=V/I no loop de fase com maior corrente, usando a injeção global de Tensão e Corrente. Cada zona dispara (tempo definido) quando Z entra na característica. Valores em Ω secundário.</div>}
+    {is21&&<><div className="bs" style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>A 21 mede Z=V/I no loop de fase com maior corrente, usando a injeção global de Tensão e Corrente. Cada zona dispara (tempo definido) quando Z entra na característica. Valores em Ω secundário.</div>
+      <div style={{padding:"8px",background:"var(--card2)",borderRadius:"var(--rs)",marginBottom:10}}><div style={{fontSize:9,fontWeight:700,color:"var(--tx3)",letterSpacing:".8px",textTransform:"uppercase",marginBottom:6}}>Localizador de Falta</div><div className="pg">
+        <div className="pi"><label>Comprimento (km)</label><IB unit="km" value={prot["21"]?.lineLen??10} onChange={v=>uPr("21","lineLen",v)} step="1"/></div>
+        <div className="pi"><label>X total (Ω sec)</label><IB unit="Ω" value={prot["21"]?.xLineTotal??10} onChange={v=>uPr("21","xLineTotal",v)} step="0.5"/></div>
+      </div>
+      {(()=>{
+        const rrLive={
+          currents:{Ia:{mag:(phasors?.currents?.Ia?.mag??0)*rtc,ang:phasors?.currents?.Ia?.ang??0},Ib:{mag:(phasors?.currents?.Ib?.mag??0)*rtc,ang:phasors?.currents?.Ib?.ang??-120},Ic:{mag:(phasors?.currents?.Ic?.mag??0)*rtc,ang:phasors?.currents?.Ic?.ang??120}},
+          voltages:{Va:{mag:(phasors?.voltages?.Va?.mag??0)*rtp,ang:phasors?.voltages?.Va?.ang??0},Vb:{mag:(phasors?.voltages?.Vb?.mag??0)*rtp,ang:phasors?.voltages?.Vb?.ang??-120},Vc:{mag:(phasors?.voltages?.Vc?.mag??0)*rtp,ang:phasors?.voltages?.Vc?.ang??120}},
+        };
+        const d=calc21FaultDistance(rrLive,prot["21"]);
+        if(d===null)return null;
+        return <div style={{marginTop:6,padding:"4px 8px",background:"var(--card3,var(--card))",borderRadius:"var(--rs)",fontFamily:"var(--fm)",fontSize:12,color:"var(--mint)",fontWeight:700}}>Falta a {d.toFixed(1)} km</div>;
+      })()}
+      </div>
+    </>}
     {is79&&<div style={{marginTop:4}}><div style={{marginBottom:8,padding:"6px 8px",background:"var(--card2)",borderRadius:"var(--rs)",fontSize:10,color:"var(--tx3)"}}>{t("customScenarios.info79dead")}</div><div className="pg"><div className="pi"><label>{t("settings.shots")}</label><IB unit="shots" value={prot["79"].shots??3} onChange={v=>uPr("79","shots",Math.max(1,Math.round(v)))}/></div><div className="pi"><label>{t("settings.reclaimTime")}</label><IB unit="s" value={prot["79"].reclaimTime??3.0} onChange={v=>uPr("79","reclaimTime",v)} step="0.1"/></div></div><div style={{marginTop:8}}><div className="fl" style={{marginBottom:4}}>{t("settings.deadTimes")}</div>{(prot["79"].deadTimes||[0.5,5.0,15.0]).map((dt,i)=><div key={i} className="fr" style={{marginBottom:4}}><div className="fg"><div className="fl">{t("settings.shot")} {i+1}</div><IB unit="s" value={dt} onChange={v=>{const dts=[...(prot["79"].deadTimes||[0.5,5.0,15.0])];dts[i]=v;uPr("79","deadTimes",dts);}} step="0.1"/></div></div>)}</div></div>}
     {is87&&<div style={{padding:"8px",background:"var(--card2)",borderRadius:"var(--rs)",marginBottom:10}}><div style={{fontSize:9,fontWeight:700,color:"var(--tx3)",letterSpacing:".8px",textTransform:"uppercase",marginBottom:6}}>Injeção 87 — dois enrolamentos (A sec)</div><div className="pg">
       <div className="pi"><label>IW1 — mag</label><IB unit="A" value={inj87.IW1.mag} onChange={v=>u87w("IW1","mag",v)} step="0.1"/></div>
