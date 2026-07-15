@@ -720,6 +720,70 @@ export function calcI2(currents){
   return fromRect(re,im);
 }
 
+// ── MOTOR DE PROTEÇÃO 60 — Supervisão de TP (Loss of Potential) ──────────────
+/**
+ * Evaluate 60/LOP (Loss of Potential) condition from relay readings.
+ * Detects two classical failure modes:
+ *   1. Three-phase VT fuse blown: all Va/Vb/Vc < vMin AND load current present
+ *      AND fault current absent (real 3φ fault would have high currents).
+ *   2. Single/two-phase VT fuse blown: V2/V1 > v2v1Thr AND I2/I1 < i2i1Thr
+ *      (asymmetric voltage without corresponding current asymmetry).
+ * @param {Object} rr — relay reading {currents:{Ia,Ib,Ic}, voltages:{Va,Vb,Vc}}
+ * @param {Object} cfg — 60 function settings {vMin, v2v1Thr, i2i1Thr, iLoadMin}
+ * @returns {{lop: boolean, reason: string}}
+ */
+export function evaluateLOP(rr, cfg) {
+  const vMin     = Number(cfg.vMin)     || 10;
+  const v2v1Thr  = Number(cfg.v2v1Thr) || 0.4;
+  const i2i1Thr  = Number(cfg.i2i1Thr) || 0.3;
+  const iLoadMin = Number(cfg.iLoadMin) || 0.2;
+
+  const Va = rr.voltages.Va.mag;
+  const Vb = rr.voltages.Vb.mag;
+  const Vc = rr.voltages.Vc.mag;
+  const Ia = rr.currents.Ia.mag;
+  const Ib = rr.currents.Ib.mag;
+  const Ic = rr.currents.Ic.mag;
+  const maxI = Math.max(Ia, Ib, Ic);
+
+  // Mode 1 — three-phase VT collapse with load current but no fault current
+  // Real 3φ fault has high currents; LOP scenario has normal-load currents
+  const allVLow = Va < vMin && Vb < vMin && Vc < vMin;
+  const loadPresent = maxI >= iLoadMin;
+  const faultCurrentAbsent = maxI < 1.5 * iLoadMin; // heuristic: ≤ 1.5× load → not a real fault
+  if (allVLow && loadPresent && faultCurrentAbsent) {
+    return { lop: true, reason: `LOP 3φ: Va=${Va.toFixed(1)} Vb=${Vb.toFixed(1)} Vc=${Vc.toFixed(1)} V < ${vMin}V com carga` };
+  }
+
+  // Mode 2 — single/two-phase VT fuse: V2/V1 unbalance without I2/I1 unbalance
+  // Symmetrical components: a = e^(j120°), a² = e^(j240°) = e^(-j120°)
+  // V1 = (Va + a·Vb + a²·Vc) / 3   [positive sequence]
+  // V2 = (Va + a²·Vb + a·Vc) / 3   [negative sequence]
+  const VaR = toRect(Va, rr.voltages.Va.ang);
+  const VbR = toRect(Vb, rr.voltages.Vb.ang);
+  const VcR = toRect(Vc, rr.voltages.Vc.ang);
+  const aR = Math.cos(2 * Math.PI / 3), aI = Math.sin(2 * Math.PI / 3);   // a  = e^(j120°)
+  const a2R = Math.cos(4 * Math.PI / 3), a2I = Math.sin(4 * Math.PI / 3); // a² = e^(j240°)
+  // V1
+  const v1re = (VaR.re + (aR * VbR.re - aI * VbR.im) + (a2R * VcR.re - a2I * VcR.im)) / 3;
+  const v1im = (VaR.im + (aR * VbR.im + aI * VbR.re) + (a2R * VcR.im + a2I * VcR.re)) / 3;
+  const V1 = Math.sqrt(v1re * v1re + v1im * v1im);
+  // V2
+  const v2re = (VaR.re + (a2R * VbR.re - a2I * VbR.im) + (aR * VcR.re - aI * VcR.im)) / 3;
+  const v2im = (VaR.im + (a2R * VbR.im + a2I * VbR.re) + (aR * VcR.im + aI * VcR.re)) / 3;
+  const V2 = Math.sqrt(v2re * v2re + v2im * v2im);
+
+  const I2 = calcI2(rr.currents).mag;
+
+  const v2v1Ratio = V1 > 0.5 ? V2 / V1 : 0;
+  const i2i1Ratio = maxI > iLoadMin ? I2 / maxI : 1; // if no load, ratio treated as high → not LOP
+  if (v2v1Ratio > v2v1Thr && i2i1Ratio < i2i1Thr && maxI >= iLoadMin) {
+    return { lop: true, reason: `LOP 1/2φ: V2/V1=${v2v1Ratio.toFixed(2)} > ${v2v1Thr} sem I2/I1=${i2i1Ratio.toFixed(2)}` };
+  }
+
+  return { lop: false, reason: "OK" };
+}
+
 // ── Helpers de avaliação — usados em runSim e evalProtectionsDirect ───────────
 /**
  * Calculate theoretical trip time for a protection function by ID.
@@ -1051,6 +1115,12 @@ export function evalProtectionsDirect(rr,relayProt,sys){
   const maxI=Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag);
   const ri3i0=calc3(rr.currents,["Ia","Ib","Ic"]);
   const rp2=relayProt;const dg=[];const allTrips=[];
+
+  // ── 60 LOP — evaluate first; blocked functions skip tripping ──────────────
+  const fn60=rp2["60"];
+  const lopResult=fn60&&fn60.enabled?evaluateLOP(rr,fn60):{lop:false,reason:"60 disabled"};
+  const lopActive=lopResult.lop;
+  const lopBlockList=fn60?.blockList||["21","67","67N","32"];
   protOrder.forEach(fid=>{
     const fn=rp2[fid];
     if(!fn.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:"-",time:"-",obs:"Function disabled"});return}
@@ -1067,6 +1137,7 @@ export function evalProtectionsDirect(rr,relayProt,sys){
         if(m>=s.pickup){ft=true;const t=calcTripTimeReal(fid,s,m);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`In=${m.toFixed(2)}A`})}
       });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:`In=${m.toFixed(2)}A`})
     }else if(fid==="67"){
+      if(lopActive&&lopBlockList.includes("67")){dg.push({fid,label:fn.label,status:"blocked",stage:"-",time:"-",obs:"Bloqueada por 60 LOP"});return}
       let ft=false;
       (fn.stages||[]).forEach(s=>{
         if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
@@ -1075,6 +1146,7 @@ export function evalProtectionsDirect(rr,relayProt,sys){
         else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:ev.reason||"No trip"})}
       });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up or blocked"})
     }else if(fid==="67N"){
+      if(lopActive&&lopBlockList.includes("67N")){dg.push({fid,label:fn.label,status:"blocked",stage:"-",time:"-",obs:"Bloqueada por 60 LOP"});return}
       let ft=false;
       (fn.stages||[]).forEach(s=>{
         if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
@@ -1122,6 +1194,7 @@ export function evalProtectionsDirect(rr,relayProt,sys){
       });
       if(!ft81u&&!ft81o)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:`f=${fr.toFixed(2)}Hz`});
     }else if(fid==="32"){
+      if(lopActive&&lopBlockList.includes("32")){dg.push({fid,label:fn.label,status:"blocked",stage:"-",time:"-",obs:"Bloqueada por 60 LOP"});return}
       const pA32=calcPower(rr.voltages.Va.mag,rr.currents.Ia.mag,rr.voltages.Va.ang,rr.currents.Ia.ang);
       const pB32=calcPower(rr.voltages.Vb.mag,rr.currents.Ib.mag,rr.voltages.Vb.ang,rr.currents.Ib.ang);
       const pC32=calcPower(rr.voltages.Vc.mag,rr.currents.Ic.mag,rr.voltages.Vc.ang,rr.currents.Ic.ang);
@@ -1140,6 +1213,7 @@ export function evalProtectionsDirect(rr,relayProt,sys){
     }else if(fid==="79"){
       dg.push({fid,label:"79",status:fn.enabled?"enabled":"disabled",stage:"-",time:"-",obs:`Shots:${fn.shots||3} DT:${(fn.deadTimes||[]).join("/")}s Reclaim:${fn.reclaimTime||3.0}s`})
     }else if(fid==="21"){
+      if(lopActive&&lopBlockList.includes("21")){dg.push({fid,label:fn.label,status:"blocked",stage:"-",time:"-",obs:"Bloqueada por 60 LOP"});return}
       let ft=false;
       (fn.stages21||[]).forEach(s=>{
         if(!s.enabled){dg.push({fid,label:fn.label,status:"disabled",stage:s.id,time:"-",obs:"Stage disabled"});return}
@@ -1187,7 +1261,9 @@ export function evalProtectionsDirect(rr,relayProt,sys){
         if(ev.tripped){ft=true;const t=calc81RTripTimeReal(s,inj);allTrips.push({func:fid,stage:s.id,time:t});dg.push({fid,label:fn.label,status:"trip",stage:s.id,time:t.toFixed(3),obs:`df/dt=${ev.dfdt}Hz/s ≥ ${s.pickup} (${s.dir})`})}
         else{dg.push({fid,label:fn.label,status:"enabled",stage:s.id,time:"-",obs:`df/dt=${ev.dfdt}Hz/s`})}
       });if(!ft)dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"No pick-up"})
+    }else if(fid==="60"){
+      dg.push({fid,label:fn.label,status:lopActive?"lop":"enabled",stage:"-",time:"-",obs:lopActive?lopResult.reason:"LOP não detectado"})
     }else{dg.push({fid,label:fn.label,status:"enabled",stage:"-",time:"-",obs:"Simplified"})}
   });
-  return{dg,allTrips};
+  return{dg,allTrips,lopActive};
 }

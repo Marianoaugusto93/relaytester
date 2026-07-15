@@ -5,6 +5,7 @@ import { soeToCsv } from "../soe.js";
 export default function MeasuresPanel({
   ci, vi, i0, v0, i2lcd, pTotal, pA, pB, pC,
   rtc, rtp, injecting, isTripped, trippedStageIds,
+  lopActive,
   prot, relayProt, outMatrix, inMatrix,
   evts, setEvts, diag, faultRecord,
   bkState, ledLabels, ledLitStates,
@@ -41,6 +42,9 @@ export default function MeasuresPanel({
         </span>
         {isTripped && trippedStageIds?.length > 0 && (
           <span style={{ fontFamily: "var(--fm)", fontSize: 10, color: "var(--red)", opacity: 0.8 }}>{trippedStageIds[0]}</span>
+        )}
+        {lopActive && (
+          <span style={{ fontFamily: "var(--fm)", fontSize: 10, fontWeight: 700, color: "#f59e0b", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 4, padding: "1px 6px", letterSpacing: ".5px" }}>⚠ LOP</span>
         )}
         <span style={{ marginLeft: "auto", fontFamily: "var(--fm)", fontSize: 14, color: "var(--green)", fontWeight: 700 }}>
           {injecting ? `● ${t("relay.injecting")}` : `● ${t("relay.stopped")}`}

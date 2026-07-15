@@ -1,12 +1,13 @@
 import{useRef,useState,useCallback}from"react";
 import{buildElectricalGraph,computeRelayReadings,checkMaletaTripDetection,checkBreakerTripCoil}from"./CampoPage.jsx";
-import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
+import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluateLOP,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
 import{protOrder,boCols,nowShort,fmtTs}from"./defaults.js";
 import{soeEvent,soePush,SOE_TYPES}from"./soe.js";
 
-export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef}){
+export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,setLopActive}){
   const tr=useRef(null);
   const ar79Ref=useRef({shot:0,deadTimer:null,reclaimTimer:null,locked:false});
+  const lopWasActive=useRef(false);
 
   const stop79=useCallback(()=>{
     const ar=ar79Ref.current;
@@ -18,9 +19,10 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
   const stopSim=useCallback(()=>{
     if(tr.current)clearInterval(tr.current);
     stop79();
+    if(lopWasActive.current){lopWasActive.current=false;if(setLopActive)setLopActive(false);}
     setSs("idle");setSimPhase("idle");
     setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INJ_STOP,icon:"⏹",text:"Stopped.",dt:`T+${stimeRef.current.toFixed(3)}s`})));
-  },[stop79,setSs,setSimPhase,setEvts,stimeRef]);
+  },[stop79,setSs,setSimPhase,setEvts,stimeRef,setLopActive]);
 
   const runSim=useCallback((injectPhasors,protOverride)=>{
     const phasorsToUse=injectPhasors||p;
@@ -105,11 +107,25 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
       return false;
     };
 
+    // ── LOP transition helper — fires SOE only on state change ───────────────
+    const notifyLOP=(isLop,reason,elSec)=>{
+      if(isLop&&!lopWasActive.current){
+        lopWasActive.current=true;
+        if(setLopActive)setLopActive(true);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.LOP_ON,icon:"⚠",text:`60 LOP: supervisão de TP ativa — 21/67/67N/32 bloqueadas. ${reason}`,dt:`T+${(elSec||0).toFixed(3)}s`})));
+      }else if(!isLop&&lopWasActive.current){
+        lopWasActive.current=false;
+        if(setLopActive)setLopActive(false);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.LOP_OFF,icon:"✔",text:"60 LOP: supervisão de TP desativada.",dt:`T+${(elSec||0).toFixed(3)}s`})));
+      }
+    };
+
     // ── MODO SEM PRÉ-FALTA ────────────────────────────────────────────────────
     if(!pfActive){
       setSimPhase("fault");
       const eval0=evalProtectionsDirect(faultRR,rp2,sys);
       setDiag(eval0.dg);
+      notifyLOP(eval0.lopActive||false,eval0.dg.find(d=>d.fid==="60")?.obs||"",0);
       const allTrips=eval0.allTrips;
 
       const fn27pre=rp2["27/59"];
@@ -343,5 +359,5 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     },iv);
   },[p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSs,setStime,setSimPhase,setDiag,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,stop79,ar79Ref,tr]);
 
-  return{runSim,stopSim,stop79,ar79Ref,tr};
+  return{runSim,stopSim,stop79,ar79Ref,tr,lopWasActive};
 }

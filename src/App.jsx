@@ -65,6 +65,7 @@ function AppInner(){
   const[ss,setSs]=useState("idle");const[stime,setStime]=useState(0);const[rp,setRp]=useState(0);
   const[trippedStageIds,setTrippedStageIds]=useState([]);const[diag,setDiag]=useState([]);const[evts,setEvts]=useState([]);
   const[isTripped,setIsTripped]=useState(false);const[maletaTripped,setMaletaTripped]=useState(false);const[faultRecord,setFaultRecord]=useState(null);
+  const[lopActive,setLopActive]=useState(false);
   const[boStatus,setBoStatus]=useState({bo1:false,bo2:false,bo3:false,bo4:false});
   const[biStatus,setBiStatus]=useState({bi1:false,bi2:false,bi3:false,bi4:false});
   const[sendFlash,setSendFlash]=useState(false);const[getFlash,setGetFlash]=useState(false);
@@ -111,7 +112,8 @@ function AppInner(){
   const{runSim,stopSim,stop79,ar79Ref,tr}=useSimulation({
     p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,
     sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,
-    setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef
+    setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,
+    setLopActive
   });
 
   // ── Relay electrical readings ──────────────────────────────────────────────
@@ -557,6 +559,7 @@ function AppInner(){
         ci={ci} vi={vi} i0={i0} v0={v0} i2lcd={i2lcd}
         pTotal={pTotal} pA={pA} pB={pB} pC={pC}
         injecting={injecting} relayProt={relayProt} trippedStageIds={trippedStageIds}
+        lopActive={lopActive}
         bkState={bkState} ledLabels={ledLabels} ledLitStates={ledLitStates}
         evts={evts} setEvts={setEvts} diag={diag} faultRecord={faultRecord}
         sendFlash={sendFlash} getFlash={getFlash}

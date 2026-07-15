@@ -25,6 +25,7 @@ export default function RelePage({
   // relay readings / display
   ci, vi, i0, v0, i2lcd, pTotal, pA, pB, pC,
   injecting, relayProt, trippedStageIds,
+  lopActive,
   bkState, ledLabels, ledLitStates,
   evts, setEvts, diag, faultRecord,
   sendFlash, getFlash,
@@ -92,6 +93,7 @@ export default function RelePage({
             injecting={injecting}
             isTripped={isTripped}
             trippedStageIds={trippedStageIds}
+            lopActive={lopActive}
             prot={prot}
             relayProt={relayProt}
             outMatrix={outMatrix}
@@ -229,6 +231,7 @@ const FUNC_LABELS = {
   "49":    { sub: "Térmica" },
   "25":    { sub: "Sincron." },
   "81R":   { sub: "df/dt" },
+  "60":    { sub: "LOP" },
 };
 
 function FuncRail({ tab, setTab, setSi, prot }) {

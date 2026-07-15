@@ -33,8 +33,9 @@ export const defaultProtections={
   "49":{label:"49",name:"Imagem Térmica",enabled:false,base:"secundario",stages49:[mk49("49-1",true,5,1.05,10,0),mk49("49-2",false,5,1.2,10,0)]},
   "25":{label:"25",name:"Verificação de Sincronismo",enabled:false,base:"secundario",ref25:{Vmag:66.4,Vang:0,fHz:60},stages25:[mk25("25-1",true,5,10,0.1,0.1)]},
   "81R":{label:"81R",name:"Taxa de Var. de Frequência (df/dt)",enabled:false,inj81r:{dfdt:0},stages81r:[mk81r("81R-1",true,0.5,0.1,"both"),mk81r("81R-2",false,1.0,0.1,"fall")]},
+  "60":{label:"60",name:"Supervisão de TP (LOP)",enabled:false,vMin:10,v2v1Thr:0.4,i2i1Thr:0.3,iLoadMin:0.2,blockList:["21","67","67N","32"]},
 };
-export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21","50BF","49","25","81R"];
+export const protOrder=["51","50","51N","50N","67","67N","27/59","47","46","81","32","79","87","21","50BF","49","25","81R","60"];
 export const biRows=["BI1","BI2","BI3","BI4","BI5","BI6"];
 export const cbStatusRows=["CB_Opened","CB_Closed"];
 export const cbCmdRows=["CLOSE_CB","OPEN_CB"];

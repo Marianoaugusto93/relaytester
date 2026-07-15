@@ -18,6 +18,8 @@ export const SOE_TYPES = {
   PRESET:          "PRESET",
   WARN:            "WARN",
   INFO:            "INFO",
+  LOP_ON:          "LOP_ON",
+  LOP_OFF:         "LOP_OFF",
 };
 
 // hh:mm:ss.mmm (hora local)
