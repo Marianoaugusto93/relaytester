@@ -546,7 +546,21 @@ const campoCSS=`
 @keyframes pulse-ok{0%,100%{box-shadow:0 0 0 2px #22c55e,0 0 6px #22c55e66;}50%{box-shadow:0 0 0 3px #4ade80,0 0 12px #4ade8099;}}
 .t-ok{outline:2px solid #22c55e;outline-offset:1px;animation:pulse-ok 1.2s ease-in-out infinite;}
 .t-dim{opacity:.35;pointer-events:none;}
-@media(prefers-reduced-motion:reduce){.t-ok{animation:none;}}
+@keyframes pulse-guide{0%,100%{box-shadow:0 0 0 2px #f59e0b,0 0 6px #f59e0b66;}50%{box-shadow:0 0 0 3px #fbbf24,0 0 12px #fbbf2499;}}
+.t-guide{outline:2px solid #f59e0b;outline-offset:1px;animation:pulse-guide 1.2s ease-in-out infinite;}
+@media(prefers-reduced-motion:reduce){.t-ok{animation:none;}.t-guide{animation:none;}}
+.guided-banner{width:100%;max-width:900px;background:#1a160a;border:1px solid #f59e0b66;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-sizing:border-box;}
+.guided-banner-text{flex:1;font-size:11px;font-family:monospace;color:#fbbf24;letter-spacing:.5px;line-height:1.5;}
+.guided-banner-btns{display:flex;gap:6px;flex-shrink:0;}
+.guided-btn{padding:4px 10px;border-radius:5px;font-size:9px;font-weight:700;font-family:monospace;letter-spacing:.8px;cursor:pointer;transition:all .15s;}
+.guided-btn.apply{border:1px solid #f59e0b88;background:rgba(245,158,11,.15);color:#f59e0b;}
+.guided-btn.apply:hover{background:rgba(245,158,11,.28);border-color:#f59e0b;}
+.guided-btn.skip{border:1px solid #44445588;background:#12121a;color:#888;}
+.guided-btn.skip:hover{background:#1e1e2a;color:#ccc;}
+.guided-btn.exit{border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.07);color:#f87171;}
+.guided-btn.exit:hover{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.55);}
+.preset-guided-btn{padding:3px 6px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid #f59e0b55;background:rgba(245,158,11,.1);color:#f59e0b;flex-shrink:0;transition:all .15s;}
+.preset-guided-btn:hover{background:rgba(245,158,11,.22);border-color:#f59e0b;}
 .campo-root{background:var(--bg);padding:12px;font-family:monospace;display:grid;grid-template-columns:1fr 240px;gap:10px;overflow:hidden;height:100%;}
 .campo-main{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;}
 .campo-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;}
@@ -690,10 +704,10 @@ function Screw(){
   );
 }
 
-function BananaChave({tid,pole,pending,validSet,onTClick,onTDbl}){
+function BananaChave({tid,pole,pending,validSet,guideSet,onTClick,onTDbl}){
   const isSel=pending===tid;
   const hasSet=validSet!==null&&validSet!==undefined;
-  const extraCls=isSel?'':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
+  const extraCls=isSel?'':guideSet?.has(tid)?' t-guide':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
   return(
     <div className={`banana-chave${isSel?' sel':''}${extraCls}`} data-tid={tid} title={tid}
       onClick={e=>{e.stopPropagation();onTClick(tid);}} onDoubleClick={e=>{e.stopPropagation();onTDbl(tid);}}>
@@ -705,11 +719,11 @@ function BananaChave({tid,pole,pending,validSet,onTClick,onTDbl}){
   );
 }
 
-function PoleCol({pole,switchSt,onToggle,pending,validSet,onTClick,onTDbl}){
+function PoleCol({pole,switchSt,onToggle,pending,validSet,guideSet,onTClick,onTDbl}){
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:42,userSelect:'none',cursor:pole.kind==='normal'?'pointer':'default'}}
       onClick={()=>{if(pole.kind==='normal')onToggle(pole.group);}}>
-      <BananaChave tid={`${pole.id}_top`} pole={pole} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+      <BananaChave tid={`${pole.id}_top`} pole={pole} pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
       <Screw/>
       {pole.kind==='terra'?(
         <div className="terra-body"><div className="terra-line"/></div>
@@ -727,15 +741,15 @@ function PoleCol({pole,switchSt,onToggle,pending,validSet,onTClick,onTDbl}){
         </div>
       )}
       <Screw/>
-      <BananaChave tid={`${pole.id}_bot`} pole={pole} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+      <BananaChave tid={`${pole.id}_bot`} pole={pole} pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
     </div>
   );
 }
 
-function BananaJack({node,pending,validSet,onTClick,onTDbl}){
+function BananaJack({node,pending,validSet,guideSet,onTClick,onTDbl}){
   const isRed=node.color==='red';const isSel=pending===node.id;
   const hasSet=validSet!==null&&validSet!==undefined;
-  const extraCls=isSel?'':hasSet?(validSet.has(node.id)?' t-ok':' t-dim'):'';
+  const extraCls=isSel?'':guideSet?.has(node.id)?' t-guide':hasSet?(validSet.has(node.id)?' t-ok':' t-dim'):'';
   return(
     <div className={`banana-jack${isSel?' sel':''}${extraCls}`} data-tid={node.id}
       style={{background:isRed?'radial-gradient(circle at 35% 30%,#EE4444,#AA1111 60%,#660000 100%)':'radial-gradient(circle at 35% 30%,#666666,#2A2A2A 60%,#111111 100%)',
@@ -746,22 +760,22 @@ function BananaJack({node,pending,validSet,onTClick,onTDbl}){
   );
 }
 
-function PairGroup({pair,pending,validSet,onTClick,onTDbl}){
+function PairGroup({pair,pending,validSet,guideSet,onTClick,onTDbl}){
   return(
     <div className="pair-group">
       <div className="pair-label">{pair.label}</div>
       <div style={{display:'flex',flexDirection:'row',gap:4,alignItems:'center'}}>
-        <BananaJack node={pair.red} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
-        <BananaJack node={pair.blk} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BananaJack node={pair.red} pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BananaJack node={pair.blk} pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
       </div>
     </div>
   );
 }
 
-function BorneOpening({n,side,pending,validSet,onTClick,onTDbl}){
+function BorneOpening({n,side,pending,validSet,guideSet,onTClick,onTDbl}){
   const tid=`tb_${n}_${side}`;const isSel=pending===tid;
   const hasSet=validSet!==null&&validSet!==undefined;
-  const extraCls=isSel?'':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
+  const extraCls=isSel?'':guideSet?.has(tid)?' t-guide':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
   return(
     <div className={`borne-opening${isSel?' sel':''}${extraCls}`} data-tid={tid} title={`Borne ${n} — ${side==='top'?'superior':'inferior'}`}
       onClick={()=>onTClick(tid)} onDoubleClick={e=>{e.stopPropagation();onTDbl(tid);}}>
@@ -772,7 +786,7 @@ function BorneOpening({n,side,pending,validSet,onTClick,onTDbl}){
   );
 }
 
-function BorneModule({n,isFirst,isLast,pending,validSet,onTClick,onTDbl}){
+function BorneModule({n,isFirst,isLast,pending,validSet,guideSet,onTClick,onTDbl}){
   const t=BORNE_TYPE[n];
   const BORNE_DESCRIPTIONS=useBorneDescriptions();
   const desc=BORNE_DESCRIPTIONS?.[n];
@@ -784,7 +798,7 @@ function BorneModule({n,isFirst,isLast,pending,validSet,onTClick,onTDbl}){
         <div className="borne-pin top"/>
         <div className="borne-ear-l"/>
         <div className="borne-ear-r"/>
-        <BorneOpening n={n} side="top" pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BorneOpening n={n} side="top" pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
       </div>
       <div className="borne-label">
         <div className="borne-number">{n}</div>
@@ -793,7 +807,7 @@ function BorneModule({n,isFirst,isLast,pending,validSet,onTClick,onTDbl}){
       <div className="borne-zone bot">
         <div className="borne-ear-l bot"/>
         <div className="borne-ear-r bot"/>
-        <BorneOpening n={n} side="bottom" pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BorneOpening n={n} side="bottom" pending={pending} validSet={validSet} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
         <div className="borne-cap-bot"/>
         <div className="borne-pin bot"/>
       </div>
@@ -812,6 +826,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   const[infoMsg,setInfoMsg]=useState(() => t('campo.hints.promptStart'));
   const[infoActive,setInfoActive]=useState(false);
   const[borneGuideOpen,setBorneGuideOpen]=useState(false);
+  const[guided,setGuided]=useState(null); // null | {preset, stepIdx}
   const connIdRef=useRef(0);
 
   // Computed electrical state — inclui contatos auxiliares 52a/52b do disjuntor
@@ -871,6 +886,14 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
     return computeValidTargets(pendingTid,allTerminalIds,switchSt,validateConnection);
   },[pendingTid,switchSt,allTerminalIds]);
 
+  // Conjunto dos dois terminais do passo atual do modo guiado (realce âmbar)
+  const guideSet=useMemo(()=>{
+    if(!guided)return null;
+    const step=guided.preset.conns[guided.stepIdx];
+    if(!step)return null;
+    return new Set([step[0],step[1]]);
+  },[guided]);
+
   const svgRef=useRef(null);
   const rootRef=useRef(null);
   const mainRef=useRef(null);
@@ -903,6 +926,22 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       connIdRef.current++;
       setConnections(c=>[...c,{id:connIdRef.current,from,to,color:col,fresh:true}]);
       tempInfo(`✓ ${from} ↔ ${to}`);
+      // Avanço automático no modo guiado: verifica se a conexão criada casa com o passo atual
+      setGuided(g=>{
+        if(!g)return g;
+        const step=g.preset.conns[g.stepIdx];
+        if(!step)return g;
+        const[sf,st]=step;
+        if((sf===from&&st===to)||(sf===to&&st===from)){
+          const next=g.stepIdx+1;
+          if(next>=g.preset.conns.length){
+            setTimeout(()=>tempInfo('🎓 Preset concluído — fiação completa!',3500),0);
+            return null;
+          }
+          return{preset:g.preset,stepIdx:next};
+        }
+        return g;
+      });
       return null;
     });
   },[tempInfo]);
@@ -950,6 +989,51 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
     connIdRef.current=preset.conns.length;
     setConnections(preset.conns.map((c,i)=>({id:i+1,from:c[0],to:c[1],color:cableColorFor(c[0],c[1]),fresh:true})));
   },[]);
+
+  // Inicia modo guiado: aplica switchSt do preset, limpa seleção pendente, não cria cabos ainda
+  const startGuided=useCallback((preset)=>{
+    setSwitchSt(prev=>{
+      const next={...prev};
+      preset.switchGroups.forEach(group=>{CHAVE_POLES.filter(p=>p.group===group).forEach(p=>{next[p.id]='down';});});
+      switchStRef.current=next;return next;
+    });
+    setPendingTid(null);
+    setGuided({preset,stepIdx:0});
+    setInfoMsg(t('campo.hints.promptStart'));setInfoActive(false);
+  },[t]);
+
+  // Avança um passo no modo guiado; ao concluir, encerra o modo
+  const advanceGuided=useCallback((currentGuided)=>{
+    const next=currentGuided.stepIdx+1;
+    if(next>=currentGuided.preset.conns.length){
+      setGuided(null);
+      tempInfo('🎓 Preset concluído — fiação completa!',3500);
+    }else{
+      setGuided({preset:currentGuided.preset,stepIdx:next});
+    }
+  },[tempInfo]);
+
+  // Aplica o passo atual do modo guiado (ou apenas avança se já existir)
+  const applyGuidedStep=useCallback(()=>{
+    if(!guided)return;
+    const step=guided.preset.conns[guided.stepIdx];
+    if(!step)return;
+    const[from,to]=step;
+    // Verifica se a conexão já existe (em qualquer ordem)
+    const exists=connections.some(c=>(c.from===from&&c.to===to)||(c.from===to&&c.to===from));
+    if(exists){
+      tempInfo('✓ passo já conectado');
+      advanceGuided(guided);
+      return;
+    }
+    const check=validateConnection(from,to,switchStRef.current);
+    if(!check.valid){tempInfo(`✗ ${check.msg}`,3500);return;}
+    const col=cableColorFor(from,to);
+    connIdRef.current++;
+    setConnections(c=>[...c,{id:connIdRef.current,from,to,color:col,fresh:true}]);
+    tempInfo('✓ passo aplicado');
+    advanceGuided(guided);
+  },[guided,connections,tempInfo,advanceGuided]);
 
   // Draw SVG connections
   useEffect(()=>{
@@ -1115,6 +1199,25 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       <div className="campo-main" ref={mainRef} style={{position:'relative',flex:1}}>
         <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
 
+        {/* FAIXA DE MODO GUIADO */}
+        {guided&&(()=>{
+          const step=guided.preset.conns[guided.stepIdx];
+          const n=guided.preset.conns.length;
+          const i=guided.stepIdx;
+          return(
+            <div className="guided-banner">
+              <div className="guided-banner-text">
+                🎓 <strong>{guided.preset.label}</strong> — Passo {i+1}/{n}: conecte <code style={{background:'#2a1f0a',padding:'1px 4px',borderRadius:3}}>{step?.[0]}</code> ↔ <code style={{background:'#2a1f0a',padding:'1px 4px',borderRadius:3}}>{step?.[1]}</code>
+              </div>
+              <div className="guided-banner-btns">
+                <button className="guided-btn apply" onClick={applyGuidedStep}>Aplicar passo</button>
+                <button className="guided-btn skip" onClick={()=>advanceGuided(guided)}>Pular</button>
+                <button className="guided-btn exit" onClick={()=>setGuided(null)}>Sair</button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* RÉGUA DE BORNES */}
         <div style={{width:'100%',maxWidth:900,display:'flex',flexDirection:'column',alignItems:'center'}}>
           <div className="c-section-label">{t('campo.sectionsUpper.borneira')}</div>
@@ -1124,7 +1227,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           <div className="borne-wrap" data-tutorial-target="terminal-block">
             <div className="borne-arrow-l"/>
             <div className="borne-chassis">
-              {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
+              {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>)}
             </div>
             <div className="borne-arrow-r"/>
           </div>
@@ -1140,7 +1243,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="section-title" style={{marginBottom:8}}>{t('campo.sectionsUpper.binaryOut')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
@@ -1150,7 +1253,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                     {BI_PAIRS.map((p,i)=>(
                       <div key={p.label} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
                         <div className={`bi-led${biMonitor[i]?.active?' on':''}`} title={`${p.label}: ${biMonitor[i]?.active?'ATIVO':'inativo'}`}/>
-                        <PairGroup pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>
+                        <PairGroup pair={p} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>
                       </div>
                     ))}
                   </div>
@@ -1163,14 +1266,14 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="subsection-label">{t('campo.sectionsUpper.current')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="subsection-label">{t('campo.sectionsUpper.voltage')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
               </div>
@@ -1191,7 +1294,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           </div>
           <div className="poles-row">
             {poleElements.map(e=>e.type==='sep'?<div key={e.key} className="c-sep"/>:
-              <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
+              <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} validSet={validTargets} guideSet={guideSet} onTClick={onTClick} onTDbl={onTDbl}/>)}
           </div>
           <div style={{display:'flex',alignItems:'flex-start',justifyContent:'center',gap:6,padding:'0 4px'}}>
             {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
@@ -1224,7 +1327,12 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
         <div style={{width:'100%'}}>
           <div className="c-section-label" style={{marginBottom:8}}>{t('campo.sectionsUpper.preset')}</div>
           <div className="preset-bar" style={{flexDirection:'column'}}>
-            {WIRING_PRESETS.map(p=><button key={p.id} className="preset-btn" onClick={()=>applyPreset(p)} style={{width:'100%'}}>{p.label}</button>)}
+            {WIRING_PRESETS.map(p=>(
+              <div key={p.id} style={{display:'flex',gap:4,width:'100%'}}>
+                <button className="preset-btn" onClick={()=>applyPreset(p)} style={{flex:1}}>{p.label}</button>
+                <button className="preset-guided-btn" title="Modo guiado passo a passo" onClick={()=>startGuided(p)}>🎓</button>
+              </div>
+            ))}
             <button className="preset-btn" onClick={handleUndo} disabled={connections.length===0} style={{width:'100%',opacity:connections.length===0?0.3:1,cursor:connections.length===0?'not-allowed':'pointer'}}>↶ {t('campo.buttons.undo')||'Desfazer'}</button>
             <button className="preset-btn clear" onClick={()=>{setConnections([]);setSelectedCableId(null);}} style={{width:'100%'}}>{t('campo.buttons.clearCables')}</button>
           </div>
