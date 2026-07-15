@@ -3,6 +3,7 @@ import BorneStatusPanel from "./BorneStatusPanel.jsx";
 import BorneGuideModal from "./BorneGuideModal.jsx";
 import { useBorneDescriptions } from "./BorneDescriptions.js";
 import { useTranslation } from "./i18n/useTranslation.js";
+import { computeValidTargets } from "./campo/wiringHelpers.js";
 
 // ── DATA ──────────────────────────────────────────────────────────────────────
 const SLOT_H=120,HANDLE_H=44,GAP=5,TOP_Y=GAP,BOT_Y=SLOT_H-HANDLE_H-GAP;
@@ -542,6 +543,10 @@ const WIRING_PRESETS=[
 
 // ── CSS ───────────────────────────────────────────────────────────────────────
 const campoCSS=`
+@keyframes pulse-ok{0%,100%{box-shadow:0 0 0 2px #22c55e,0 0 6px #22c55e66;}50%{box-shadow:0 0 0 3px #4ade80,0 0 12px #4ade8099;}}
+.t-ok{outline:2px solid #22c55e;outline-offset:1px;animation:pulse-ok 1.2s ease-in-out infinite;}
+.t-dim{opacity:.35;pointer-events:none;}
+@media(prefers-reduced-motion:reduce){.t-ok{animation:none;}}
 .campo-root{background:var(--bg);padding:12px;font-family:monospace;display:grid;grid-template-columns:1fr 240px;gap:10px;overflow:hidden;height:100%;}
 .campo-main{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;}
 .campo-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;}
@@ -685,10 +690,12 @@ function Screw(){
   );
 }
 
-function BananaChave({tid,pole,pending,onTClick,onTDbl}){
+function BananaChave({tid,pole,pending,validSet,onTClick,onTDbl}){
   const isSel=pending===tid;
+  const hasSet=validSet!==null&&validSet!==undefined;
+  const extraCls=isSel?'':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
   return(
-    <div className={`banana-chave${isSel?' sel':''}`} data-tid={tid} title={tid}
+    <div className={`banana-chave${isSel?' sel':''}${extraCls}`} data-tid={tid} title={tid}
       onClick={e=>{e.stopPropagation();onTClick(tid);}} onDoubleClick={e=>{e.stopPropagation();onTDbl(tid);}}>
       <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',
         background:`radial-gradient(circle at 35% 30%,${pole.body}CC,${pole.body}44 60%,#111 100%)`,border:`2px solid ${pole.body}66`}}>
@@ -698,11 +705,11 @@ function BananaChave({tid,pole,pending,onTClick,onTDbl}){
   );
 }
 
-function PoleCol({pole,switchSt,onToggle,pending,onTClick,onTDbl}){
+function PoleCol({pole,switchSt,onToggle,pending,validSet,onTClick,onTDbl}){
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:42,userSelect:'none',cursor:pole.kind==='normal'?'pointer':'default'}}
       onClick={()=>{if(pole.kind==='normal')onToggle(pole.group);}}>
-      <BananaChave tid={`${pole.id}_top`} pole={pole} pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
+      <BananaChave tid={`${pole.id}_top`} pole={pole} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
       <Screw/>
       {pole.kind==='terra'?(
         <div className="terra-body"><div className="terra-line"/></div>
@@ -720,15 +727,17 @@ function PoleCol({pole,switchSt,onToggle,pending,onTClick,onTDbl}){
         </div>
       )}
       <Screw/>
-      <BananaChave tid={`${pole.id}_bot`} pole={pole} pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
+      <BananaChave tid={`${pole.id}_bot`} pole={pole} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
     </div>
   );
 }
 
-function BananaJack({node,pending,onTClick,onTDbl}){
+function BananaJack({node,pending,validSet,onTClick,onTDbl}){
   const isRed=node.color==='red';const isSel=pending===node.id;
+  const hasSet=validSet!==null&&validSet!==undefined;
+  const extraCls=isSel?'':hasSet?(validSet.has(node.id)?' t-ok':' t-dim'):'';
   return(
-    <div className={`banana-jack${isSel?' sel':''}`} data-tid={node.id}
+    <div className={`banana-jack${isSel?' sel':''}${extraCls}`} data-tid={node.id}
       style={{background:isRed?'radial-gradient(circle at 35% 30%,#EE4444,#AA1111 60%,#660000 100%)':'radial-gradient(circle at 35% 30%,#666666,#2A2A2A 60%,#111111 100%)',
         borderColor:isRed?'#881111':'#777777'}}
       onClick={()=>onTClick(node.id)} onDoubleClick={e=>{e.stopPropagation();onTDbl(node.id);}}>
@@ -737,22 +746,24 @@ function BananaJack({node,pending,onTClick,onTDbl}){
   );
 }
 
-function PairGroup({pair,pending,onTClick,onTDbl}){
+function PairGroup({pair,pending,validSet,onTClick,onTDbl}){
   return(
     <div className="pair-group">
       <div className="pair-label">{pair.label}</div>
       <div style={{display:'flex',flexDirection:'row',gap:4,alignItems:'center'}}>
-        <BananaJack node={pair.red} pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
-        <BananaJack node={pair.blk} pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BananaJack node={pair.red} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BananaJack node={pair.blk} pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
       </div>
     </div>
   );
 }
 
-function BorneOpening({n,side,pending,onTClick,onTDbl}){
+function BorneOpening({n,side,pending,validSet,onTClick,onTDbl}){
   const tid=`tb_${n}_${side}`;const isSel=pending===tid;
+  const hasSet=validSet!==null&&validSet!==undefined;
+  const extraCls=isSel?'':hasSet?(validSet.has(tid)?' t-ok':' t-dim'):'';
   return(
-    <div className={`borne-opening${isSel?' sel':''}`} data-tid={tid} title={`Borne ${n} — ${side==='top'?'superior':'inferior'}`}
+    <div className={`borne-opening${isSel?' sel':''}${extraCls}`} data-tid={tid} title={`Borne ${n} — ${side==='top'?'superior':'inferior'}`}
       onClick={()=>onTClick(tid)} onDoubleClick={e=>{e.stopPropagation();onTDbl(tid);}}>
       <div className="borne-inner"/>
       <div className="borne-ridge-l"/>
@@ -761,7 +772,7 @@ function BorneOpening({n,side,pending,onTClick,onTDbl}){
   );
 }
 
-function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
+function BorneModule({n,isFirst,isLast,pending,validSet,onTClick,onTDbl}){
   const t=BORNE_TYPE[n];
   const BORNE_DESCRIPTIONS=useBorneDescriptions();
   const desc=BORNE_DESCRIPTIONS?.[n];
@@ -773,7 +784,7 @@ function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
         <div className="borne-pin top"/>
         <div className="borne-ear-l"/>
         <div className="borne-ear-r"/>
-        <BorneOpening n={n} side="top" pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BorneOpening n={n} side="top" pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
       </div>
       <div className="borne-label">
         <div className="borne-number">{n}</div>
@@ -782,7 +793,7 @@ function BorneModule({n,isFirst,isLast,pending,onTClick,onTDbl}){
       <div className="borne-zone bot">
         <div className="borne-ear-l bot"/>
         <div className="borne-ear-r bot"/>
-        <BorneOpening n={n} side="bottom" pending={pending} onTClick={onTClick} onTDbl={onTDbl}/>
+        <BorneOpening n={n} side="bottom" pending={pending} validSet={validSet} onTClick={onTClick} onTDbl={onTDbl}/>
         <div className="borne-cap-bot"/>
         <div className="borne-pin bot"/>
       </div>
@@ -839,6 +850,26 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       setConnections(restored);
     }
   },[loadWiring]);
+  // Lista completa de todos os IDs de terminal do painel de cabos
+  const allTerminalIds=useMemo(()=>{
+    const ids=[];
+    // Chave de aferição: top e bot de cada polo
+    CHAVE_POLES.forEach(p=>{ids.push(`${p.id}_top`);ids.push(`${p.id}_bot`);});
+    // Maleta: saídas de corrente, tensão, BO e BI
+    [...AO_I,...AO_V,...BO_PAIRS,...BI_PAIRS].forEach(pair=>{
+      ids.push(pair.red.id);ids.push(pair.blk.id);
+    });
+    // Régua de bornes 1–16 (top e bottom)
+    for(let n=1;n<=16;n++){ids.push(`tb_${n}_top`);ids.push(`tb_${n}_bottom`);}
+    return ids;
+  },[]);
+
+  // Conjunto de terminais válidos como destino enquanto há um terminal pendente selecionado
+  const validTargets=useMemo(()=>{
+    if(!pendingTid)return null;
+    return computeValidTargets(pendingTid,allTerminalIds,switchSt,validateConnection);
+  },[pendingTid,switchSt,allTerminalIds]);
+
   const svgRef=useRef(null);
   const rootRef=useRef(null);
   const mainRef=useRef(null);
@@ -851,7 +882,9 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   const onTClick=useCallback((tid)=>{
     setPendingTid(prev=>{
       if(!prev){
-        setInfoMsg(t('campo.hints.selectedFromClickDest', { tid }));setInfoActive(true);
+        // Calcula quantos alvos válidos existem para mostrar na dica
+        const validSet=computeValidTargets(tid,allTerminalIds,switchStRef.current,validateConnection);
+        setInfoMsg(`Origem: ${tid} — ${validSet.size} alvos válidos (ESC cancela)`);setInfoActive(true);
         return tid;
       }
       if(prev===tid){
@@ -934,6 +967,19 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
     const h=()=>{setConnections(c=>[...c]);};
     window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h);
   },[]);
+
+  // ESC cancela a seleção de terminal pendente
+  useEffect(()=>{
+    const onKey=(e)=>{
+      if(e.key==='Escape'&&pendingTid){
+        setPendingTid(null);
+        setInfoMsg(t('campo.hints.promptStart'));
+        setInfoActive(false);
+      }
+    };
+    window.addEventListener('keydown',onKey);
+    return()=>window.removeEventListener('keydown',onKey);
+  },[pendingTid,t]);
 
   // Build pole groups with separators
   const poleElements=[];
@@ -1029,7 +1075,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           <div className="borne-wrap" data-tutorial-target="terminal-block">
             <div className="borne-arrow-l"/>
             <div className="borne-chassis">
-              {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+              {Array.from({length:16},(_,i)=><BorneModule key={i+1} n={i+1} isFirst={i===0} isLast={i===15} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
             </div>
             <div className="borne-arrow-r"/>
           </div>
@@ -1045,7 +1091,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="section-title" style={{marginBottom:8}}>{t('campo.sectionsUpper.binaryOut')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {BO_PAIRS.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
@@ -1055,7 +1101,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                     {BI_PAIRS.map((p,i)=>(
                       <div key={p.label} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
                         <div className={`bi-led${biMonitor[i]?.active?' on':''}`} title={`${p.label}: ${biMonitor[i]?.active?'ATIVO':'inativo'}`}/>
-                        <PairGroup pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>
+                        <PairGroup pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>
                       </div>
                     ))}
                   </div>
@@ -1068,14 +1114,14 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="subsection-label">{t('campo.sectionsUpper.current')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {AO_I.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
                 <div className="v-divider"/>
                 <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}>
                   <div className="subsection-label">{t('campo.sectionsUpper.voltage')}</div>
                   <div style={{display:'flex',justifyContent:'space-evenly',width:'100%'}}>
-                    {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+                    {AO_V.map(p=><PairGroup key={p.label} pair={p} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
                   </div>
                 </div>
               </div>
@@ -1096,7 +1142,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           </div>
           <div className="poles-row">
             {poleElements.map(e=>e.type==='sep'?<div key={e.key} className="c-sep"/>:
-              <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} onTClick={onTClick} onTDbl={onTDbl}/>)}
+              <PoleCol key={e.key} pole={e.pole} switchSt={switchSt} onToggle={onToggleGroup} pending={pendingTid} validSet={validTargets} onTClick={onTClick} onTDbl={onTDbl}/>)}
           </div>
           <div style={{display:'flex',alignItems:'flex-start',justifyContent:'center',gap:6,padding:'0 4px'}}>
             {poleElements.map(e=>e.type==='sep'?<div key={e.key} style={{width:1,background:'transparent',margin:'0 2px'}}/>:
