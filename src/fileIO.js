@@ -1,5 +1,6 @@
 import { deepClone } from './defaults.js';
 import { resolveCurveName } from './protection.js';
+import { normalizeGroups, clampGroupIdx } from './settingGroups.js';
 
 export const FILE_HEADER='# RELAYLAB 360 — Parametrization File';
 export const FILE_VERSION='v1.0';
@@ -21,9 +22,10 @@ function safeNum(v,fallback){const n=parseFloat(v);return Number.isFinite(n)?n:f
  * @param {Object} prot - Protection functions config (51, 50, 67, 27/59, etc.)
  * @param {Object} outMatrix - Output matrix (stages → relay outputs)
  * @param {Object} wiring - Field wiring (switch state, manual connections)
+ * @param {Object} [groupsData] - Setting groups G1–G4: {settingGroups:Array, activeGroup:number}
  * @returns {string} INI-formatted configuration text
  */
-export function buildSaveContent(sys,prot,outMatrix,wiring){
+export function buildSaveContent(sys,prot,outMatrix,wiring,groupsData){
   const lines=[FILE_HEADER,`# Version: ${FILE_VERSION}`,`# Date: ${new Date().toISOString()}`,''];
 
   // ── SYSTEM PARAMETERS
@@ -117,6 +119,16 @@ export function buildSaveContent(sys,prot,outMatrix,wiring){
     lines.push('');
   }
 
+  // ── SETTING GROUPS (G1–G4)
+  // Cada grupo é um snapshot completo de `prot`. Serializado como uma linha JSON por
+  // grupo (lossless para a estrutura de ajustes) sob a seção [SETTING_GROUPS].
+  if(groupsData&&Array.isArray(groupsData.settingGroups)){
+    lines.push('[SETTING_GROUPS]');
+    lines.push(`ACTIVE=${groupsData.activeGroup||0}`);
+    groupsData.settingGroups.forEach((g,i)=>{lines.push(`GROUP_${i}=${JSON.stringify(g)}`);});
+    lines.push('');
+  }
+
   return lines.join('\n');
 }
 
@@ -135,6 +147,7 @@ export function parseSaveFile(text,currentProt,currentMatrix){
   // Reset matrix to all false
   Object.keys(matrix).forEach(r=>{Object.keys(matrix[r]).forEach(c=>{matrix[r][c]=false;});});
   const wiring={switchSt:{},connections:[]};let connIdx=0;
+  const rawGroups=[];let groupActive=0;let hasGroups=false;
 
   let section='';
   let currentFid='';
@@ -324,7 +337,18 @@ export function parseSaveFile(text,currentProt,currentMatrix){
         if(from&&to){wiring.connections.push({from,to});connIdx++;}
       }
     }
+    else if(section==='SETTING_GROUPS'){
+      hasGroups=true;
+      if(key==='ACTIVE'){groupActive=clampGroupIdx(safeNum(val,0));}
+      else if(key.startsWith('GROUP_')){
+        const idx=parseInt(key.replace('GROUP_',''));
+        try{const g=JSON.parse(val);if(g&&typeof g==='object')rawGroups[idx]=g;}catch{/* ignora grupo corrompido */}
+      }
+    }
   }
   const hasWiring=Object.keys(wiring.switchSt).length>0||wiring.connections.length>0;
-  return{sys,prot,outMatrix:matrix,wiring:hasWiring?wiring:null};
+  // Retrocompat: arquivos sem [SETTING_GROUPS] → 4 grupos clonados do prot carregado.
+  const settingGroups=hasGroups?normalizeGroups(rawGroups,prot):normalizeGroups(null,prot);
+  const activeGroup=hasGroups?groupActive:0;
+  return{sys,prot,outMatrix:matrix,wiring:hasWiring?wiring:null,settingGroups,activeGroup};
 }

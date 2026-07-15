@@ -14,6 +14,7 @@ export const SOE_TYPES = {
   SETTINGS_GET:    "SETTINGS_GET",
   SETTINGS_CHANGE: "SETTINGS_CHANGE",
   LED_RESET:       "LED_RESET",
+  GROUP_CHANGE:    "GROUP_CHANGE",
   PRESET:          "PRESET",
   WARN:            "WARN",
   INFO:            "INFO",

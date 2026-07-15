@@ -17,6 +17,7 @@ export default function RelePage({
   prot, outMatrix, inMatrix,
   tab, setTab, si, setSi, mainTab, setMainTab,
   uPr, uSt, uS, toggleMatrix, toggleInMatrix,
+  settingGroups, activeGroup, switchGroup, copyGroup,
   applyTestPreset, rtp, rtc,
   // simulation
   ss, stime, isTripped, maletaTripped,
@@ -154,6 +155,10 @@ export default function RelePage({
                 toggleMatrix={toggleMatrix}
                 toggleInMatrix={toggleInMatrix}
                 applyTestPreset={applyTestPreset}
+                settingGroups={settingGroups}
+                activeGroup={activeGroup}
+                switchGroup={switchGroup}
+                copyGroup={copyGroup}
                 rtp={rtp}
                 rtc={rtc}
                 phasors={p}

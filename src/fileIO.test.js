@@ -107,3 +107,136 @@ describe("parseSaveFile — robustness", () => {
     expect(out.wiring).toBeNull();
   });
 });
+
+describe("buildSaveContent + parseSaveFile — Setting Groups round trip", () => {
+  it("[SETTING_GROUPS] section serializes ACTIVE and GROUP_0..GROUP_3 as JSON lines", () => {
+    const p = prot();
+    p["51"].stages[0].pickup = 6.5;
+    p["50"].stages[0].pickup = 12;
+
+    const groups = [
+      deepClone(p),
+      { ...deepClone(p), "51": { ...deepClone(p["51"]), stages: [{ ...deepClone(p["51"].stages[0]), pickup: 8 }] } },
+      { ...deepClone(p), "51": { ...deepClone(p["51"]), stages: [{ ...deepClone(p["51"].stages[0]), pickup: 9 }] } },
+      { ...deepClone(p), "51": { ...deepClone(p["51"]), stages: [{ ...deepClone(p["51"].stages[0]), pickup: 10 }] } },
+    ];
+    const groupsData = { settingGroups: groups, activeGroup: 2 };
+
+    const text = buildSaveContent(sys(), p, matrix(), null, groupsData);
+
+    // Verify file contains [SETTING_GROUPS] section
+    expect(text).toContain("[SETTING_GROUPS]");
+    expect(text).toContain("ACTIVE=2");
+    expect(text).toContain("GROUP_0=");
+    expect(text).toContain("GROUP_1=");
+    expect(text).toContain("GROUP_2=");
+    expect(text).toContain("GROUP_3=");
+  });
+
+  it("parseSaveFile recovers settingGroups and activeGroup correctly", () => {
+    const p = prot();
+    p["51"].stages[0].pickup = 6.5;
+
+    const groups = [
+      deepClone(p),
+      deepClone(p),
+      deepClone(p),
+      deepClone(p),
+    ];
+    groups[1]["51"].stages[0].pickup = 7.5;
+    groups[2]["51"].stages[0].pickup = 8.5;
+
+    const groupsData = { settingGroups: groups, activeGroup: 1 };
+    const text = buildSaveContent(sys(), p, matrix(), null, groupsData);
+
+    const out = parseSaveFile(text, prot(), matrix());
+
+    expect(out.settingGroups).toHaveLength(4);
+    expect(out.activeGroup).toBe(1);
+    expect(out.settingGroups[0]["51"].stages[0].pickup).toBe(6.5);
+    expect(out.settingGroups[1]["51"].stages[0].pickup).toBe(7.5);
+    expect(out.settingGroups[2]["51"].stages[0].pickup).toBe(8.5);
+    expect(out.settingGroups[3]["51"].stages[0].pickup).toBe(6.5);
+  });
+
+  it("file without [SETTING_GROUPS] returns 4 clones of loaded prot as settingGroups", () => {
+    const p = prot();
+    p["51"].stages[0].pickup = 5.5;
+
+    // Build file WITHOUT groups data
+    const text = buildSaveContent(sys(), p, matrix(), null);
+
+    const out = parseSaveFile(text, prot(), matrix());
+
+    expect(out.settingGroups).toHaveLength(4);
+    expect(out.activeGroup).toBe(0);
+    // All groups should be clones of the loaded prot
+    out.settingGroups.forEach((g, i) => {
+      expect(g["51"].stages[0].pickup).toBe(5.5);
+      // Each group is independent
+      if (i > 0) expect(g).not.toBe(out.settingGroups[0]);
+    });
+  });
+
+  it("corrupted GROUP line (invalid JSON) is ignored, slot filled with fallback", () => {
+    const baseText = buildSaveContent(sys(), prot(), matrix(), null, {
+      settingGroups: [prot(), prot(), prot(), prot()],
+      activeGroup: 0,
+    });
+
+    // Corrupt GROUP_1 by replacing JSON with invalid text
+    const corruptedText = baseText.replace(/GROUP_1=\{.*?\}(?=\n|$)/, "GROUP_1=not-valid-json");
+
+    const out = parseSaveFile(corruptedText, prot(), matrix());
+
+    expect(out.settingGroups).toHaveLength(4);
+    // GROUP_1 should be filled with a clone of the protection (fallback)
+    expect(out.settingGroups[1]).toEqual(out.settingGroups[0]); // Both are fallbacks
+  });
+
+  it("ACTIVE index clamped to [0, 3]", () => {
+    const text = [
+      FILE_HEADER,
+      "[SYSTEM]",
+      "TP_PRI_V=13800",
+      "[SETTING_GROUPS]",
+      "ACTIVE=100", // Out of range
+      'GROUP_0={"51":{"enabled":true}}',
+    ].join("\n");
+
+    const out = parseSaveFile(text, prot(), matrix());
+
+    expect(out.activeGroup).toBe(3); // Clamped to 3
+  });
+
+  it("complex scenario: 4 distinct groups with different settings", () => {
+    const g0 = prot();
+    g0["51"].stages[0].pickup = 5;
+    g0["50"].stages[0].pickup = 10;
+
+    const g1 = deepClone(g0);
+    g1["51"].stages[0].pickup = 6;
+    g1["50"].stages[0].pickup = 12;
+
+    const g2 = deepClone(g0);
+    g2["51"].stages[0].pickup = 7;
+    g2["67"].enabled = true;
+
+    const g3 = deepClone(g0);
+    g3["51"].stages[0].pickup = 8;
+
+    const groupsData = { settingGroups: [g0, g1, g2, g3], activeGroup: 2 };
+    const text = buildSaveContent(sys(), g0, matrix(), null, groupsData);
+
+    const out = parseSaveFile(text, prot(), matrix());
+
+    expect(out.activeGroup).toBe(2);
+    expect(out.settingGroups[0]["51"].stages[0].pickup).toBe(5);
+    expect(out.settingGroups[0]["50"].stages[0].pickup).toBe(10);
+    expect(out.settingGroups[1]["51"].stages[0].pickup).toBe(6);
+    expect(out.settingGroups[1]["50"].stages[0].pickup).toBe(12);
+    expect(out.settingGroups[2]["51"].stages[0].pickup).toBe(7);
+    expect(out.settingGroups[2]["67"].enabled).toBe(true);
+    expect(out.settingGroups[3]["51"].stages[0].pickup).toBe(8);
+  });
+});

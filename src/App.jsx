@@ -7,6 +7,7 @@ import { generateComtrade } from "./comtrade.js";
 import JSZip from "jszip";
 import { deepClone, defaultPhasors, defaultSystem, defaultProtections, protOrder, biRows, allRows, boCols, ledCols, buildDefaultMatrix, buildDefaultInMatrix, mainTabs, TEST_PRESETS, fmtTs, nowShort } from "./defaults.js";
 import { soeEvent, soePush, SOE_TYPES } from "./soe.js";
+import { mkGroups, applyGroupSwitch, copyGroupPure, GROUP_LABELS } from "./settingGroups.js";
 import { EDUCATIONAL_SCENARIOS } from "./scenarios/educational-scenarios.js";
 import { calc3, calcPower, calcI2 } from "./protection.js";
 import { buildSaveContent, parseSaveFile } from "./fileIO.js";
@@ -54,6 +55,9 @@ function AppInner(){
   const[pfDuration,setPfDuration]=useState(1.0);
   const[pfMode,setPfMode]=useState("fault");
   const[prot,setProt]=useState(deepClone(defaultProtections));const[relayProt,setRelayProt]=useState(deepClone(defaultProtections));
+  // Grupos de ajustes G1–G4 (lado de parametrização). O grupo ativo É `prot`; os slots
+  // inativos ficam em `settingGroups` e o slot ativo é materializado na troca/cópia/save.
+  const[settingGroups,setSettingGroups]=useState(()=>mkGroups(deepClone(defaultProtections)));const[activeGroup,setActiveGroup]=useState(0);
   const[outMatrix,setOutMatrix]=useState(buildDefaultMatrix);const[relayMatrix,setRelayMatrix]=useState(buildDefaultMatrix);
   const[inMatrix,setInMatrix]=useState(buildDefaultInMatrix);
   const[mainTab,setMainTab]=useState("relay");const[tab,setTab]=useState("51");const[si,setSi]=useState(0);const[relayTab,setRelayTab]=useState("mensuracao");const[mensTab,setMensTab]=useState("corr");
@@ -400,6 +404,17 @@ function AppInner(){
   const sendSettings=()=>{setRelayProt(deepClone(prot));setRelayMatrix(deepClone(outMatrix));setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.SETTINGS_SEND,icon:"↑",text:"Settings uploaded to relay.",dt:""})))};
   const getSettings=()=>{setProt(deepClone(relayProt));setOutMatrix(deepClone(relayMatrix));setGetFlash(true);setTimeout(()=>setGetFlash(false),1200);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.SETTINGS_GET,icon:"↓",text:"Settings downloaded from relay.",dt:""})))};
   /**
+   * Comuta o grupo de ajustes ativo (G1–G4). Congela as edições atuais (`prot`) no slot
+   * do grupo antigo e carrega o snapshot do novo grupo em `prot`. NÃO envia ao relé — o
+   * usuário precisa clicar Send para a troca surtir efeito no relé (fluxo de relé real).
+   */
+  const switchGroup=(idx)=>{if(idx===activeGroup)return;setSettingGroups(groups=>{const r=applyGroupSwitch(groups,activeGroup,prot,idx);setActiveGroup(r.active);setProt(r.prot);return r.groups;});setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.GROUP_CHANGE,icon:"⚙",text:`Grupo de ajustes ativo: ${GROUP_LABELS[idx]??("G"+(idx+1))}`,dt:""})));};
+  /**
+   * Copia os ajustes de um grupo para outro (deep clone). Se o destino for o grupo ativo,
+   * atualiza também `prot`. Registra evento INFO.
+   */
+  const copyGroup=(from,to)=>{if(from===to)return;setSettingGroups(groups=>{const r=copyGroupPure(groups,activeGroup,prot,from,to);setProt(r.prot);return r.groups;});setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"⧉",text:`Grupo ${GROUP_LABELS[from]??("G"+(from+1))} copiado para ${GROUP_LABELS[to]??("G"+(to+1))}`,dt:""})));};
+  /**
    * Reset fault simulation and clear event/diagnostic history.
    */
   const resetFault=()=>{if(tr.current)clearInterval(tr.current);stop79();setSs("idle");setSimPhase("idle");setStime(0);stimeRef.current=0;setDiag([]);setEvts([]);setMaletaTripped(false);setBkResetCtr(c=>c+1)};
@@ -477,7 +492,9 @@ function AppInner(){
    * Uses native showSaveFilePicker or fallback download.
    */
   const saveFile=async()=>{
-    const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}});
+    // Sincroniza o slot ativo com prot antes de salvar (edições em andamento não perdem).
+    const groupsToSave=settingGroups.map((g,i)=>i===activeGroup?deepClone(prot):g);
+    const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}},{settingGroups:groupsToSave,activeGroup});
     try{const handle=await window.showSaveFilePicker({suggestedName:'relay_config.txt',types:[{description:'Text File',accept:{'text/plain':['.txt']}}]});const writable=await handle.createWritable();await writable.write(content);await writable.close();setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:`Configuration saved: ${handle.name}`,dt:""})));}
     catch(err){if(err.name!=='AbortError'){const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='relay_config.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:"Configuration saved to file.",dt:""})));}}
   };
@@ -488,7 +505,7 @@ function AppInner(){
    */
   const loadFile=()=>{
     const input=document.createElement('input');input.type='file';input.accept='.txt';
-    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.INFO,icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""})));}catch(err){setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error loading file: ${err.message}`,dt:""})));}};reader.readAsText(file);};
+    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);setSettingGroups(result.settingGroups);setActiveGroup(result.activeGroup);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.INFO,icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""})));}catch(err){setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error loading file: ${err.message}`,dt:""})));}};reader.readAsText(file);};
     input.click();
   };
 
@@ -531,6 +548,7 @@ function AppInner(){
         tab={tab} setTab={setTab} si={si} setSi={setSi}
         mainTab={mainTab} setMainTab={setMainTab}
         uPr={uPr} uSt={uSt} uS={uS}
+        settingGroups={settingGroups} activeGroup={activeGroup} switchGroup={switchGroup} copyGroup={copyGroup}
         toggleMatrix={toggleMatrix} toggleInMatrix={toggleInMatrix}
         applyTestPreset={applyTestPreset} rtp={rtp} rtc={rtc}
         ss={ss} stime={stime} isTripped={isTripped} maletaTripped={maletaTripped}
