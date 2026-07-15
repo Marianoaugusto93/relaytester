@@ -25,7 +25,7 @@ export default function RelePage({
   ci, vi, i0, v0, i2lcd, pTotal, pA, pB, pC,
   injecting, relayProt, trippedStageIds,
   bkState, ledLabels, ledLitStates,
-  evts, diag, faultRecord,
+  evts, setEvts, diag, faultRecord,
   sendFlash, getFlash,
   // action callbacks
   sendSettings, getSettings,
@@ -96,6 +96,7 @@ export default function RelePage({
             outMatrix={outMatrix}
             inMatrix={inMatrix}
             evts={evts}
+            setEvts={setEvts}
             diag={diag}
             faultRecord={faultRecord}
             bkState={bkState}

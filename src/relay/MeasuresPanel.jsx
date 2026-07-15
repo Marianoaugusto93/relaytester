@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "../i18n/useTranslation.js";
+import { soeToCsv } from "../soe.js";
 
 export default function MeasuresPanel({
   ci, vi, i0, v0, i2lcd, pTotal, pA, pB, pC,
   rtc, rtp, injecting, isTripped, trippedStageIds,
   prot, relayProt, outMatrix, inMatrix,
-  evts, diag, faultRecord,
+  evts, setEvts, diag, faultRecord,
   bkState, ledLabels, ledLitStates,
   sendFlash, getFlash,
   onSend, onGet, onOpenFile, onSaveFile,
@@ -181,18 +182,39 @@ export default function MeasuresPanel({
 
       {/* EVENTOS tab */}
       {measTab === "evt" && (
-        <div className="measures-scroll">
-          {evts.length === 0
-            ? <div className="rp-empty">Sem eventos · aguardando injeção</div>
-            : evts.slice(0, 20).map((e, i) => (
-              <div key={i} className="rp-evt">
-                <span className="rp-evt-t">[{e.time}]</span>
-                <span style={{ fontSize: 10 }}>{e.icon}</span>
-                <span className="rp-evt-x">{e.text}</span>
-              </div>
-            ))
-          }
-        </div>
+        <>
+          <div style={{ display: "flex", gap: 4, padding: "4px 8px", borderBottom: "1px solid var(--bdr)", flexShrink: 0 }}>
+            <button className="act-btn-v2" onClick={() => setEvts && setEvts([])}>
+              <span className="ico">✕</span>Limpar
+            </button>
+            <button className="act-btn-v2" onClick={() => {
+              if (!evts || evts.length === 0) return;
+              const csv = soeToCsv(evts);
+              const now = new Date();
+              const ts = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}_${String(now.getHours()).padStart(2,"0")}${String(now.getMinutes()).padStart(2,"0")}${String(now.getSeconds()).padStart(2,"0")}`;
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = `soe_${ts}.csv`;
+              document.body.appendChild(a); a.click();
+              document.body.removeChild(a); URL.revokeObjectURL(url);
+            }}>
+              <span className="ico">⇩</span>CSV
+            </button>
+          </div>
+          <div className="measures-scroll">
+            {evts.length === 0
+              ? <div className="rp-empty">Sem eventos · aguardando injeção</div>
+              : evts.map((e, i) => (
+                <div key={i} className="rp-evt">
+                  <span className="rp-evt-t">[{e.time}]</span>
+                  <span style={{ fontSize: 10 }}>{e.icon}</span>
+                  <span className="rp-evt-x">{e.text}</span>
+                </div>
+              ))
+            }
+          </div>
+        </>
       )}
 
       {/* Action buttons inline with labels - 1 row 4 columns each section */}

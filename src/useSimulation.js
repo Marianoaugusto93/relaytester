@@ -2,6 +2,7 @@ import{useRef,useState,useCallback}from"react";
 import{buildElectricalGraph,computeRelayReadings,checkMaletaTripDetection,checkBreakerTripCoil}from"./CampoPage.jsx";
 import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
 import{protOrder,boCols,nowShort,fmtTs}from"./defaults.js";
+import{soeEvent,soePush,SOE_TYPES}from"./soe.js";
 
 export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSimPhase,setDiag,setSs,setStime,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef}){
   const tr=useRef(null);
@@ -18,13 +19,13 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     if(tr.current)clearInterval(tr.current);
     stop79();
     setSs("idle");setSimPhase("idle");
-    setEvts(ev=>[{time:nowShort(),icon:"⏹",text:"Stopped.",dt:`T+${stimeRef.current.toFixed(3)}s`},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INJ_STOP,icon:"⏹",text:"Stopped.",dt:`T+${stimeRef.current.toFixed(3)}s`})));
   },[stop79,setSs,setSimPhase,setEvts,stimeRef]);
 
   const runSim=useCallback((injectPhasors,protOverride)=>{
     const phasorsToUse=injectPhasors||p;
     setSs("running");setStime(0);stimeRef.current=0;setDiag([]);setMaletaTripped(false);
-    setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Simulation started.",dt:"T+0.000s"},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INJ_START,icon:"⚡",text:"Simulation started.",dt:"T+0.000s"})));
     let el=0;const iv=10;
     const pfActive=pfEnabled&&pfDuration>0;
     // protOverride: ajustes de proteção passados por argumento (ex.: injeção df/dt da
@@ -49,7 +50,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
       setIsTripped(true);
       setFaultRecord({stages:[...trippedSoFar],timestamp:fmtTs(),...buildFaultBase(rr)});
       const dtLabel=latest.time!==null?`T+${latest.time.toFixed(3)}s`:phaseLabel;
-      setEvts(ev=>[{time:nowShort(),icon:"⚡",text:`Relay trip: ${latest.stage}`,dt:dtLabel},...ev.slice(0,20)]);
+      setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP,icon:"⚡",text:`Relay trip: ${latest.stage}`,dt:dtLabel})));
 
       if(!firstTripRecorded){
         firstTripRecorded=true;
@@ -81,7 +82,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         if(latest.time!==null){setStime(latest.time);stimeRef.current=latest.time;}
         const maletaStop=latest.time;
         setTripHistory(prev=>{if(prev.length===0)return prev;const updated=[...prev];updated[0]={...updated[0],maletaStopTime:maletaStop};return updated;});
-        setEvts(ev=>[{time:nowShort(),icon:"🔴",text:`TRIP detected by maleta: ${ids.join(", ")}`,dt:dtLabel},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP_MALETA,icon:"🔴",text:`TRIP detected by maleta: ${ids.join(", ")}`,dt:dtLabel})));
         return true;
       }
       const tcTrip=checkBreakerTripCoil(ids,relayMatrix,fieldStateRef.current);
@@ -89,7 +90,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         clearInterval(tr.current);setSs("idle");setSimPhase("idle");setMaletaTripped(true);
         if(latest.time!==null){setStime(latest.time);stimeRef.current=latest.time;}
         setTripHistory(prev=>{if(prev.length===0)return prev;const u=[...prev];u[0]={...u[0],maletaStopTime:latest.time};return u;});
-        setEvts(ev=>[{time:nowShort(),icon:"🔓",text:`TRIP via bobina TC: ${ids.join(", ")}`,dt:dtLabel},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP_MALETA,icon:"🔓",text:`TRIP via bobina TC: ${ids.join(", ")}`,dt:dtLabel})));
         return true;
       }
       const boTriggered=ids.filter(id=>boCols.some(bo=>relayMatrix[id]?.[bo]));
@@ -98,7 +99,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         clearInterval(tr.current);setSs("idle");setSimPhase("idle");setMaletaTripped(true);
         if(latest.time!==null){setStime(latest.time);stimeRef.current=latest.time;}
         setTripHistory(prev=>{if(prev.length===0)return prev;const updated=[...prev];updated[0]={...updated[0],maletaStopTime:latest.time};return updated;});
-        setEvts(ev=>[{time:nowShort(),icon:"⚡",text:`${boTriggered.join(", ")} → ${activeBOs.join("/")} → OPEN_CB`,dt:dtLabel},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.CB_OPEN,icon:"⚡",text:`${boTriggered.join(", ")} → ${activeBOs.join("/")} → OPEN_CB`,dt:dtLabel})));
         return true;
       }
       return false;
@@ -132,7 +133,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         });
       }
       if(preInj27Count>0){
-        setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`27 trip imediato: relé via 0V antes da injeção (sem pré-falta). Use pré-falta com tensão nominal para evitar.`,dt:"T+0.000s"},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⚠",text:`27 trip imediato: relé via 0V antes da injeção (sem pré-falta). Use pré-falta com tensão nominal para evitar.`,dt:"T+0.000s"})));
       }
 
       allTrips.sort((a,b)=>a.time-b.time);
@@ -151,7 +152,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         }
         if(el>60000&&!stopped){
           clearInterval(tr.current);setSs("idle");setSimPhase("idle");
-          if(trippedSoFar.length>0)setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`Timeout — relay tripped but maleta did not detect.`,dt:"T+60.000s"},...ev.slice(0,20)]);
+          if(trippedSoFar.length>0)setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⚠",text:`Timeout — relay tripped but maleta did not detect.`,dt:"T+60.000s"})));
         }
       },iv);
       return;
@@ -170,7 +171,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
     const trippedSoFar=[];
 
     setSimPhase("prefault");
-    setEvts(ev=>[{time:nowShort(),icon:"⏳",text:`Pre-fault: ${pfDuration.toFixed(1)}s`,dt:""},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INJ_START,icon:"⏳",text:`Pre-fault: ${pfDuration.toFixed(1)}s`,dt:""})));
 
     tr.current=setInterval(()=>{
       el+=iv;if(stopped)return;
@@ -180,7 +181,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         currentRR=pfRR;
         if(el>=pfDurMs){
           phase="fault";faultEl=0;setSimPhase("fault");currentRR=faultRR;
-          setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fault phase started. Timer running.",dt:"T+0.000s"},...ev.slice(0,20)]);
+          setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INJ_START,icon:"⚡",text:"Fault phase started. Timer running.",dt:"T+0.000s"})));
         }
       }else{
         currentRR=faultRR;
@@ -264,7 +265,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
           const ids=trippedSoFar.map(t=>t.stage);
           setTrippedStageIds(prev=>{const merged=new Set([...prev,...ids]);return[...merged]});
           setIsTripped(true);
-          setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`Trip na pré-falta: ${latest.stage} (maleta continua)`,dt:"PF"},...ev.slice(0,20)]);
+          setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP,icon:"⚠",text:`Trip na pré-falta: ${latest.stage} (maleta continua)`,dt:"PF"})));
         }else{
           if(handleTrips(trippedSoFar,latest,"T",rr))stopped=true;
         }
@@ -337,7 +338,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
 
       if(phase==="fault"&&faultEl>60000&&!stopped){
         clearInterval(tr.current);setSs("idle");setSimPhase("idle");
-        if(trippedSoFar.length>0)setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`Timeout — relay tripped but maleta did not detect.`,dt:"T+60.000s"},...ev.slice(0,20)]);
+        if(trippedSoFar.length>0)setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⚠",text:`Timeout — relay tripped but maleta did not detect.`,dt:"T+60.000s"})));
       }
     },iv);
   },[p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSs,setStime,setSimPhase,setDiag,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,stop79,ar79Ref,tr]);

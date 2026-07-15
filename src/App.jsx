@@ -6,6 +6,7 @@ import PainelPage from "./PainelPage.jsx";
 import { generateComtrade } from "./comtrade.js";
 import JSZip from "jszip";
 import { deepClone, defaultPhasors, defaultSystem, defaultProtections, protOrder, biRows, allRows, boCols, ledCols, buildDefaultMatrix, buildDefaultInMatrix, mainTabs, TEST_PRESETS, fmtTs, nowShort } from "./defaults.js";
+import { soeEvent, soePush, SOE_TYPES } from "./soe.js";
 import { EDUCATIONAL_SCENARIOS } from "./scenarios/educational-scenarios.js";
 import { calc3, calcPower, calcI2 } from "./protection.js";
 import { buildSaveContent, parseSaveFile } from "./fileIO.js";
@@ -145,7 +146,7 @@ function AppInner(){
           return updated;
         });
         setMainTab('relay');
-        setEvts(ev=>[{time:nowShort(),icon:'⚡',text:'Preset enviado de Estudos',dt:''},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.PRESET,icon:'⚡',text:'Preset enviado de Estudos',dt:''})));
       }
     });
     return unsub;
@@ -178,7 +179,7 @@ function AppInner(){
       // mas o usuário permanece na aba atual. Um toast oferece o atalho para o Relé.
       const kA=(Number(payload.If)||0)/1000;
       setFaultToast({label:payload.label||payload.at||'',ft,kA,Isec});
-      setEvts(ev=>[{time:nowShort(),icon:'🔀',text:`Falta importada de Manobras: ${payload.label||payload.at||''} ${ft} ${kA.toFixed(2)}kA → ${Isec.toFixed(1)}A sec (pré-carregada na injeção do Relé)`,dt:''},...ev.slice(0,20)]);
+      setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:'🔀',text:`Falta importada de Manobras: ${payload.label||payload.at||''} ${ft} ${kA.toFixed(2)}kA → ${Isec.toFixed(1)}A sec (pré-carregada na injeção do Relé)`,dt:''})));
     });
     return unsub;
   },[bus,sys]);
@@ -215,7 +216,7 @@ function AppInner(){
       if(prev!==state){
         const icon=state==='closed'?'🔒':'🔓';
         const msg=state==='closed'?t('appEvents.disjuntorClosed52a'):(latch?t('appEvents.disjuntorOpenTrip52b'):t('appEvents.disjuntorOpen52b'));
-        setEvts(ev=>[{time:nowShort(),icon,text:msg,dt:''},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:state==='closed'?SOE_TYPES.CB_CLOSE:SOE_TYPES.CB_OPEN,icon,text:msg,dt:''})));
         if(state==='open'&&ssRef.current==='running'){
           const im=inMatrixRef.current;
           const mappedBIs=biRows.filter(bi=>im.CB_Opened?.[bi]);
@@ -223,13 +224,13 @@ function AppInner(){
             const t=stimeRef.current;
             clearInterval(tr.current);
             setSs('idle');setSimPhase('idle');setMaletaTripped(true);
-            setEvts(ev=>[{time:nowShort(),icon:'🔴',text:`CB_Opened via ${mappedBIs.join(', ')} — abertura confirmada`,dt:`T+${t.toFixed(3)}s`},...ev.slice(0,20)]);
+            setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.CB_OPEN,icon:'🔴',text:`CB_Opened via ${mappedBIs.join(', ')} — abertura confirmada`,dt:`T+${t.toFixed(3)}s`})));
           }
         }
         if(state==='closed'){
           const im=inMatrixRef.current;
           const mappedBIs=biRows.filter(bi=>im.CB_Closed?.[bi]);
-          if(mappedBIs.length>0)setEvts(ev=>[{time:nowShort(),icon:'🟢',text:`CB_Closed via ${mappedBIs.join(', ')}`,dt:''},...ev.slice(0,20)]);
+          if(mappedBIs.length>0)setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.CB_CLOSE,icon:'🟢',text:`CB_Closed via ${mappedBIs.join(', ')}`,dt:''})));
         }
         if(state==='open'&&latch){
           const fn79=relayProtRef.current["79"];
@@ -237,23 +238,23 @@ function AppInner(){
           if(fn79?.enabled&&!ar.locked){
             if(ar.shot>=(fn79.shots||3)){
               ar.locked=true;
-              setEvts(ev=>[{time:nowShort(),icon:"🔒",text:t('appEvents.reclose79Lockout',{shot:ar.shot}),dt:''},...ev.slice(0,20)]);
+              setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.LOCKOUT,icon:"🔒",text:t('appEvents.reclose79Lockout',{shot:ar.shot}),dt:''})));
             }else{
               const deadTimes=fn79.deadTimes||[0.5,5.0,15.0];
               const dt=Math.round((deadTimes[ar.shot]??deadTimes[deadTimes.length-1])*1000);
               if(ar.reclaimTimer){clearTimeout(ar.reclaimTimer);ar.reclaimTimer=null}
               if(ar.deadTimer){clearTimeout(ar.deadTimer);ar.deadTimer=null}
               const shotNum=ar.shot+1;
-              setEvts(ev=>[{time:nowShort(),icon:"⏱",text:t('appEvents.reclose79WaitingDeadTime',{shotNum:shotNum,deadTime:(dt/1000).toFixed(1)}),dt:''},...ev.slice(0,20)]);
+              setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.RECLOSE,icon:"⏱",text:t('appEvents.reclose79WaitingDeadTime',{shotNum:shotNum,deadTime:(dt/1000).toFixed(1)}),dt:''})));
               ar.deadTimer=setTimeout(()=>{
                 ar.deadTimer=null;ar.shot++;
                 setTrippedStageIds([]);setIsTripped(false);setFaultRecord(null);
                 setBkCloseCtr(c=>c+1);
-                setEvts(ev=>[{time:nowShort(),icon:"🔄",text:t('appEvents.reclose79Reclosing',{shot:ar.shot,shots:fn79.shots||3}),dt:''},...ev.slice(0,20)]);
+                setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.RECLOSE,icon:"🔄",text:t('appEvents.reclose79Reclosing',{shot:ar.shot,shots:fn79.shots||3}),dt:''})));
                 const rt=Math.round((fn79.reclaimTime||3.0)*1000);
                 ar.reclaimTimer=setTimeout(()=>{
                   ar.reclaimTimer=null;ar.shot=0;ar.locked=false;
-                  setEvts(ev=>[{time:nowShort(),icon:"✓",text:t('appEvents.reclose79Success'),dt:''},...ev.slice(0,20)]);
+                  setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.RECLOSE,icon:"✓",text:t('appEvents.reclose79Success'),dt:''})));
                 },rt);
               },dt);
             }
@@ -357,7 +358,7 @@ function AppInner(){
   const onBalChangeI=(mode)=>{setBalI(mode);if(mode==="balanced"){rebalance("currents",seqI,setP,p);rebalance("currents",seqI,setPf,pf)}};
   const onBalChangeV=(mode)=>{setBalV(mode);if(mode==="balanced"){rebalance("voltages",seqV,setP,p);rebalance("voltages",seqV,setPf,pf)}};
   const uS=(s,f,v)=>setSys(o=>({...o,[s]:{...o[s],[f]:v}}));
-  const uPr=(id,f,v)=>setProt(o=>({...o,[id]:{...o[id],[f]:v}}));
+  const uPr=(id,f,v)=>{setProt(o=>({...o,[id]:{...o[id],[f]:v}}));if(f==="enabled")setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.SETTINGS_CHANGE,icon:"⚙",text:`Função ${id} ${v?"habilitada":"desabilitada"}`,dt:""})));};
   const uSt=(id,idx,f,v)=>{setProt(o=>{const fn={...o[id]};if(id==="27/59"){const k=idx<3?"stages27":"stages59";const ri=idx<3?idx:idx-3;const s=[...fn[k]];s[ri]={...s[ri],[f]:v};return{...o,[id]:{...fn,[k]:s}}}if(id==="81"){const k=idx<3?"stages81u":"stages81o";const ri=idx<3?idx:idx-3;const s=[...fn[k]];s[ri]={...s[ri],[f]:v};return{...o,[id]:{...fn,[k]:s}}}if(id==="32"){const k=idx<2?"stages32r":"stages32f";const ri=idx<2?idx:idx-2;const s=[...fn[k]];s[ri]={...s[ri],[f]:v};return{...o,[id]:{...fn,[k]:s}}}if(id==="87"){const s=[...fn.stages87];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages87:s}}}if(id==="21"){const s=[...fn.stages21];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages21:s}}}if(id==="50BF"){const s=[...fn.stages50bf];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages50bf:s}}}if(id==="49"){const s=[...fn.stages49];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages49:s}}}if(id==="25"){const s=[...fn.stages25];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages25:s}}}if(id==="81R"){const s=[...fn.stages81r];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages81r:s}}}const s=[...fn.stages];s[idx]={...s[idx],[f]:v};return{...o,[id]:{...fn,stages:s}}})};
   const toggleMatrix=(row,col)=>{setOutMatrix(m=>{const n=deepClone(m);n[row][col]=!n[row][col];return n})};
   const toggleInMatrix=(row,col)=>{setInMatrix(m=>{const n=deepClone(m);n[row][col]=!n[row][col];return n})};
@@ -389,15 +390,15 @@ function AppInner(){
     if(preset.phasors){setP(deepClone(preset.phasors));}
     setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);
     if(preset.label){analytics.recordScenarioLoad(preset.label);}
-    setEvts(ev=>[{time:nowShort(),icon:'⚡',text:t('appEvents.presetApplied',{name:preset.label}),dt:''},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.PRESET,icon:'⚡',text:t('appEvents.presetApplied',{name:preset.label}),dt:''})));
   },[t]);
 
   // ── Analytics-wrapped simulation controls ──────────────────────────────────
   const runSimWithAnalytics=useCallback(()=>{analytics.recordInjectionStart();runSim();},[runSim]);
   const stopSimWithAnalytics=useCallback(()=>{analytics.recordInjectionEnd(stime,trippedStageIds[0]??null);stopSim();},[stopSim,stime,trippedStageIds]);
 
-  const sendSettings=()=>{setRelayProt(deepClone(prot));setRelayMatrix(deepClone(outMatrix));setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↑",text:"Settings uploaded to relay.",dt:""},...ev.slice(0,20)])};
-  const getSettings=()=>{setProt(deepClone(relayProt));setOutMatrix(deepClone(relayMatrix));setGetFlash(true);setTimeout(()=>setGetFlash(false),1200);setEvts(ev=>[{time:nowShort(),icon:"↓",text:"Settings downloaded from relay.",dt:""},...ev.slice(0,20)])};
+  const sendSettings=()=>{setRelayProt(deepClone(prot));setRelayMatrix(deepClone(outMatrix));setSendFlash(true);setTimeout(()=>setSendFlash(false),1200);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.SETTINGS_SEND,icon:"↑",text:"Settings uploaded to relay.",dt:""})))};
+  const getSettings=()=>{setProt(deepClone(relayProt));setOutMatrix(deepClone(relayMatrix));setGetFlash(true);setTimeout(()=>setGetFlash(false),1200);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.SETTINGS_GET,icon:"↓",text:"Settings downloaded from relay.",dt:""})))};
   /**
    * Reset fault simulation and clear event/diagnostic history.
    */
@@ -407,8 +408,9 @@ function AppInner(){
    * Prevents reset if 27 function is active (low-voltage protection).
    */
   const resetRelay=()=>{
-    if(!injecting){const active27=check27IdleCondition();if(active27.length>0){setEvts(ev=>[{time:nowShort(),icon:"⚠",text:t('appEvents.resetBlocked',{stages:active27.map(s=>s.id).join(", ")}),dt:""},...ev.slice(0,20)]);return;}}
+    if(!injecting){const active27=check27IdleCondition();if(active27.length>0){setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⚠",text:t('appEvents.resetBlocked',{stages:active27.map(s=>s.id).join(", ")}),dt:""})));return;}}
     setTrippedStageIds([]);setIsTripped(false);setFaultRecord(null);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.LED_RESET,icon:"↺",text:"Relay reset — LEDs/stages cleared.",dt:""})));
   };
 
   // ── LCD display values ─────────────────────────────────────────────────────
@@ -440,7 +442,7 @@ function AppInner(){
       system:{rtc,rtp,priV:sys.tp.priV,secV:sys.tp.secV,priA:sys.tc.priA,secA:sys.tc.secA},
     };
     setTripHistory(prev=>[record,...prev].slice(0,5));
-    setEvts(ev=>[{time:nowShort(),icon:"📷",text:`Snapshot: ${isInj?"recording":"idle (zeros)"}`,dt:""},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"📷",text:`Snapshot: ${isInj?"recording":"idle (zeros)"}`,dt:""})));
   };
 
   /**
@@ -466,7 +468,7 @@ function AppInner(){
     if(evts.length>0){L.push("── EVENTS (recent) ──");evts.slice(0,5).forEach(e=>L.push(`  [${e.time}] ${e.icon} ${e.text} ${e.dt}`))}
     L.push("");L.push("═══ END DUMP ═══");
     const text=L.join("\n");
-    navigator.clipboard.writeText(text).then(()=>setEvts(ev=>[{time:nowShort(),icon:"📋",text:"Full state dump copied to clipboard.",dt:""},...ev.slice(0,20)])).catch(()=>{const blob=new Blob([text],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dump_state.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>[{time:nowShort(),icon:"📋",text:"Full state dump saved to file.",dt:""},...ev.slice(0,20)]);});
+    navigator.clipboard.writeText(text).then(()=>setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"📋",text:"Full state dump copied to clipboard.",dt:""})))).catch(()=>{const blob=new Blob([text],{type:'text/plain'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='dump_state.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"📋",text:"Full state dump saved to file.",dt:""})));});
   };
 
   /**
@@ -476,8 +478,8 @@ function AppInner(){
    */
   const saveFile=async()=>{
     const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}});
-    try{const handle=await window.showSaveFilePicker({suggestedName:'relay_config.txt',types:[{description:'Text File',accept:{'text/plain':['.txt']}}]});const writable=await handle.createWritable();await writable.write(content);await writable.close();setEvts(ev=>[{time:nowShort(),icon:"💾",text:`Configuration saved: ${handle.name}`,dt:""},...ev.slice(0,20)]);}
-    catch(err){if(err.name!=='AbortError'){const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='relay_config.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>[{time:nowShort(),icon:"💾",text:"Configuration saved to file.",dt:""},...ev.slice(0,20)]);}}
+    try{const handle=await window.showSaveFilePicker({suggestedName:'relay_config.txt',types:[{description:'Text File',accept:{'text/plain':['.txt']}}]});const writable=await handle.createWritable();await writable.write(content);await writable.close();setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:`Configuration saved: ${handle.name}`,dt:""})));}
+    catch(err){if(err.name!=='AbortError'){const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='relay_config.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:"Configuration saved to file.",dt:""})));}}
   };
 
   /**
@@ -486,7 +488,7 @@ function AppInner(){
    */
   const loadFile=()=>{
     const input=document.createElement('input');input.type='file';input.accept='.txt';
-    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>[{time:nowShort(),icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""},...ev2.slice(0,20)]);}catch(err){setEvts(ev2=>[{time:nowShort(),icon:"✗",text:`Error loading file: ${err.message}`,dt:""},...ev2.slice(0,20)]);}};reader.readAsText(file);};
+    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.INFO,icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""})));}catch(err){setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error loading file: ${err.message}`,dt:""})));}};reader.readAsText(file);};
     input.click();
   };
 
@@ -538,7 +540,7 @@ function AppInner(){
         pTotal={pTotal} pA={pA} pB={pB} pC={pC}
         injecting={injecting} relayProt={relayProt} trippedStageIds={trippedStageIds}
         bkState={bkState} ledLabels={ledLabels} ledLitStates={ledLitStates}
-        evts={evts} diag={diag} faultRecord={faultRecord}
+        evts={evts} setEvts={setEvts} diag={diag} faultRecord={faultRecord}
         sendFlash={sendFlash} getFlash={getFlash}
         sendSettings={sendSettings} getSettings={getSettings}
         loadFile={loadFile} saveFile={saveFile}
@@ -593,15 +595,15 @@ function AppInner(){
             const blob=await zip.generateAsync({type:'blob'});
             const handle=await window.showSaveFilePicker({suggestedName:`${baseName}.zip`,types:[{description:'ZIP Archive',accept:{'application/zip':['.zip']}}]});
             const wr=await handle.createWritable();await wr.write(blob);await wr.close();analytics.recordComtradeExport(rec?.preset?.label);
-            setEvts(ev=>[{time:nowShort(),icon:"∿",text:`Waveform saved: ${handle.name}`,dt:""},...ev.slice(0,20)]);
+            setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"∿",text:`Waveform saved: ${handle.name}`,dt:""})));
             setWfModalOpen(false);setWfSelected(null);
-          }catch(err){if(err.name!=='AbortError')setEvts(ev=>[{time:nowShort(),icon:"✗",text:`Error: ${err.message}`,dt:""},...ev.slice(0,20)]);}
+          }catch(err){if(err.name!=='AbortError')setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error: ${err.message}`,dt:""})));}
         }}>{t("waveform.download")}</button>
       </div>
     </div>
   </div>}
   {phasorDiagOpen&&<Suspense fallback={null}><PhasorDiagram onClose={()=>setPhasorDiagOpen(false)} p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode} phasorVis={phasorVis} setPhasorVis={setPhasorVis} balI={balI} balV={balV} seqI={seqI} seqV={seqV} uP={uP} uPf={uPf} onBalChangeI={onBalChangeI} onBalChangeV={onBalChangeV} onSeqChangeI={onSeqChangeI} onSeqChangeV={onSeqChangeV}/></Suspense>}
-  {fcOpen&&<Suspense fallback={null}><FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>[{time:nowShort(),icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""},...ev.slice(0,20)]);}} onClose={()=>setFcOpen(false)}/></Suspense>}
+  {fcOpen&&<Suspense fallback={null}><FaultCalculator sys={sys} onApply={(fp,pp)=>{setP(fp);if(pp){setPfEnabled(true);setPf(pp)}setFcOpen(false);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.PRESET,icon:"⚡",text:"Fasores de falta aplicados pelo Calculador.",dt:""})));}} onClose={()=>setFcOpen(false)}/></Suspense>}
   {wfDisplayOpen&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.75)',zIndex:1500,display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setWfDisplayOpen(false)}><div style={{background:'var(--card)',borderRadius:16,width:'90vw',maxWidth:1000,maxHeight:'90vh',display:'flex',flexDirection:'column',overflow:'hidden',border:'1px solid var(--bdr)',boxShadow:'0 24px 80px rgba(0,0,0,.6)'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--bdr)',flexShrink:0}}><div style={{fontSize:14,fontWeight:800,color:'var(--tx)',fontFamily:'var(--fh)',letterSpacing:1,textTransform:'uppercase'}}>Live Waveform</div><button onClick={()=>setWfDisplayOpen(false)} style={{background:'transparent',border:'1px solid var(--bdr)',color:'var(--tx3)',width:30,height:30,borderRadius:8,cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center',transition:'all .15s'}} onMouseEnter={e=>{e.currentTarget.style.background='var(--red-dim)';e.currentTarget.style.borderColor='rgba(248,113,113,.3)';e.currentTarget.style.color='var(--red)'}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.borderColor='var(--bdr)';e.currentTarget.style.color='var(--tx3)'}}>✕</button></div><div style={{flex:1,minHeight:0,overflow:'hidden',padding:'8px'}}><Suspense fallback={null}><WaveformDisplay phasors={p} isInjecting={injecting} injectionTime={stime} tripHistory={tripHistory} freq={sys.freq??60}/></Suspense></div></div></div>}
   {analyticsOpen&&<Suspense fallback={null}><AnalyticsDashboard open={analyticsOpen} onClose={()=>setAnalyticsOpen(false)}/></Suspense>}
   <Suspense fallback={null}><HelpModal/></Suspense>

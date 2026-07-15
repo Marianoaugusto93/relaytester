@@ -1,5 +1,6 @@
 import { buildFaultPhasors, buildPrefaultPhasors } from './testUtils.js';
 import { evaluate } from './PassFailEvaluator.js';
+import { soeEvent, soePush, SOE_TYPES } from '../soe.js';
 
 const INTER_POINT_DELAY_MS = 3000;
 const POINT_TIMEOUT_MS = 60000;
@@ -63,12 +64,7 @@ export async function runCampaign(test, ctx) {
     onStart?.(i, point);
 
     if (setEvts) {
-      setEvts(ev => [{
-        time: new Date().toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        icon: '▶',
-        text: `Teste ${test.fn} ponto ${i+1}/${test.points.length}`,
-        dt: ''
-      }, ...(ev || []).slice(0, 49)]);
+      setEvts(ev => soePush(ev || [], soeEvent({ type: SOE_TYPES.INJ_START, icon: '▶', text: `Teste ${test.fn} ponto ${i+1}/${test.points.length}`, dt: '' })));
     }
 
     // Build phasors for this point
@@ -94,10 +90,7 @@ export async function runCampaign(test, ctx) {
       if (cancelled.current) break;
 
       if (setEvts && shotsN > 1) {
-        setEvts(ev => [{
-          time: new Date().toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          icon: '●', text: `  shot ${s + 1}/${shotsN}`, dt: ''
-        }, ...(ev || []).slice(0, 49)]);
+        setEvts(ev => soePush(ev || [], soeEvent({ type: SOE_TYPES.INJ_START, icon: '●', text: `  shot ${s + 1}/${shotsN}`, dt: '' })));
       }
 
       // Apply pre-fault settings
@@ -160,12 +153,7 @@ export async function runCampaign(test, ctx) {
     };
 
     if (setEvts) {
-      setEvts(ev => [{
-        time: new Date().toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        icon: evalResult.pass ? '✓' : '✗',
-        text: `Ponto ${i+1} ${evalResult.pass ? 'PASSOU' : 'FALHOU'}: ${evalResult.failReason || ''}`,
-        dt: ''
-      }, ...(ev || []).slice(0, 49)]);
+      setEvts(ev => soePush(ev || [], soeEvent({ type: evalResult.pass ? SOE_TYPES.INFO : SOE_TYPES.WARN, icon: evalResult.pass ? '✓' : '✗', text: `Ponto ${i+1} ${evalResult.pass ? 'PASSOU' : 'FALHOU'}: ${evalResult.failReason || ''}`, dt: '' })));
     }
 
     results.push(result);

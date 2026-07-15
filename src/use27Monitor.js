@@ -1,6 +1,7 @@
 import{useRef,useEffect,useCallback}from"react";
 import{getVoltagesPu,evaluate27Stage,simulate27OperateTime}from"./protection.js";
 import{fmtTs,nowShort}from"./defaults.js";
+import{soeEvent,soePush,SOE_TYPES}from"./soe.js";
 
 export default function use27Monitor({relayProt,relayReadings,sys,injecting,trippedStageIds,setTrippedStageIds,setIsTripped,setFaultRecord,setTripHistory,setDiag,setEvts,rtc,rtp}){
   const idle27Ref=useRef({iv:null,start:null,targets:null});
@@ -39,7 +40,7 @@ export default function use27Monitor({relayProt,relayReadings,sys,injecting,trip
     if(ref.iv)clearInterval(ref.iv);
     ref.targets=stagesToTrip.map(s=>({id:s.id,timeOp:s.timeOp,pickup:s.pickup,targetMs:simulate27OperateTime(s.timeOp)*1000,tripped:false}));
     ref.start=Date.now();
-    setEvts(ev=>[{time:nowShort(),icon:"⏳",text:`27 timer: relé vê subtensão (sem injeção). Contando ${stagesToTrip.map(s=>s.id).join(", ")}...`,dt:""},...ev.slice(0,20)]);
+    setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⏳",text:`27 timer: relé vê subtensão (sem injeção). Contando ${stagesToTrip.map(s=>s.id).join(", ")}...`,dt:""})));
 
     ref.iv=setInterval(()=>{
       const elapsed=Date.now()-ref.start;
@@ -66,7 +67,7 @@ export default function use27Monitor({relayProt,relayReadings,sys,injecting,trip
           primary:{currents:{Ia:z,Ib:z,Ic:z},voltages:{Va:z,Vb:z,Vc:z}},
           system:{rtc,rtp,priV:sys.tp.priV,secV:sys.tp.secV,priA:sys.tc.priA,secA:sys.tc.secA},
         },...prev].slice(0,5));
-        setEvts(ev=>[{time:nowShort(),icon:"⚠",text:`27 trip: ${ids.join(", ")} — ${tripTimeS.toFixed(3)}s (relé sem tensão)`,dt:`T+${tripTimeS.toFixed(3)}s`},...ev.slice(0,20)]);
+        setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.TRIP,icon:"⚠",text:`27 trip: ${ids.join(", ")} — ${tripTimeS.toFixed(3)}s (relé sem tensão)`,dt:`T+${tripTimeS.toFixed(3)}s`})));
         if(ref.targets.every(t=>t.tripped)){clearInterval(ref.iv);ref.iv=null}
       }
     },20);
