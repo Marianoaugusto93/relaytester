@@ -433,12 +433,12 @@ function AppInner(){
    * do grupo antigo e carrega o snapshot do novo grupo em `prot`. NÃO envia ao relé — o
    * usuário precisa clicar Send para a troca surtir efeito no relé (fluxo de relé real).
    */
-  const switchGroup=(idx)=>{if(idx===activeGroup)return;setSettingGroups(groups=>{const r=applyGroupSwitch(groups,activeGroup,prot,idx);setActiveGroup(r.active);setProt(r.prot);return r.groups;});setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.GROUP_CHANGE,icon:"⚙",text:`Grupo de ajustes ativo: ${GROUP_LABELS[idx]??("G"+(idx+1))}`,dt:""})));};
+  const switchGroup=(idx)=>{if(idx===activeGroup)return;const r=applyGroupSwitch(settingGroups,activeGroup,prot,idx);setSettingGroups(r.groups);setActiveGroup(r.active);setProt(r.prot);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.GROUP_CHANGE,icon:"⚙",text:`Grupo de ajustes ativo: ${GROUP_LABELS[idx]??("G"+(idx+1))}`,dt:""})));};
   /**
    * Copia os ajustes de um grupo para outro (deep clone). Se o destino for o grupo ativo,
    * atualiza também `prot`. Registra evento INFO.
    */
-  const copyGroup=(from,to)=>{if(from===to)return;setSettingGroups(groups=>{const r=copyGroupPure(groups,activeGroup,prot,from,to);setProt(r.prot);return r.groups;});setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"⧉",text:`Grupo ${GROUP_LABELS[from]??("G"+(from+1))} copiado para ${GROUP_LABELS[to]??("G"+(to+1))}`,dt:""})));};
+  const copyGroup=(from,to)=>{if(from===to)return;const r=copyGroupPure(settingGroups,activeGroup,prot,from,to);setSettingGroups(r.groups);setProt(r.prot);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"⧉",text:`Grupo ${GROUP_LABELS[from]??("G"+(from+1))} copiado para ${GROUP_LABELS[to]??("G"+(to+1))}`,dt:""})));};
   /**
    * Reset fault simulation and clear event/diagnostic history.
    */

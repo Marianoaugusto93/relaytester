@@ -54,8 +54,11 @@ export function soePush(list, e, cap = 500) {
 }
 
 // Envolve um campo em aspas duplas CSV (dobra aspas internas).
+// Células iniciando com =, +, -, @, tab ou CR ganham apóstrofo de prefixo para
+// não serem interpretadas como fórmula no Excel/LibreOffice (CSV injection).
 function csvCell(v) {
-  const s = String(v ?? "");
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   if (s.includes(";") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
     return `"${s.replace(/"/g, '""')}"`;
   }

@@ -1,6 +1,6 @@
 import{useRef,useState,useCallback}from"react";
 import{buildElectricalGraph,computeRelayReadings,checkMaletaTripDetection,checkBreakerTripCoil}from"./CampoPage.jsx";
-import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluateLOP,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
+import{calc3,calcPower,getVoltagesPu,evaluate27Stage,evaluate59Stage,calcI2,calc67TheoreticalTripTime,calc67NTheoreticalTripTime,calcTripTime,calcTripTimeReal,getCurrentForFunc,evalProtectionsDirect,evaluateLOP,evaluate87Stage,calc87TripTimeReal,evaluate21Stage,calc21TripTimeReal,calc21FaultDistance,evaluate50BFStage,calc50BFTripTimeReal,calc49TripTime,evaluate49Stage,evaluate25Stage,evaluate81RStage}from"./protection.js";
 import{protOrder,boCols,nowShort,fmtTs}from"./defaults.js";
 import{soeEvent,soePush,SOE_TYPES}from"./soe.js";
 
@@ -205,9 +205,17 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         faultEl+=iv;setStime(faultEl/1000);stimeRef.current=faultEl/1000;
       }
 
+      // ── 60 LOP — mesmo comportamento do caminho sem pré-falta: avalia a cada
+      // tick, notifica transições e bloqueia as funções da blocklist enquanto ativo.
+      const fn60=rp2["60"];
+      const lopRes=(fn60&&fn60.enabled)?evaluateLOP(currentRR,fn60):{lop:false,reason:""};
+      notifyLOP(lopRes.lop,lopRes.reason||"",phase==="fault"?faultEl/1000:0);
+      const lopBlock=lopRes.lop?(fn60?.blockList||["21","67","67N","32"]):null;
+
       let newTrips=false;
       stageStates.forEach(ss=>{
         if(ss.tripped)return;
+        if(lopBlock&&lopBlock.includes(ss.fid))return;
         let Ttotal;
         if(ss.fid==="27/59"){
           const fn27=rp2["27/59"];
@@ -270,7 +278,11 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         if(ss.accum>=ss.tripThreshold){
           ss.tripped=true;
           ss.tripTime=phase==="fault"?faultEl/1000:null;
-          trippedSoFar.push({func:ss.fid,stage:ss.stage.id,time:ss.tripTime,phase});
+          const trip={func:ss.fid,stage:ss.stage.id,time:ss.tripTime,phase};
+          // Localizador de falta (F4): trip da 21 carrega a distância estimada,
+          // como no caminho sem pré-falta (evalProtectionsDirect).
+          if(ss.fid==="21"){const dk=calc21FaultDistance(currentRR,rp2["21"]);if(dk!=null)trip.distKm=dk;}
+          trippedSoFar.push(trip);
           newTrips=true;
         }
       });
@@ -358,7 +370,7 @@ export default function useSimulation({p,pf,pfEnabled,pfDuration,relayProt,relay
         if(trippedSoFar.length>0)setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.WARN,icon:"⚠",text:`Timeout — relay tripped but maleta did not detect.`,dt:"T+60.000s"})));
       }
     },iv);
-  },[p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSs,setStime,setSimPhase,setDiag,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,stop79,ar79Ref,tr]);
+  },[p,pf,pfEnabled,pfDuration,relayProt,relayMatrix,fieldStateRef,sys,rtc,rtp,setEvts,setTripHistory,setSs,setStime,setSimPhase,setDiag,setTrippedStageIds,setIsTripped,setMaletaTripped,setFaultRecord,stimeRef,stop79,ar79Ref,tr,setLopActive]);
 
   return{runSim,stopSim,stop79,ar79Ref,tr,lopWasActive};
 }
