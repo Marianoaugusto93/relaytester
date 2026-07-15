@@ -808,6 +808,7 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
   const switchStRef=useRef(switchSt);
   const[connections,setConnections]=useState([]);
   const[pendingTid,setPendingTid]=useState(null);
+  const[selectedCableId,setSelectedCableId]=useState(null);
   const[infoMsg,setInfoMsg]=useState(() => t('campo.hints.promptStart'));
   const[infoActive,setInfoActive]=useState(false);
   const[borneGuideOpen,setBorneGuideOpen]=useState(false);
@@ -911,6 +912,29 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
     setConnections(c=>{const n=c.filter(x=>x.from!==tid&&x.to!==tid);if(n.length<c.length){tempInfo(t('campo.hints.connsRemoved'));}return n;});
   },[tempInfo]);
 
+  // Delete selected cable when Delete/Backspace is pressed
+  useEffect(()=>{
+    const handleKeyDown=(e)=>{
+      if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+      if((e.key==='Delete'||e.key==='Backspace')&&selectedCableId!==null){
+        e.preventDefault();
+        setConnections(c=>c.filter(x=>x.id!==selectedCableId));
+        setSelectedCableId(null);
+        tempInfo(t('campo.hints.connRemoved'));
+      }
+    };
+    window.addEventListener('keydown',handleKeyDown);
+    return()=>window.removeEventListener('keydown',handleKeyDown);
+  },[selectedCableId,tempInfo,t]);
+
+  // Undo: remove last connection
+  const handleUndo=useCallback(()=>{
+    if(connections.length===0)return;
+    setConnections(c=>c.slice(0,-1));
+    setSelectedCableId(null);
+    tempInfo(t('campo.hints.connRemoved'));
+  },[connections.length,tempInfo,t]);
+
   const onToggleGroup=useCallback((group)=>{
     setSwitchSt(prev=>{const next={...prev};const poles=CHAVE_POLES.filter(p=>p.group===group);
       const np=prev[poles[0].id]==='down'?'up':'down';poles.forEach(p=>{next[p.id]=np;});
@@ -943,24 +967,49 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       const bend=Math.max(30,Math.abs(p2.y-p1.y)*0.38+Math.abs(p2.x-p1.x)*0.12);
       const d=`M${p1.x},${p1.y} C${p1.x},${p1.y+bend} ${p2.x},${p2.y-bend} ${p2.x},${p2.y}`;
       const col=conn.color;
+      const cid=conn.id;
+      const isSelected=selectedCableId===cid;
+
       // Hit area
       const hit=document.createElementNS('http://www.w3.org/2000/svg','path');
       hit.setAttribute('d',d);hit.setAttribute('fill','none');hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','18');
       hit.style.pointerEvents='stroke';hit.style.cursor='pointer';
-      const cid=conn.id;
-      hit.ondblclick=()=>{setConnections(c=>c.filter(x=>x.id!==cid));tempInfo(t('campo.hints.connRemoved'));};
+      hit.onclick=(e)=>{e.stopPropagation();setSelectedCableId(isSelected?null:cid);};
       svg.appendChild(hit);
+
       // Cable layers
-      [[darken(col,0.48),7],[col,5],['rgba(255,255,255,0.15)',2]].forEach(([stroke,sw])=>{
+      const sw1=isSelected?9:7,sw2=isSelected?7:5;
+      [[darken(col,0.48),sw1],[col,sw2],['rgba(255,255,255,0.15)',2]].forEach(([stroke,sw])=>{
         const path=document.createElementNS('http://www.w3.org/2000/svg','path');
         path.setAttribute('d',d);path.setAttribute('fill','none');path.setAttribute('stroke',stroke);path.setAttribute('stroke-width',String(sw));path.setAttribute('stroke-linecap','round');
         if(conn.fresh){path.style.strokeDasharray='900';path.style.strokeDashoffset='900';
           requestAnimationFrame(()=>{path.style.transition='stroke-dashoffset 0.38s ease';path.style.strokeDashoffset='0';});}
         svg.appendChild(path);
       });
+
+      // Highlight/dashed overlay when selected
+      if(isSelected){
+        const hl=document.createElementNS('http://www.w3.org/2000/svg','path');
+        hl.setAttribute('d',d);hl.setAttribute('stroke','white');hl.setAttribute('stroke-width','2');hl.setAttribute('stroke-dasharray','5,5');hl.setAttribute('fill','none');hl.setAttribute('stroke-linecap','round');
+        svg.appendChild(hl);
+
+        // Delete button at midpoint
+        const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+        const mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+        const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        circle.setAttribute('cx',mx.toString());circle.setAttribute('cy',my.toString());circle.setAttribute('r','9');circle.setAttribute('fill','#ef4444');
+        circle.onclick=(e)=>{e.stopPropagation();setConnections(c2=>c2.filter(x=>x.id!==cid));setSelectedCableId(null);tempInfo(t('campo.hints.connRemoved'));};
+        circle.style.cursor='pointer';
+        const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+        txt.setAttribute('x',mx.toString());txt.setAttribute('y',(my+4).toString());txt.setAttribute('text-anchor','middle');txt.setAttribute('fill','white');txt.setAttribute('font-weight','bold');txt.setAttribute('font-size','14');txt.setAttribute('pointer-events','none');
+        txt.textContent='✕';
+        g.appendChild(circle);g.appendChild(txt);
+        svg.appendChild(g);
+      }
+
       conn.fresh=false;
     });
-  },[connections,tempInfo]);
+  },[connections,selectedCableId,tempInfo,t]);
 
   // Redraw on resize
   useEffect(()=>{
@@ -1176,7 +1225,8 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
           <div className="c-section-label" style={{marginBottom:8}}>{t('campo.sectionsUpper.preset')}</div>
           <div className="preset-bar" style={{flexDirection:'column'}}>
             {WIRING_PRESETS.map(p=><button key={p.id} className="preset-btn" onClick={()=>applyPreset(p)} style={{width:'100%'}}>{p.label}</button>)}
-            <button className="preset-btn clear" onClick={()=>setConnections([])} style={{width:'100%'}}>{t('campo.buttons.clearCables')}</button>
+            <button className="preset-btn" onClick={handleUndo} disabled={connections.length===0} style={{width:'100%',opacity:connections.length===0?0.3:1,cursor:connections.length===0?'not-allowed':'pointer'}}>↶ {t('campo.buttons.undo')||'Desfazer'}</button>
+            <button className="preset-btn clear" onClick={()=>{setConnections([]);setSelectedCableId(null);}} style={{width:'100%'}}>{t('campo.buttons.clearCables')}</button>
           </div>
         </div>
       </div>
