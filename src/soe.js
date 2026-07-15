@@ -8,6 +8,7 @@ export const SOE_TYPES = {
   TRIP_MALETA:     "TRIP_MALETA",
   CB_OPEN:         "CB_OPEN",
   CB_CLOSE:        "CB_CLOSE",
+  CB_MAINT_ALARM:  "CB_MAINT_ALARM",
   RECLOSE:         "RECLOSE",
   LOCKOUT:         "LOCKOUT",
   SETTINGS_SEND:   "SETTINGS_SEND",

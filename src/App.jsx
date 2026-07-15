@@ -8,6 +8,7 @@ import JSZip from "jszip";
 import { deepClone, defaultPhasors, defaultSystem, defaultProtections, protOrder, biRows, allRows, boCols, ledCols, buildDefaultMatrix, buildDefaultInMatrix, mainTabs, TEST_PRESETS, fmtTs, nowShort } from "./defaults.js";
 import { soeEvent, soePush, SOE_TYPES } from "./soe.js";
 import { mkGroups, applyGroupSwitch, copyGroupPure, GROUP_LABELS } from "./settingGroups.js";
+import { mkBkMon, recordTripOp, bkMonAlarm, resetBkMon, BK_MON_DEFAULT_LIMITS } from "./breakerMonitor.js";
 import { EDUCATIONAL_SCENARIOS } from "./scenarios/educational-scenarios.js";
 import { calc3, calcPower, calcI2 } from "./protection.js";
 import { buildSaveContent, parseSaveFile } from "./fileIO.js";
@@ -66,6 +67,10 @@ function AppInner(){
   const[trippedStageIds,setTrippedStageIds]=useState([]);const[diag,setDiag]=useState([]);const[evts,setEvts]=useState([]);
   const[isTripped,setIsTripped]=useState(false);const[maletaTripped,setMaletaTripped]=useState(false);const[faultRecord,setFaultRecord]=useState(null);
   const[lopActive,setLopActive]=useState(false);
+  // Monitor de desgaste do disjuntor (F5): contadores acumulados de aberturas e ΣkA².
+  const[bkMon,setBkMon]=useState(()=>mkBkMon());
+  const[bkMonLimits]=useState(BK_MON_DEFAULT_LIMITS);
+  const bkMonRef=useRef(bkMon);bkMonRef.current=bkMon;
   const[boStatus,setBoStatus]=useState({bo1:false,bo2:false,bo3:false,bo4:false});
   const[biStatus,setBiStatus]=useState({bi1:false,bi2:false,bi3:false,bi4:false});
   const[sendFlash,setSendFlash]=useState(false);const[getFlash,setGetFlash]=useState(false);
@@ -104,6 +109,10 @@ function AppInner(){
   useEffect(()=>{inMatrixRef.current=inMatrix;},[inMatrix]);
   useEffect(()=>{ssRef.current=ss;},[ss]);
   useEffect(()=>{relayProtRef.current=relayProt;},[relayProt]);
+  // Refs para o monitor de desgaste: onBreakerChange é memoizado e precisa ler
+  // leituras do relé/RTC atuais sem virar dependência (evita recriar o callback a cada tick).
+  const relayReadingsRef=useRef(null);
+  const rtcRef=useRef(1);
 
   // ── Transformer ratios (needed before hooks) ───────────────────────────────
   const rtc=sys.tc.priA/sys.tc.secA;const rtp=sys.tp.priV/sys.tp.secV;const Inom=sys.tc.secA;
@@ -122,6 +131,9 @@ function AppInner(){
   const relayGraph=useMemo(()=>fieldState.electricalGraph||buildElectricalGraph(fieldState.connections,fieldState.internalConns),[fieldState]);
   const activePhasors=simPhase==="prefault"?pf:p;
   const relayReadings=useMemo(()=>computeRelayReadings(activePhasors,relayGraph),[activePhasors,relayGraph]);
+  // Keep refs in sync so onBreakerChange (stable useCallback) reads current values
+  relayReadingsRef.current=relayReadings;
+  rtcRef.current=rtc;
   const injecting=ss==="running";
   const i3i0=calc3(relayReadings.currents,["Ia","Ib","Ic"]);const v3v0=calc3(relayReadings.voltages,["Va","Vb","Vc"]);
   const pA=calcPower(relayReadings.voltages.Va.mag,relayReadings.currents.Ia.mag,relayReadings.voltages.Va.ang,relayReadings.currents.Ia.ang);
@@ -239,6 +251,17 @@ function AppInner(){
           if(mappedBIs.length>0)setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.CB_CLOSE,icon:'🟢',text:`CB_Closed via ${mappedBIs.join(', ')}`,dt:''})));
         }
         if(state==='open'&&latch){
+          // ── Registra desgaste do disjuntor (trip-open) ──────────────────────
+          const rr=relayReadingsRef?.current??null;
+          const iSecA=rr?Math.max(rr.currents.Ia.mag,rr.currents.Ib.mag,rr.currents.Ic.mag):0;
+          const prevAlarm=bkMonAlarm(bkMonRef.current,bkMonLimits).alarm;
+          const nextMon=recordTripOp(bkMonRef.current,iSecA,rtcRef?.current??1);
+          bkMonRef.current=nextMon;
+          setBkMon(nextMon);
+          const nextAlarm=bkMonAlarm(nextMon,bkMonLimits).alarm;
+          if(nextAlarm&&!prevAlarm){
+            setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.CB_MAINT_ALARM,icon:"⚠",text:`ALARME MANUTENÇÃO DJ — ${nextMon.nOps} ops / ${nextMon.sumKA2.toFixed(1)} kA²`,dt:''})));
+          }
           const fn79=relayProtRef.current["79"];
           const ar=ar79Ref.current;
           if(fn79?.enabled&&!ar.locked){
@@ -420,6 +443,7 @@ function AppInner(){
    * Reset fault simulation and clear event/diagnostic history.
    */
   const resetFault=()=>{if(tr.current)clearInterval(tr.current);stop79();setSs("idle");setSimPhase("idle");setStime(0);stimeRef.current=0;setDiag([]);setEvts([]);setMaletaTripped(false);setBkResetCtr(c=>c+1)};
+  const resetBkMonitor=useCallback(()=>{const z=resetBkMon();setBkMon(z);bkMonRef.current=z;setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"↺",text:"Monitor de desgaste do DJ zerado.",dt:""})));},[]);
   /**
    * Reset tripped stages and fault record.
    * Prevents reset if 27 function is active (low-voltage protection).
@@ -496,7 +520,7 @@ function AppInner(){
   const saveFile=async()=>{
     // Sincroniza o slot ativo com prot antes de salvar (edições em andamento não perdem).
     const groupsToSave=settingGroups.map((g,i)=>i===activeGroup?deepClone(prot):g);
-    const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}},{settingGroups:groupsToSave,activeGroup});
+    const content=buildSaveContent(sys,prot,outMatrix,{connections:fieldState.connections||[],switchSt:fieldState.switchSt||{}},{settingGroups:groupsToSave,activeGroup},bkMon);
     try{const handle=await window.showSaveFilePicker({suggestedName:'relay_config.txt',types:[{description:'Text File',accept:{'text/plain':['.txt']}}]});const writable=await handle.createWritable();await writable.write(content);await writable.close();setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:`Configuration saved: ${handle.name}`,dt:""})));}
     catch(err){if(err.name!=='AbortError'){const blob=new Blob([content],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='relay_config.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);setEvts(ev=>soePush(ev,soeEvent({type:SOE_TYPES.INFO,icon:"💾",text:"Configuration saved to file.",dt:""})));}}
   };
@@ -507,7 +531,7 @@ function AppInner(){
    */
   const loadFile=()=>{
     const input=document.createElement('input');input.type='file';input.accept='.txt';
-    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);setSettingGroups(result.settingGroups);setActiveGroup(result.activeGroup);if(result.wiring)setCampoLoadWiring(result.wiring);setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.INFO,icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""})));}catch(err){setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error loading file: ${err.message}`,dt:""})));}};reader.readAsText(file);};
+    input.onchange=(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(ev)=>{try{const result=parseSaveFile(ev.target.result,prot,outMatrix);setSys(result.sys);setProt(result.prot);setOutMatrix(result.outMatrix);setSettingGroups(result.settingGroups);setActiveGroup(result.activeGroup);if(result.wiring)setCampoLoadWiring(result.wiring);if(result.bkMon){setBkMon(result.bkMon);bkMonRef.current=result.bkMon;}setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.INFO,icon:"📂",text:`Configuration loaded: ${file.name}`,dt:""})));}catch(err){setEvts(ev2=>soePush(ev2,soeEvent({type:SOE_TYPES.WARN,icon:"✗",text:`Error loading file: ${err.message}`,dt:""})));}};reader.readAsText(file);};
     input.click();
   };
 
@@ -572,7 +596,7 @@ function AppInner(){
       /></div>
 
       {/* PAINEL */}
-      <div className="slide-pg"><PainelPage relayTrip={maletaTripped} onBreakerChange={onBreakerChange} resetSignal={bkResetCtr} closeSignal={bkCloseCtr} openSignal={bkOpenCtr} sys={sys} relayReadings={relayReadings} injecting={injecting} phasors={p} tripHistory={tripHistory}/></div>
+      <div className="slide-pg"><PainelPage relayTrip={maletaTripped} onBreakerChange={onBreakerChange} resetSignal={bkResetCtr} closeSignal={bkCloseCtr} openSignal={bkOpenCtr} sys={sys} relayReadings={relayReadings} injecting={injecting} phasors={p} tripHistory={tripHistory} bkMon={bkMon} bkMonLimits={bkMonLimits} onResetBkMon={resetBkMonitor}/></div>
 
       {/* TESTES */}
       <div className="slide-pg"><TestsPage prot={prot} relayProt={relayProt} sys={sys} rtc={rtc} rtp={rtp} runSim={runSim} stopSim={stopSim} setP={setP} setPf={setPf} setEvts={setEvts} setPfEnabled={setPfEnabled} setPfDuration={setPfDuration} tripHistory={tripHistory}/></div>

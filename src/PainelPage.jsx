@@ -21,6 +21,9 @@ export default function PainelPage({
   injecting    = false,
   phasors      = null,
   tripHistory  = [],
+  bkMon        = null,
+  bkMonLimits  = null,
+  onResetBkMon = null,
 }) {
   const [bkState,      setBkState]      = useState('open');
   const [springLoaded, setSpringLoaded] = useState(true);
@@ -273,6 +276,43 @@ export default function PainelPage({
           <div className="kpi-val kv-mono" style={{ fontSize: 13 }}>BAY-01</div>
         </div>
       </div>
+
+      {/* ── Monitor de Manutenção do Disjuntor ── */}
+      {bkMon && bkMonLimits && (() => {
+        const alarm = (bkMon.nOps >= bkMonLimits.maxOps) || (bkMon.sumKA2 >= bkMonLimits.maxKA2);
+        const pctOps = Math.min(100, (bkMon.nOps / bkMonLimits.maxOps) * 100);
+        const pctKA2 = Math.min(100, (bkMon.sumKA2 / bkMonLimits.maxKA2) * 100);
+        return (
+          <div style={{margin:'12px 16px 0',padding:'12px 16px',background:'var(--card2)',border:`1px solid ${alarm?'#ef4444':'var(--bdr)'}`,borderRadius:8,display:'flex',flexDirection:'column',gap:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
+              <div className="bar" style={{background:alarm?'#ef4444':'var(--mint)'}}/>
+              <span style={{fontFamily:'var(--fh)',fontWeight:700,fontSize:13,letterSpacing:1,color:'var(--tx)'}}>MANUTENÇÃO DJ</span>
+              {alarm && <span style={{marginLeft:'auto',padding:'2px 8px',borderRadius:12,background:'#ef444420',color:'#ef4444',fontSize:11,fontWeight:700,letterSpacing:0.5}}>ALARME</span>}
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                <span style={{fontSize:10,color:'var(--tx2)',fontFamily:'var(--fm)'}}>Operações</span>
+                <span style={{fontFamily:'var(--fh)',fontWeight:700,fontSize:16,color:bkMon.nOps>=bkMonLimits.maxOps?'#ef4444':'var(--tx)'}}>{bkMon.nOps} / {bkMonLimits.maxOps}</span>
+                <div style={{height:4,borderRadius:2,background:'var(--bdr)',overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${pctOps}%`,background:bkMon.nOps>=bkMonLimits.maxOps?'#ef4444':'var(--mint)',transition:'width .3s'}}/>
+                </div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                <span style={{fontSize:10,color:'var(--tx2)',fontFamily:'var(--fm)'}}>Σ kA²</span>
+                <span style={{fontFamily:'var(--fh)',fontWeight:700,fontSize:16,color:bkMon.sumKA2>=bkMonLimits.maxKA2?'#ef4444':'var(--tx)'}}>{bkMon.sumKA2.toFixed(1)} / {bkMonLimits.maxKA2}</span>
+                <div style={{height:4,borderRadius:2,background:'var(--bdr)',overflow:'hidden'}}>
+                  <div style={{height:'100%',width:`${pctKA2}%`,background:bkMon.sumKA2>=bkMonLimits.maxKA2?'#ef4444':'#f59e0b',transition:'width .3s'}}/>
+                </div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                <span style={{fontSize:10,color:'var(--tx2)',fontFamily:'var(--fm)'}}>Último Ik</span>
+                <span style={{fontFamily:'var(--fh)',fontWeight:700,fontSize:16,color:'var(--tx)'}}>{bkMon.lastIkA.toFixed(2)} kA</span>
+                <button onClick={onResetBkMon} style={{marginTop:2,padding:'2px 6px',fontSize:10,fontFamily:'var(--fm)',background:'transparent',border:'1px solid var(--bdr)',borderRadius:4,color:'var(--tx2)',cursor:'pointer'}}>↺ Zerar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

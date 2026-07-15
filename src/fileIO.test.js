@@ -240,3 +240,48 @@ describe("buildSaveContent + parseSaveFile — Setting Groups round trip", () =>
     expect(out.settingGroups[3]["51"].stages[0].pickup).toBe(8);
   });
 });
+
+describe("buildSaveContent + parseSaveFile — Breaker Monitor round trip", () => {
+  it("[BREAKER_MONITOR] section serializes and recovers nOps, sumKA2, lastIkA, lastOpTs", () => {
+    const mon = { nOps: 7, sumKA2: 123.45, lastIkA: 4.2, lastOpTs: 1720000000000 };
+    const text = buildSaveContent(sys(), prot(), matrix(), null, null, mon);
+
+    expect(text).toContain("[BREAKER_MONITOR]");
+    expect(text).toContain("NOPS=7");
+    expect(text).toContain("SUMKA2=123.45");
+
+    const out = parseSaveFile(text, prot(), matrix());
+    expect(out.bkMon.nOps).toBe(7);
+    expect(out.bkMon.sumKA2).toBeCloseTo(123.45, 2);
+    expect(out.bkMon.lastIkA).toBeCloseTo(4.2, 2);
+    expect(out.bkMon.lastOpTs).toBe(1720000000000);
+  });
+
+  it("file without [BREAKER_MONITOR] returns zeroed bkMon (retrocompat)", () => {
+    const text = buildSaveContent(sys(), prot(), matrix(), null);
+    const out = parseSaveFile(text, prot(), matrix());
+
+    expect(out.bkMon).toBeDefined();
+    expect(out.bkMon.nOps).toBe(0);
+    expect(out.bkMon.sumKA2).toBe(0);
+    expect(out.bkMon.lastIkA).toBe(0);
+    expect(out.bkMon.lastOpTs).toBeNull();
+  });
+
+  it("corrupt NOPS value falls back to 0, not NaN", () => {
+    const mon = { nOps: 5, sumKA2: 50, lastIkA: 2.0, lastOpTs: null };
+    let text = buildSaveContent(sys(), prot(), matrix(), null, null, mon);
+    text = text.replace("NOPS=5", "NOPS=notanumber");
+
+    const out = parseSaveFile(text, prot(), matrix());
+    expect(Number.isNaN(out.bkMon.nOps)).toBe(false);
+    expect(out.bkMon.nOps).toBe(0);
+  });
+
+  it("lastOpTs=empty string parses as null", () => {
+    const mon = { nOps: 1, sumKA2: 10, lastIkA: 1.0, lastOpTs: null };
+    const text = buildSaveContent(sys(), prot(), matrix(), null, null, mon);
+    const out = parseSaveFile(text, prot(), matrix());
+    expect(out.bkMon.lastOpTs).toBeNull();
+  });
+});

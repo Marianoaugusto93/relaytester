@@ -1,6 +1,7 @@
 import { deepClone } from './defaults.js';
 import { resolveCurveName } from './protection.js';
 import { normalizeGroups, clampGroupIdx } from './settingGroups.js';
+import { normalizeBkMon } from './breakerMonitor.js';
 
 export const FILE_HEADER='# RELAYLAB 360 — Parametrization File';
 export const FILE_VERSION='v1.0';
@@ -25,7 +26,7 @@ function safeNum(v,fallback){const n=parseFloat(v);return Number.isFinite(n)?n:f
  * @param {Object} [groupsData] - Setting groups G1–G4: {settingGroups:Array, activeGroup:number}
  * @returns {string} INI-formatted configuration text
  */
-export function buildSaveContent(sys,prot,outMatrix,wiring,groupsData){
+export function buildSaveContent(sys,prot,outMatrix,wiring,groupsData,bkMon){
   const lines=[FILE_HEADER,`# Version: ${FILE_VERSION}`,`# Date: ${new Date().toISOString()}`,''];
 
   // ── SYSTEM PARAMETERS
@@ -129,6 +130,17 @@ export function buildSaveContent(sys,prot,outMatrix,wiring,groupsData){
     lines.push('');
   }
 
+  // ── BREAKER MONITOR (desgaste do DJ)
+  // Contadores acumulados de manutenção: nº de aberturas e ΣkA² interrompidos.
+  if(bkMon&&typeof bkMon==='object'){
+    lines.push('[BREAKER_MONITOR]');
+    lines.push(`NOPS=${bkMon.nOps||0}`);
+    lines.push(`SUMKA2=${bkMon.sumKA2||0}`);
+    lines.push(`LASTIKA=${bkMon.lastIkA||0}`);
+    lines.push(`LASTOPTS=${bkMon.lastOpTs!=null?bkMon.lastOpTs:''}`);
+    lines.push('');
+  }
+
   return lines.join('\n');
 }
 
@@ -148,6 +160,7 @@ export function parseSaveFile(text,currentProt,currentMatrix){
   Object.keys(matrix).forEach(r=>{Object.keys(matrix[r]).forEach(c=>{matrix[r][c]=false;});});
   const wiring={switchSt:{},connections:[]};let connIdx=0;
   const rawGroups=[];let groupActive=0;let hasGroups=false;
+  const rawBkMon={};
 
   let section='';
   let currentFid='';
@@ -345,10 +358,18 @@ export function parseSaveFile(text,currentProt,currentMatrix){
         try{const g=JSON.parse(val);if(g&&typeof g==='object')rawGroups[idx]=g;}catch{/* ignora grupo corrompido */}
       }
     }
+    else if(section==='BREAKER_MONITOR'){
+      if(key==='NOPS')rawBkMon.nOps=safeNum(val,0);
+      else if(key==='SUMKA2')rawBkMon.sumKA2=safeNum(val,0);
+      else if(key==='LASTIKA')rawBkMon.lastIkA=safeNum(val,0);
+      else if(key==='LASTOPTS')rawBkMon.lastOpTs=val===''?null:safeNum(val,null);
+    }
   }
   const hasWiring=Object.keys(wiring.switchSt).length>0||wiring.connections.length>0;
   // Retrocompat: arquivos sem [SETTING_GROUPS] → 4 grupos clonados do prot carregado.
   const settingGroups=hasGroups?normalizeGroups(rawGroups,prot):normalizeGroups(null,prot);
   const activeGroup=hasGroups?groupActive:0;
-  return{sys,prot,outMatrix:matrix,wiring:hasWiring?wiring:null,settingGroups,activeGroup};
+  // Retrocompat: arquivos sem [BREAKER_MONITOR] → contadores zerados.
+  const bkMon=normalizeBkMon(rawBkMon);
+  return{sys,prot,outMatrix:matrix,wiring:hasWiring?wiring:null,settingGroups,activeGroup,bkMon};
 }
