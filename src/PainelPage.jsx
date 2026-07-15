@@ -3,6 +3,7 @@ import WaveformDisplay from "./WaveformDisplay.jsx";
 import BreakerCard from "./painel/BreakerCard.jsx";
 import CommandDiagram from "./painel/CommandDiagram.jsx";
 import CommandLegend from "./painel/CommandLegend.jsx";
+import UnifilarDiagram from "./painel/UnifilarDiagram.jsx";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -30,6 +31,7 @@ export default function PainelPage({
   const [springPct,    setSpringPct]    = useState(100);
   const [opCount,      setOpCount]      = useState(0);
   const [tripLatch,    setTripLatch]    = useState(false);
+  const [midView,      setMidView]      = useState('cmd'); // 'cmd' | 'uni'
 
   const timerRef = useRef(null);
   const bkRef    = useRef(bkState);
@@ -210,20 +212,53 @@ export default function PainelPage({
           />
         </div>
 
-        {/* ── MEIO 50%: Diagrama de Comando ── */}
+        {/* ── MEIO 50%: Diagrama de Comando / Unifilar ── */}
         <div className="painel-cmd-v3">
-          <div className="ph">
+          <div className="ph" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="bar bar-lav"/>
-            <span className="ph-t">Diagrama de Comando</span>
+            <span className="ph-t">{midView === 'cmd' ? 'Diagrama de Comando' : 'Diagrama Unifilar'}</span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+              <button
+                onClick={() => setMidView('cmd')}
+                style={{
+                  padding: '2px 10px', fontSize: 11, fontFamily: 'var(--fh)', fontWeight: 700,
+                  border: '1px solid var(--bdr)', borderRadius: 12, cursor: 'pointer',
+                  background: midView === 'cmd' ? 'var(--lav,#818cf8)' : 'transparent',
+                  color: midView === 'cmd' ? '#fff' : 'var(--tx2)',
+                  letterSpacing: 0.5, transition: 'background .15s, color .15s',
+                }}
+              >Comando</button>
+              <button
+                onClick={() => setMidView('uni')}
+                style={{
+                  padding: '2px 10px', fontSize: 11, fontFamily: 'var(--fh)', fontWeight: 700,
+                  border: '1px solid var(--bdr)', borderRadius: 12, cursor: 'pointer',
+                  background: midView === 'uni' ? 'var(--lav,#818cf8)' : 'transparent',
+                  color: midView === 'uni' ? '#fff' : 'var(--tx2)',
+                  letterSpacing: 0.5, transition: 'background .15s, color .15s',
+                }}
+              >Unifilar</button>
+            </div>
           </div>
 
           <div className="painel-cmd-body">
-            <CommandDiagram
-              bkState={bkState}
-              springLoaded={springLoaded}
-              tripLatch={tripLatch}
-              showLegend={false}
-            />
+            {midView === 'cmd' ? (
+              <CommandDiagram
+                bkState={bkState}
+                springLoaded={springLoaded}
+                tripLatch={tripLatch}
+                showLegend={false}
+              />
+            ) : (
+              <UnifilarDiagram
+                bkState={bkState}
+                tripLatch={tripLatch}
+                springLoaded={springLoaded}
+                sys={sys}
+                relayReadings={relayReadings}
+                injecting={injecting}
+              />
+            )}
           </div>
         </div>
 
