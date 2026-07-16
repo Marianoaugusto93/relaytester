@@ -65,8 +65,8 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
   const CY1 = 213, CY2 = 333;
   const MID  = (CY1 + CY2) / 2;
 
-  const BUS  = '#e2e8f0';
-  const WIRE = '#cbd5e1';
+  const BUS  = '#f1f5f9';
+  const WIRE = '#e2e8f0';
   const NODE = '#94a3b8';
   const OFF_C = '#475569';
 
@@ -111,7 +111,7 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
     return (
       <g>
         {segs.map(([a, b], i) => (
-          <line key={i} x1={x} y1={a} x2={x} y2={b} stroke={WIRE} strokeWidth="1.8" strokeLinecap="round" opacity="0.9"/>
+          <line key={i} x1={x} y1={a} x2={x} y2={b} stroke={WIRE} strokeWidth="2.2" strokeLinecap="round" opacity="0.9"/>
         ))}
         {sorted.map((c, i) => (
           <Contact key={i} x={x} y={c.y} active={c.active} nc={c.nc}/>
@@ -125,7 +125,7 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
     const r = 15;
     return (
       <g>
-        <line x1={x} y1={Y2} x2={x} y2={COIL_Y - r} stroke={WIRE} strokeWidth="1.8" opacity="0.9"/>
+        <line x1={x} y1={Y2} x2={x} y2={COIL_Y - r} stroke={WIRE} strokeWidth="2.2" opacity="0.9"/>
         {on && c2.g !== 'none' && (
           <circle cx={x} cy={COIL_Y} r={r+6} fill="none" stroke={c2.g} strokeWidth="1.2" opacity="0.5"/>
         )}
@@ -145,7 +145,7 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
     const s = 13;
     return (
       <g>
-        <line x1={x + s} y1={y} x2={X0} y2={y} stroke={WIRE} strokeWidth="1.8" opacity="0.9"/>
+        <line x1={x + s} y1={y} x2={X0} y2={y} stroke={WIRE} strokeWidth="2.2" opacity="0.9"/>
         {on && c2.g !== 'none' && (
           <rect x={x-s-4} y={y-s-4} width={(s+4)*2} height={(s+4)*2} rx="3" fill="none" stroke={c2.g} strokeWidth="1.2" opacity="0.5"/>
         )}
@@ -292,9 +292,9 @@ function CommandDiagramSVG({ bkState, springLoaded, tripLatch }) {
         </text>
 
         {/* Rails horizontais */}
-        <line x1={XS[0]} y1={CY1} x2={XS[5]} y2={CY1} stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
-        <line x1={XS[3]} y1={CY2} x2={XS[8]} y2={CY2} stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
-        <line x1={XS[6]} y1={MID} x2={XS[9]} y2={MID} stroke={WIRE} strokeWidth="1.5" opacity="0.75"/>
+        <line x1={XS[0]} y1={CY1} x2={XS[5]} y2={CY1} stroke={WIRE} strokeWidth="2" opacity="0.9"/>
+        <line x1={XS[3]} y1={CY2} x2={XS[8]} y2={CY2} stroke={WIRE} strokeWidth="2" opacity="0.9"/>
+        <line x1={XS[6]} y1={MID} x2={XS[9]} y2={MID} stroke={WIRE} strokeWidth="2" opacity="0.9"/>
 
         {/* Indicadores */}
         <g style={{cursor:'pointer'}} onMouseEnter={e=>handleTipEnter('BCS',e)} onMouseMove={handleTipMove} onMouseLeave={handleTipLeave}><IndS x={XS[0]} label="BCS" c2={eBCS} s={9}/></g>

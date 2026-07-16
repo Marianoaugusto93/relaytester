@@ -30,8 +30,8 @@ export default function CommandLegend({ bkState, springLoaded, tripLatch }) {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-      <div style={{ flex: 1, overflow: 'y auto', padding: '10px 12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 12px' }}>
         {Object.entries(categories).map(([cat, label]) => {
           const items = LEGEND_ITEMS.filter(i => i.cat === cat);
           if (items.length === 0) return null;
