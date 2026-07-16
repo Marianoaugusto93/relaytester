@@ -248,6 +248,7 @@ function FuncRail({ tab, setTab, setSi, prot }) {
             title={`${prot?.[id]?.name} ${enabled ? "(Ativo)" : "(Inativo)"}`}
           >
             {info.display || id}
+            <span className="sub">{info.sub}</span>
           </button>
         );
       })}
