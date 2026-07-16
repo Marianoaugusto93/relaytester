@@ -538,6 +538,18 @@ function AppInner(){
   // ── JSX ────────────────────────────────────────────────────────────────────
   // Lembra a última sub-aba da Bancada (Relé 360): 0=Campo 1=Relé 2=Painel 3=Testes
   const benchLastRef=useRef(0);
+  // Páginas inativas do carrossel pulam layout/paint (.slide-pg-off) sem desmontar;
+  // a página de origem fica visível até o fim da transição de slide (450ms).
+  const prevPageRef=useRef(page);
+  const[slidingFrom,setSlidingFrom]=useState(null);
+  useEffect(()=>{
+    if(prevPageRef.current===page)return;
+    setSlidingFrom(prevPageRef.current);
+    prevPageRef.current=page;
+    const tm=setTimeout(()=>setSlidingFrom(null),500);
+    return()=>clearTimeout(tm);
+  },[page]);
+  const pgCls=i=>(i===page||i===slidingFrom)?"slide-pg":"slide-pg slide-pg-off";
   return(<><style>{S}</style><div className="app">
     <div className="topbar">
       <div className="tb-l"><div className="tb-ico"><svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="9" fill="#181b22"/><circle cx="18" cy="18" r="13" fill="none" stroke="#f97316" strokeWidth="1.8"/><circle cx="18" cy="18" r="9.5" fill="#0e1015"/><line x1="18" y1="5" x2="18" y2="8" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="18" y1="28" x2="18" y2="31" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="5" y1="18" x2="8" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><line x1="28" y1="18" x2="31" y2="18" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 18 Q12.5 13 15 18 Q17.5 23 20 18" fill="none" stroke="#f3f4f6" strokeWidth="1.5" strokeLinecap="round"/><path d="M20 18 L22 14 L24 22 L26 16" fill="none" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div><div className="tb-t">RelayLab <span>360</span></div><div className="tb-s">{t("topbar.subtitle")}</div></div></div>
@@ -559,10 +571,10 @@ function AppInner(){
     </div>}
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
       {/* CAMPO */}
-      <div className="slide-pg"><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>
+      <div className={pgCls(0)}><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>
 
       {/* RELÉ */}
-      <div className="slide-pg"><RelePage
+      <div className={pgCls(1)}><RelePage
         p={p} pf={pf} pfMode={pfMode} setPfMode={setPfMode}
         pfEnabled={pfEnabled} setPfEnabled={setPfEnabled}
         pfDuration={pfDuration} setPfDuration={setPfDuration}
@@ -596,20 +608,20 @@ function AppInner(){
       /></div>
 
       {/* PAINEL */}
-      <div className="slide-pg"><PainelPage relayTrip={maletaTripped} onBreakerChange={onBreakerChange} resetSignal={bkResetCtr} closeSignal={bkCloseCtr} openSignal={bkOpenCtr} sys={sys} relayReadings={relayReadings} injecting={injecting} phasors={p} tripHistory={tripHistory} bkMon={bkMon} bkMonLimits={bkMonLimits} onResetBkMon={resetBkMonitor}/></div>
+      <div className={pgCls(2)}><PainelPage relayTrip={maletaTripped} onBreakerChange={onBreakerChange} resetSignal={bkResetCtr} closeSignal={bkCloseCtr} openSignal={bkOpenCtr} sys={sys} relayReadings={relayReadings} injecting={injecting} phasors={p} tripHistory={tripHistory} bkMon={bkMon} bkMonLimits={bkMonLimits} onResetBkMon={resetBkMonitor}/></div>
 
       {/* TESTES */}
-      <div className="slide-pg"><TestsPage prot={prot} relayProt={relayProt} sys={sys} rtc={rtc} rtp={rtp} runSim={runSim} stopSim={stopSim} setP={setP} setPf={setPf} setEvts={setEvts} setPfEnabled={setPfEnabled} setPfDuration={setPfDuration} tripHistory={tripHistory}/></div>
+      <div className={pgCls(3)}><TestsPage prot={prot} relayProt={relayProt} sys={sys} rtc={rtc} rtp={rtp} runSim={runSim} stopSim={stopSim} setP={setP} setPf={setPf} setEvts={setEvts} setPfEnabled={setPfEnabled} setPfDuration={setPfDuration} tripHistory={tripHistory}/></div>
 
       {/* ESTUDOS */}
-      <div className="slide-pg"><Suspense fallback={null}><EstudosPage mainTab={mainTab}/></Suspense></div>
+      <div className={pgCls(4)}><Suspense fallback={null}><EstudosPage mainTab={mainTab}/></Suspense></div>
 
       {/* SIMULADOR NR */}
-      <div className="slide-pg"><SimuladorNRPage/></div>
-      <div className="slide-pg"><CoordenogramaPage/></div>
+      <div className={pgCls(5)}><SimuladorNRPage/></div>
+      <div className={pgCls(6)}><CoordenogramaPage/></div>
 
       {/* SIMULADOR DE MANOBRAS */}
-      <div className="slide-pg"><SimuladorManobrasPage/></div>
+      <div className={pgCls(7)}><SimuladorManobrasPage/></div>
     </div></div>
   </div>
   {faultToast&&<div role="status" style={{position:'fixed',right:18,bottom:18,zIndex:5000,background:'var(--card,#181b22)',border:'1px solid #f97316',borderRadius:10,padding:'12px 14px',boxShadow:'0 8px 24px rgba(0,0,0,.45)',maxWidth:330,display:'flex',flexDirection:'column',gap:8}}>

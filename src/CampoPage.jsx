@@ -1101,6 +1101,18 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
     window.addEventListener('resize',h);return()=>window.removeEventListener('resize',h);
   },[]);
 
+  // Revalida os cabos ao reexibir a página: com content-visibility:hidden na página
+  // inativa (.slide-pg-off) os getBoundingClientRect saem zerados enquanto oculta
+  useEffect(()=>{
+    const main=mainRef.current;
+    if(!main||typeof IntersectionObserver==='undefined')return;
+    const obs=new IntersectionObserver(entries=>{
+      if(entries.some(e=>e.isIntersecting))setConnections(c=>[...c]);
+    });
+    obs.observe(main);
+    return()=>obs.disconnect();
+  },[]);
+
   // ESC cancela a seleção de terminal pendente
   useEffect(()=>{
     const onKey=(e)=>{
