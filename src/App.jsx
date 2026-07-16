@@ -99,6 +99,9 @@ function AppInner(){
   const fieldStateRef=useRef(fieldState);
   const onFieldStateChange=useCallback((fs)=>{setFieldState(fs);fieldStateRef.current=fs;},[]);
   const[bkState,setBkState]=useState('open');const[bkSpring,setBkSpring]=useState(true);const[bkTripLatch,setBkTripLatch]=useState(false);
+  // Identidade estável: objeto inline aqui realimentava o efeito de fieldState do
+  // CampoPage (internalConns novo → setFieldState → re-render) num loop infinito.
+  const bkStatusMemo=useMemo(()=>({state:bkState,spring:bkSpring,trip:bkTripLatch}),[bkState,bkSpring,bkTripLatch]);
   const[balI,setBalI]=useState("manual");const[balV,setBalV]=useState("manual");const[seqI,setSeqI]=useState("ABC");const[seqV,setSeqV]=useState("ABC");
 
   // ── Refs ───────────────────────────────────────────────────────────────────
@@ -571,7 +574,7 @@ function AppInner(){
     </div>}
     <div className="slide-vp"><div className="slide-tk" style={{transform:`translateX(-${page*100}%)`}}>
       {/* CAMPO */}
-      <div className={pgCls(0)}><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={{state:bkState,spring:bkSpring,trip:bkTripLatch}} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>
+      <div className={pgCls(0)}><CampoPage onFieldStateChange={onFieldStateChange} bkStatus={bkStatusMemo} onBkCommand={onBkFieldCommand} loadWiring={campoLoadWiring} trippedStageIds={trippedStageIds} relayProt={relayProt}/></div>
 
       {/* RELÉ */}
       <div className={pgCls(1)}><RelePage
