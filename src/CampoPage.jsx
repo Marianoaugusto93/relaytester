@@ -562,7 +562,7 @@ const campoCSS=`
 .preset-guided-btn{padding:3px 6px;border-radius:4px;font-size:10px;cursor:pointer;border:1px solid #f59e0b55;background:rgba(245,158,11,.1);color:#f59e0b;flex-shrink:0;transition:all .15s;}
 .preset-guided-btn:hover{background:rgba(245,158,11,.22);border-color:#f59e0b;}
 .campo-root{background:var(--bg);padding:12px;font-family:monospace;display:grid;grid-template-columns:1fr 240px;gap:10px;overflow:hidden;height:100%;}
-.campo-main{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;}
+.campo-main{display:flex;flex-direction:column;align-items:center;gap:10px;overflow-y:auto;overflow-x:hidden;min-width:0;max-width:100%;}
 .campo-sidebar{display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;}
 .poles-row{display:flex;align-items:flex-start;justify-content:center;gap:6px;padding:8px 6px;background:#0E0E14;border:1px solid #1E1E28;border-radius:8px;}
 .switch-body{position:relative;width:42px;height:120px;border-radius:7px;background:linear-gradient(90deg,#1A1A1C 0%,#232328 40%,#1A1A1C 100%);border:1.5px solid #111;box-shadow:inset 0 2px 8px rgba(0,0,0,0.7);}
@@ -1208,8 +1208,13 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
       </div>
 
       {/* MAIN AREA — Régua, Maleta, Chave */}
-      <div className="campo-main" ref={mainRef} style={{position:'relative',flex:1}}>
+      <div className="campo-main" ref={mainRef} style={{position:'relative',flex:1,minWidth:0}}>
         <svg ref={svgRef} style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',pointerEvents:'none',zIndex:100}}/>
+
+        {/* BARRA DE DICA — no fluxo, largura contida (evita overflow-x) */}
+        <div style={{width:'100%',maxWidth:900}}>
+          <div className={`c-info-bar${infoActive?' active':''}`}>{infoMsg}</div>
+        </div>
 
         {/* FAIXA DE MODO GUIADO */}
         {guided&&(()=>{
@@ -1291,9 +1296,6 @@ export default function CampoPage({onFieldStateChange,bkStatus,onBkCommand,loadW
               </div>
             </div>
             <div style={{display:'flex',justifyContent:'space-between',marginTop:10}}><div className="maleta-latch"/><div className="maleta-latch"/></div>
-          </div>
-          <div style={{position:'absolute',right:-185,top:'50%',transform:'translateY(-50%)',width:170}}>
-            <div className={`c-info-bar${infoActive?' active':''}`}>{infoMsg}</div>
           </div>
         </div>
 
