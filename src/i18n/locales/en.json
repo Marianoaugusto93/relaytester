@@ -89,6 +89,7 @@
     "notes": "Notes"
   },
   "settings": {
+    "stages": "STAGES",
     "preset": "PRESET",
     "eduScenarios": "Educational Scenarios",
     "adjustBase": "Adjustment Base",
@@ -713,6 +714,13 @@
     "no_close_cmd": "No active close command"
   },
   "analytics": {
+    "clear": "Clear Data",
+    "scenarios": "Scenarios",
+    "actions": "Actions",
+    "errors": "Errors",
+    "topScenarios": "Top Scenarios",
+    "errorFrequency": "Error Frequency",
+    "actionDistribution": "Action Distribution",
     "title": "Usage Statistics",
     "closeBtn": "Close statistics",
     "clearConfirm": "Clear all usage statistics?",
