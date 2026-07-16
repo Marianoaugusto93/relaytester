@@ -53,8 +53,7 @@ export default function UnifilarDiagram({ bkState, tripLatch, springLoaded, sys,
   const RW = 56,  RH = 36;
 
   // Trip line: relay bottom → 52 base
-  const tripVisible = tripLatch;
-  const tripColor   = tripLatch ? '#ef4444' : '#ef4444';
+  const tripColor   = '#ef4444';
   const tripOpacity = tripLatch ? 1 : 0.25;
 
   const LBox = ({ x, y, title, val, unit, color }) => (

@@ -773,7 +773,8 @@
     "buttons": {
       "clearCables": "Limpiar Cables",
       "closeCb": "I CERRAR CB",
-      "borneGuide": "📖 Guía de Bornes"
+      "borneGuide": "📖 Guía de Bornes",
+      "undo": "Deshacer"
     },
     "hints": {
       "promptStart": "Haga clic en cualquier terminal para iniciar una conexión — doble clic en un cable o terminal para desconectar",

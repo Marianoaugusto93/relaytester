@@ -773,7 +773,8 @@
     "buttons": {
       "clearCables": "Clear Cables",
       "closeCb": "I CLOSE CB",
-      "borneGuide": "📖 Terminal Guide"
+      "borneGuide": "📖 Terminal Guide",
+      "undo": "Undo"
     },
     "hints": {
       "promptStart": "Click any terminal to start a connection — double-click a cable or terminal to disconnect",
