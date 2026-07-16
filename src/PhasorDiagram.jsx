@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { toRect, mulC, normAng, subC } from "./protection.js";
+import { useTranslation } from "./i18n/useTranslation.js";
 
 const COLORS={Ia:"#ff6b6b",Ib:"#51cf66",Ic:"#339af0",Va:"#ff922b",Vb:"#845ef7",Vc:"#20c997",Vab:"#e8590c",Vbc:"#9775fa",Vca:"#38d9a9",I0:"#ff8787",I1:"#69db7c",I2:"#74c0fc",V0:"#ffa94d",V1:"#b197fc",V2:"#63e6be"};
 const DASHES={I0:"4,3",I1:"4,3",I2:"4,3",V0:"4,3",V1:"4,3",V2:"4,3",Vab:"6,3",Vbc:"6,3",Vca:"6,3"};
 
 export default function PhasorDiagram({onClose,p,pf,pfMode,setPfMode,phasorVis,setPhasorVis,balI,balV,seqI,seqV,uP,uPf,onBalChangeI,onBalChangeV,onSeqChangeI,onSeqChangeV}){
+  const{t}=useTranslation();
   const seqComponents=useMemo(()=>{
     const src=pfMode==="prefault"?pf:p;
     const a1=toRect(1,120),a2=toRect(1,240);
@@ -66,7 +68,7 @@ export default function PhasorDiagram({onClose,p,pf,pfMode,setPfMode,phasorVis,s
       <div className="pd-modal" onClick={e=>e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="pd-title" onKeyDown={(e)=>{if(e.key==="Escape")onClose()}}>
         <div className="pd-header">
           <div id="pd-title" className="pd-title">Phasor Diagram</div>
-          <div className="pd-mode">{pfMode==="prefault"?"PRE-FAULT":"FAULT"}</div>
+          <div className="pd-mode">{(pfMode==="prefault"?t("tabs.preFault"):t("tabs.fault")).toUpperCase()}</div>
           <button className="pd-close" onClick={onClose}>✕</button>
         </div>
         <div className="pd-body">
